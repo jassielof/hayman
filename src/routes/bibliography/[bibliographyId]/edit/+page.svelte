@@ -2,11 +2,12 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import BibliographyMetadataForm from '$lib/components/BibliographyMetadataForm.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
+  import {
+    BibliographyService,
+    formatValidationErrorMessage
+  } from '$lib/services/bibliography.service';
   import { CircleAlert } from '@lucide/svelte';
   import type { PageProps } from './$types';
-
-  type ErrorWithBody = { body?: { message?: string } };
 
   let { data, params }: PageProps = $props();
 
@@ -14,29 +15,33 @@
   const bibliography = $state(data.oldBibliography);
 
   let errorMessage = $state(undefined as string | undefined);
+  let isSubmitting = $state(false);
 
-  async function handleSubmit() {
+  async function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    isSubmitting = true;
+    errorMessage = undefined;
+
     try {
       await BibliographyService.updateMetadata(
         params.bibliographyId,
         bibliography
       );
 
-      goto(resolve('/'));
+      goto(resolve(`/bibliography/${bibliography.metadata.id}/`));
     } catch (err: unknown) {
-      const bodyMessage =
-        typeof err === 'object' && err !== null
-          ? (err as ErrorWithBody).body?.message
-          : undefined;
-      errorMessage =
-        bodyMessage || 'Failed to update bibliography. Please try again.';
+      errorMessage = formatValidationErrorMessage(err);
       console.error('Error updating bibliography:', err);
+    } finally {
+      isSubmitting = false;
     }
   }
 </script>
 
 <form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
-  <fieldset class="fieldset rounded-box border border-base-300 bg-base-200 p-4">
+  <fieldset class="fieldset bg-muted/30">
     <legend class="fieldset-legend"> Edit Bibliography </legend>
 
     {#if errorMessage}
@@ -53,7 +58,17 @@
 
     <div class="divider"></div>
 
-    <button class="btn btn-primary">Save</button>
-    <a class="btn btn-error" href={resolve('/')}>Cancel</a>
+    <button class="btn btn-primary" disabled={isSubmitting}>
+      {#if isSubmitting}
+        <span class="loading loading-sm loading-spinner"></span>
+      {/if}
+      Save
+    </button>
+    <a
+      class="btn btn-error"
+      href={resolve(`/bibliography/${params.bibliographyId}/`)}
+    >
+      Cancel
+    </a>
   </fieldset>
 </form>

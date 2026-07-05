@@ -25,15 +25,13 @@
   }
 </script>
 
-<fieldset
-  class="fieldset rounded-box border border-base-300 bg-base-100/50 p-4"
->
+<fieldset class="fieldset">
   <legend class="fieldset-legend"> Affiliated people </legend>
 
   {#if value && value.length > 0}
     <div class="space-y-4">
       {#each value as affiliation, i (i)}
-        <div class="rounded-box border border-base-content/20 p-4">
+        <div class="rounded-lg border border-border p-4">
           <div class="flex items-center justify-between">
             <h4 class="text-lg font-semibold">Affiliated Person #{i + 1}</h4>
             <button

@@ -44,9 +44,7 @@
   });
 </script>
 
-<fieldset
-  class="fieldset rounded-box border border-base-300 bg-base-100/50 p-4"
->
+<fieldset class="fieldset">
   <legend class="fieldset-legend">{label}</legend>
 
   {#if multiline}

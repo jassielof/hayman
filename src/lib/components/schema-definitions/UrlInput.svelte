@@ -33,9 +33,7 @@
   });
 </script>
 
-<fieldset
-  class="fieldset rounded-box border border-base-300 bg-base-100/50 p-4"
->
+<fieldset class="fieldset">
   <legend class="fieldset-legend"> {label} </legend>
 
   <label class="label" for="{uid}-entry-url">{label}</label>
@@ -43,7 +41,7 @@
     bind:value={urlValue}
     id="{uid}-entry-url"
     type="url"
-    class="validator input w-full"
+    class="input w-full"
     {placeholder}
     required={dateValue ? true : false}
   />

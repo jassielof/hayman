@@ -16,7 +16,7 @@
   type="text"
   id="{uid}-entry-language"
   placeholder="en-US"
-  class="validator input w-full"
+  class="input w-full"
   title="Language must match the Unicode Language Identifier format."
   pattern={LANGUAGE_REGEX.source}
   bind:value

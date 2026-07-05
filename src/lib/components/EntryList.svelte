@@ -1,123 +1,360 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
+  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
   import { formatAuthor } from '$lib/formatters/author';
   import { formatEntryDateShort } from '$lib/formatters/date-formatter';
   import { formatEntryType } from '$lib/formatters/entry-type-formatter';
   import { formatFormattableString } from '$lib/formatters/formattable-string';
   import { BibliographyService } from '$lib/services/bibliography.service';
-  import type { Hayagriva } from '$lib/types/hayagriva';
+  import { hayagrivaService } from '$lib/services/hayagriva.service';
+  import { ENTRY_TYPE_NAMES, type Hayagriva } from '$lib/types/hayagriva';
+  import { cn } from '$lib/utils/cn';
+  import { DropdownMenu } from 'bits-ui';
+  import { SvelteSet } from 'svelte/reactivity';
   import {
     Calendar,
+    Copy,
     Ellipsis,
     Eye,
     Hash,
     Pencil,
+    Search,
     Trash,
     User
   } from '@lucide/svelte';
 
   let {
-    entries = $bindable(),
-    bibliographyId = $bindable()
+    entries,
+    bibliographyId
   }: {
     entries: Hayagriva;
     bibliographyId: string;
   } = $props();
+
+  type SortKey = 'id' | 'title' | 'type' | 'date';
+
+  let search = $state('');
+  let typeFilter = $state('');
+  let sortKey = $state<SortKey>('id');
+  let selected = new SvelteSet<string>();
+  let deleteOpen = $state(false);
+  let bulkDeleteOpen = $state(false);
+  let copyFeedback = $state(false);
+
+  const entryList = $derived(Object.entries(entries));
+
+  const filteredEntries = $derived(
+    entryList
+      .filter(([id, entry]) => {
+        const q = search.trim().toLowerCase();
+        if (q) {
+          const haystack = [
+            id,
+            formatFormattableString(entry.title),
+            entry.author ? formatAuthor(entry.author) : '',
+            entry.type ?? ''
+          ]
+            .join(' ')
+            .toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        if (typeFilter && (entry.type ?? '').toLowerCase() !== typeFilter) {
+          return false;
+        }
+        return true;
+      })
+      .sort(([idA, a], [idB, b]) => {
+        switch (sortKey) {
+          case 'title':
+            return formatFormattableString(a.title).localeCompare(
+              formatFormattableString(b.title)
+            );
+          case 'type':
+            return (a.type ?? '').localeCompare(b.type ?? '');
+          case 'date':
+            return formatEntryDateShort(a.date).localeCompare(
+              formatEntryDateShort(b.date)
+            );
+          default:
+            return idA.localeCompare(idB);
+        }
+      })
+  );
+
+  const allVisibleSelected = $derived(
+    filteredEntries.length > 0 &&
+      filteredEntries.every(([id]) => selected.has(id))
+  );
+
+  function toggleSelect(id: string) {
+    const next = new SvelteSet(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    selected = next;
+  }
+
+  function toggleSelectAll() {
+    if (allVisibleSelected) {
+      const next = new SvelteSet(selected);
+      for (const [id] of filteredEntries) next.delete(id);
+      selected = next;
+    } else {
+      const next = new SvelteSet(selected);
+      for (const [id] of filteredEntries) next.add(id);
+      selected = next;
+    }
+  }
+
+  let pendingDeleteId = $state<string | null>(null);
+
+  function requestDelete(id: string) {
+    pendingDeleteId = id;
+    deleteOpen = true;
+  }
+
+  async function confirmDelete() {
+    if (!pendingDeleteId) return;
+    await BibliographyService.deleteEntry(bibliographyId, pendingDeleteId);
+    delete entries[pendingDeleteId];
+    selected.delete(pendingDeleteId);
+    selected = new SvelteSet(selected);
+    pendingDeleteId = null;
+  }
+
+  async function confirmBulkDelete() {
+    for (const id of [...selected]) {
+      await BibliographyService.deleteEntry(bibliographyId, id);
+      delete entries[id];
+    }
+    selected = new SvelteSet();
+  }
+
+  async function copySelected() {
+    const subset: Hayagriva = {};
+    for (const id of selected) {
+      if (entries[id]) subset[id] = entries[id];
+    }
+    await hayagrivaService.export(subset, { toClipboard: true });
+    copyFeedback = true;
+    setTimeout(() => (copyFeedback = false), 2000);
+  }
+
+  const bulkDeleteDescription = $derived(
+    [...selected].map((id) => `• ${id}`).join('\n')
+  );
 </script>
 
+<ConfirmDialog
+  bind:open={deleteOpen}
+  title="Delete entry?"
+  description={pendingDeleteId
+    ? `Are you sure you want to delete "${pendingDeleteId}"? This cannot be undone.`
+    : undefined}
+  confirmLabel="Delete"
+  destructive={true}
+  onConfirm={confirmDelete}
+/>
+
+<ConfirmDialog
+  bind:open={bulkDeleteOpen}
+  title="Delete selected entries?"
+  description={`The following ${selected.size} entries will be permanently removed:\n${bulkDeleteDescription}`}
+  confirmLabel="Delete all"
+  destructive={true}
+  onConfirm={confirmBulkDelete}
+/>
+
 <div class="card mt-4 shadow-md">
-  {#if Object.entries(entries).length === 0}
+  {#if entryList.length === 0}
     <div class="card-body">
-      <p class="text-center text-gray-500">This bibliography has no entries.</p>
+      <p class="text-center text-muted-foreground">
+        This bibliography has no entries.
+      </p>
     </div>
   {:else}
-    <ul class="list rounded-box bg-base-200 shadow-md">
-      {#each Object.entries(entries) as [id, entry] (id)}
-        {@const { label, Icon } = formatEntryType(entry.type)}
+    <div class="card-body space-y-4 border-b border-border">
+      <div class="grid gap-3 md:grid-cols-3">
+        <label class="label md:col-span-1">
+          <span class="sr-only">Search entries</span>
+          <span class="input flex items-center gap-2">
+            <Search class="size-4 text-muted-foreground" />
+            <input
+              class="w-full border-0 bg-transparent p-0 shadow-none focus:ring-0"
+              placeholder="Search by ID, title, author…"
+              bind:value={search}
+            />
+          </span>
+        </label>
+
+        <label class="label">
+          <span class="sr-only">Filter by type</span>
+          <select class="select" bind:value={typeFilter}>
+            <option value="">All types</option>
+            {#each ENTRY_TYPE_NAMES as typeName (typeName)}
+              <option value={typeName}>{typeName}</option>
+            {/each}
+          </select>
+        </label>
+
+        <label class="label">
+          <span class="sr-only">Sort entries</span>
+          <select class="select" bind:value={sortKey}>
+            <option value="id">Sort by ID</option>
+            <option value="title">Sort by title</option>
+            <option value="type">Sort by type</option>
+            <option value="date">Sort by date</option>
+          </select>
+        </label>
+      </div>
+
+      {#if selected.size > 0}
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm text-muted-foreground"
+            >{selected.size} selected</span
+          >
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            onclick={copySelected}
+          >
+            <Copy class="size-4" />
+            Copy YAML
+          </button>
+          {#if copyFeedback}
+            <span class="text-xs text-primary" role="status">Copied!</span>
+          {/if}
+          <button
+            type="button"
+            class="btn btn-sm btn-destructive"
+            onclick={() => (bulkDeleteOpen = true)}
+          >
+            <Trash class="size-4" />
+            Delete selected
+          </button>
+        </div>
+      {/if}
+    </div>
+
+    <ul class="list">
+      <li class="list-row bg-muted/50 text-xs font-medium uppercase">
+        <div class="flex items-center">
+          <input
+            type="checkbox"
+            class="checkbox"
+            checked={allVisibleSelected}
+            aria-label="Select all visible entries"
+            onchange={toggleSelectAll}
+          />
+        </div>
+        <div class="list-col-grow">Entry</div>
+        <div>Actions</div>
+      </li>
+
+      {#if filteredEntries.length === 0}
         <li class="list-row">
-          <div class="flex flex-col items-center justify-center">
-            <div class="tooltip tooltip-right" data-tip={label}>
-              <Icon />
-            </div>
-          </div>
-          <div>
-            <span class="font-mono text-sm">
-              <Hash class="inline size-[1.2em]" />
-              {id}
-            </span>
-            <br />
-            <span class="text-lg font-semibold">
-              {formatFormattableString(entry.title)}
-            </span>
-            {#if entry.author}
-              <br />
-              <span class="font-serif italic">
-                <User class="inline size-[1.2em]" />
-                {formatAuthor(entry.author)}
-              </span>
-            {/if}
-            {#if entry.date}
-              <br />
-              <span class="text-xs">
-                <Calendar class="inline size-[1.2em]" />
-                {formatEntryDateShort(entry.date)}
-              </span>
-            {/if}
-          </div>
-          <div class="flex flex-col items-center justify-center">
-            <button
-              class="btn m-1"
-              popovertarget={`popover-${id}`}
-              style={`anchor-name: --anchor-${id};`}
-            >
-              <Ellipsis class="inline-block" />
-            </button>
-            <ul
-              class="menu dropdown dropdown-left w-max rounded-box bg-base-100 shadow-sm"
-              popover
-              id={`popover-${id}`}
-              style={`position-anchor: --anchor-${id};`}
-            >
-              <li>
-                <a
-                  href={resolve(`/bibliography/${bibliographyId}/entry/${id}`)}
-                >
-                  <Eye class="inline size-[1.2em]" />
-                  View
-                </a>
-              </li>
-              <li>
-                <a
-                  href={resolve(
-                    `/bibliography/${bibliographyId}/entry/${id}/edit`
-                  )}
-                >
-                  <Pencil class="inline size-[1.2em]" />
-                  Edit</a
-                >
-              </li>
-              <li>
-                <button
-                  class="btn btn-soft btn-sm btn-error"
-                  onclick={async () => {
-                    if (
-                      confirm(
-                        `Are you sure you want to delete the following entry: ${id}?`
-                      )
-                    ) {
-                      await BibliographyService.deleteEntry(bibliographyId, id);
-                      delete entries[id];
-                    }
-                  }}
-                >
-                  <Trash class="inline size-[1.2em]" />
-                  Delete
-                </button>
-              </li>
-            </ul>
-          </div>
+          <p class="text-muted-foreground">No entries match your filters.</p>
         </li>
-      {/each}
+      {:else}
+        {#each filteredEntries as [id, entry] (id)}
+          {@const { label, Icon } = formatEntryType(entry.type)}
+          <li class="list-row">
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                class="checkbox"
+                checked={selected.has(id)}
+                aria-label={`Select ${id}`}
+                onchange={() => toggleSelect(id)}
+              />
+            </div>
+            <div>
+              <div
+                class="flex items-center gap-2 text-xs text-muted-foreground"
+              >
+                <Icon aria-label={label} class="size-4" />
+                <span>{label}</span>
+              </div>
+              <span class="font-mono text-sm">
+                <Hash class="inline size-[1.2em]" />
+                {id}
+              </span>
+              <br />
+              <span class="text-lg font-semibold">
+                {formatFormattableString(entry.title)}
+              </span>
+              {#if entry.author}
+                <br />
+                <span class="font-serif italic">
+                  <User class="inline size-[1.2em]" />
+                  {formatAuthor(entry.author)}
+                </span>
+              {/if}
+              {#if entry.date}
+                <br />
+                <span class="text-xs">
+                  <Calendar class="inline size-[1.2em]" />
+                  {formatEntryDateShort(entry.date)}
+                </span>
+              {/if}
+            </div>
+            <div class="flex flex-col items-center justify-center">
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger
+                  class="btn m-1"
+                  aria-label={`Actions for entry ${id}`}
+                >
+                  <Ellipsis class="inline-block" />
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.Content
+                    class={cn(
+                      'z-50 min-w-40 rounded-md border border-border bg-card p-1 shadow-md'
+                    )}
+                    side="left"
+                  >
+                    <DropdownMenu.Item>
+                      {#snippet child({ props })}
+                        <a
+                          {...props}
+                          href={resolve(
+                            `/bibliography/${bibliographyId}/entry/${id}`
+                          )}
+                          class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          <Eye class="size-4" />
+                          View
+                        </a>
+                      {/snippet}
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item>
+                      {#snippet child({ props })}
+                        <a
+                          {...props}
+                          href={resolve(
+                            `/bibliography/${bibliographyId}/entry/${id}/edit`
+                          )}
+                          class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          <Pencil class="size-4" />
+                          Edit
+                        </a>
+                      {/snippet}
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator class="my-1 h-px bg-border" />
+                    <DropdownMenu.Item
+                      class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+                      onSelect={() => requestDelete(id)}
+                    >
+                      <Trash class="size-4" />
+                      Delete
+                    </DropdownMenu.Item>
+                  </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Root>
+            </div>
+          </li>
+        {/each}
+      {/if}
     </ul>
   {/if}
 </div>

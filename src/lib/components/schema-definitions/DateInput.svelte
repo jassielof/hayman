@@ -28,6 +28,6 @@
   bind:value
   id="{uid}-entry-date"
   type="text"
-  class="validator input w-full"
+  class="input w-full"
   {placeholder}
 />

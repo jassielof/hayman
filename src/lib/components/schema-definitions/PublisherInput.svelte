@@ -45,15 +45,13 @@
   });
 </script>
 
-<fieldset
-  class="fieldset rounded-box border border-base-300 bg-base-100/50 p-4"
->
+<fieldset class="fieldset">
   <legend class="fieldset-legend"> {label} </legend>
   <label for="{uid}-publisher-name" class="label">{label}</label>
   <input
     type="text"
     id="{uid}-publisher-name"
-    class="validator input w-full"
+    class="input w-full"
     bind:value={publisherName}
     {placeholder}
     required={publisherLocation ? true : false}

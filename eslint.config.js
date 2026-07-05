@@ -38,5 +38,11 @@ export default defineConfig(
         svelteConfig
       }
     }
+  },
+  {
+    files: ['src/lib/components/ui/entry-preview-tabs.svelte'],
+    rules: {
+      'svelte/no-at-html-tags': 'off'
+    }
   }
 );

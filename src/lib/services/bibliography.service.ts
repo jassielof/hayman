@@ -1,14 +1,18 @@
 import { db } from '$lib/db';
-import type { Bibliography } from '$lib/types/bibliography';
 import {
-  hayagrivaBibliographySchema,
-  topLevelEntrySchema,
-  type Hayagriva,
-  type TopLevelEntry
-} from '$lib/types/hayagriva';
+  BibliographyDuplicateIdError,
+  BibliographyNotFoundError,
+  EntryAlreadyExistsError,
+  ReservedBibliographyIdError
+} from '$lib/errors/bibliography';
+import type { Bibliography } from '$lib/types/bibliography';
+import { type Hayagriva, type TopLevelEntry } from '$lib/types/hayagriva';
 import { assertHayagrivaStructure } from '$lib/validators/structure';
+import {
+  parseAndValidateEntry,
+  parseAndValidateHayagriva
+} from '$lib/validators/parse-and-validate';
 import { error } from '@sveltejs/kit';
-import type { z } from 'zod';
 
 /**
  * A single validation issue, with a dotted path to the offending field
@@ -27,21 +31,21 @@ export interface ValidationResult {
   errors: ValidationIssue[] | null;
 }
 
-function toValidationIssues(error: z.ZodError): ValidationIssue[] {
-  return error.issues.map((issue) => ({
-    path: issue.path.join('.') || '(root)',
-    message: issue.message
-  }));
-}
-
 function formatIssues(issues: ValidationIssue[] | null): string {
   return (issues ?? []).map((e) => `${e.path}: ${e.message}`).join('; ');
+}
+
+export function formatValidationErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return 'An unexpected error occurred.';
 }
 
 /** Strip Svelte proxies and reject cyclic/deep parent graphs before IndexedDB. */
 function cloneForStorage(bibliography: Bibliography): Bibliography {
   assertHayagrivaStructure(bibliography.data);
-  return JSON.parse(JSON.stringify(bibliography));
+  const clone = JSON.parse(JSON.stringify(bibliography)) as Bibliography;
+  clone.metadata.updatedAt = new Date().toISOString();
+  return clone;
 }
 
 /**
@@ -56,13 +60,29 @@ export class BibliographyService {
     return await db.bibliographies.toArray();
   }
 
+  static async getOrNull(id: string): Promise<Bibliography | null> {
+    return (await db.bibliographies.get(id)) ?? null;
+  }
+
   /**
    * Retrieves a specific bibliography by its ID.
    * @param id - The unique identifier of the bibliography.
-   * @returns A promise that resolves to the bibliography if found, undefined otherwise.
+   * @throws {BibliographyNotFoundError} When not found (client-side callers).
+   * @throws SvelteKit HTTP error when used from loaders via `getForLoad`.
    */
   static async get(id: string) {
-    const bibliography = await db.bibliographies.get(id);
+    const bibliography = await this.getOrNull(id);
+
+    if (!bibliography) {
+      throw new BibliographyNotFoundError(id);
+    }
+
+    return bibliography;
+  }
+
+  /** For SvelteKit loaders — maps missing bibliography to HTTP 404. */
+  static async getForLoad(id: string) {
+    const bibliography = await this.getOrNull(id);
 
     if (!bibliography) {
       error(404, { message: 'Bibliography not found' });
@@ -77,11 +97,7 @@ export class BibliographyService {
    * @returns A validation result with errors if invalid.
    */
   static async validateHayagriva(data: Hayagriva): Promise<ValidationResult> {
-    const result = hayagrivaBibliographySchema.safeParse(data);
-    return {
-      valid: result.success,
-      errors: result.success ? null : toValidationIssues(result.error)
-    };
+    return parseAndValidateHayagriva(data);
   }
 
   /**
@@ -90,11 +106,7 @@ export class BibliographyService {
    * @returns A validation result with errors if invalid.
    */
   static async validateEntry(entry: TopLevelEntry): Promise<ValidationResult> {
-    const result = topLevelEntrySchema.safeParse(entry);
-    return {
-      valid: result.success,
-      errors: result.success ? null : toValidationIssues(result.error)
-    };
+    return parseAndValidateEntry(entry);
   }
 
   /**
@@ -115,7 +127,6 @@ export class BibliographyService {
       }
     }
 
-    bibliography.metadata.updatedAt = new Date().toISOString();
     await db.bibliographies.add(cloneForStorage(bibliography));
   }
 
@@ -128,16 +139,6 @@ export class BibliographyService {
     await db.bibliographies.delete(id);
   }
 
-  /**
-   * Updates specific fields of an existing bibliography.
-   * @param id - The unique identifier of the bibliography to update.
-   * @param changes - An object containing the fields to update.
-   * @returns A promise that resolves when the bibliography has been updated.
-   */
-  static async update(id: string, changes: Partial<Bibliography>) {
-    await db.bibliographies.update(id, changes);
-  }
-
   static async exists(id: string) {
     return !!(await db.bibliographies.get(id));
   }
@@ -146,20 +147,21 @@ export class BibliographyService {
     const newId = updated.metadata.id;
 
     if (newId == 'new') {
-      error(400, {
-        message: 'Bibliography ID cannot be "new" as it is reserved'
-      });
+      throw new ReservedBibliographyIdError();
     }
 
-    if (newId !== id) {
-      if (await this.exists(newId)) {
-        error(409, { message: 'Bibliography with the new ID already exists' });
+    await db.transaction('rw', db.bibliographies, async () => {
+      if (newId !== id && (await db.bibliographies.get(newId))) {
+        throw new BibliographyDuplicateIdError(newId);
       }
 
-      await this.delete(id);
-    }
+      const stored = cloneForStorage(updated);
+      await db.bibliographies.put(stored);
 
-    await this.put(updated);
+      if (newId !== id) {
+        await db.bibliographies.delete(id);
+      }
+    });
   }
 
   /**
@@ -180,7 +182,6 @@ export class BibliographyService {
       }
     }
 
-    bibliography.metadata.updatedAt = new Date().toISOString();
     await db.bibliographies.put(cloneForStorage(bibliography));
   }
 
@@ -207,13 +208,17 @@ export class BibliographyService {
       }
     }
 
-    const bibliography = await this.get(bibliographyId);
-    if (!bibliography) throw new Error('Bibliography not found');
-    if (bibliography.data[newEntryId]) {
-      throw new Error('Entry already exists');
-    }
-    bibliography.data[newEntryId] = newEntryData;
-    await this.put(bibliography, true); // Skip validation since we already validated the entry
+    await db.transaction('rw', db.bibliographies, async () => {
+      const bibliography = await db.bibliographies.get(bibliographyId);
+      if (!bibliography) {
+        throw new BibliographyNotFoundError(bibliographyId);
+      }
+      if (bibliography.data[newEntryId]) {
+        throw new EntryAlreadyExistsError(newEntryId);
+      }
+      bibliography.data[newEntryId] = newEntryData;
+      await db.bibliographies.put(cloneForStorage(bibliography));
+    });
   }
 
   /**
@@ -224,9 +229,14 @@ export class BibliographyService {
    * @returns A promise that resolves when the entry has been deleted.
    */
   static async deleteEntry(bibliographyId: string, entryId: string) {
-    const bibliography = await this.get(bibliographyId);
-    delete bibliography.data[entryId];
-    await this.put(bibliography);
+    await db.transaction('rw', db.bibliographies, async () => {
+      const bibliography = await db.bibliographies.get(bibliographyId);
+      if (!bibliography) {
+        throw new BibliographyNotFoundError(bibliographyId);
+      }
+      delete bibliography.data[entryId];
+      await db.bibliographies.put(cloneForStorage(bibliography));
+    });
   }
 
   /**
@@ -238,7 +248,6 @@ export class BibliographyService {
    */
   static async getEntry(bibliographyId: string, entryId: string) {
     const bibliography = await this.get(bibliographyId);
-    if (!bibliography) throw new Error('Bibliography not found');
     return bibliography.data[entryId];
   }
 
@@ -268,21 +277,23 @@ export class BibliographyService {
       }
     }
 
-    const bibliography = await this.get(bibliographyId);
-    if (!bibliography) throw new Error('Bibliography not found');
+    await db.transaction('rw', db.bibliographies, async () => {
+      const bibliography = await db.bibliographies.get(bibliographyId);
+      if (!bibliography) {
+        throw new BibliographyNotFoundError(bibliographyId);
+      }
 
-    const isRename = updatedEntryId !== oldEntryId;
-    if (isRename && bibliography.data[updatedEntryId]) {
-      throw new Error(
-        `Entry "${updatedEntryId}" already exists in this bibliography`
-      );
-    }
+      const isRename = updatedEntryId !== oldEntryId;
+      if (isRename && bibliography.data[updatedEntryId]) {
+        throw new EntryAlreadyExistsError(updatedEntryId);
+      }
 
-    if (isRename) {
-      delete bibliography.data[oldEntryId];
-    }
+      if (isRename) {
+        delete bibliography.data[oldEntryId];
+      }
 
-    bibliography.data[updatedEntryId] = updatedEntryData;
-    await this.put(bibliography, true); // Skip validation since we already validated the entry
+      bibliography.data[updatedEntryId] = updatedEntryData;
+      await db.bibliographies.put(cloneForStorage(bibliography));
+    });
   }
 }

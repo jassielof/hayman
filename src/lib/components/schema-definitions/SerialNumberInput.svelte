@@ -148,9 +148,7 @@
   });
 </script>
 
-<fieldset
-  class="fieldset rounded-box border border-base-300 bg-base-100/50 p-4"
->
+<fieldset class="fieldset">
   <legend class="fieldset-legend">Serial Number</legend>
 
   <div class="grid grid-cols-1 gap-2 md:grid-cols-2">

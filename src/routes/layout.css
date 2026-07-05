@@ -6,14 +6,257 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-@plugin 'daisyui' {
-  themes:
-    emerald --default,
-    dim --prefersdark;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: 'IBM Plex Sans', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
   --font-serif: 'IBM Plex Serif', serif;
+
+  --color-background: oklch(0.985 0.002 155);
+  --color-foreground: oklch(0.21 0.02 155);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.21 0.02 155);
+  --color-muted: oklch(0.96 0.01 155);
+  --color-muted-foreground: oklch(0.45 0.02 155);
+  --color-border: oklch(0.9 0.01 155);
+  --color-input: oklch(0.9 0.01 155);
+  --color-primary: oklch(0.55 0.14 160);
+  --color-primary-foreground: oklch(0.99 0.01 160);
+  --color-secondary: oklch(0.94 0.02 155);
+  --color-secondary-foreground: oklch(0.28 0.03 155);
+  --color-accent: oklch(0.94 0.03 160);
+  --color-accent-foreground: oklch(0.28 0.03 155);
+  --color-destructive: oklch(0.55 0.2 25);
+  --color-destructive-foreground: oklch(0.99 0.01 25);
+  --color-warning: oklch(0.72 0.15 75);
+  --color-warning-foreground: oklch(0.28 0.05 75);
+  --color-ring: oklch(0.55 0.14 160);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+.dark {
+  --color-background: oklch(0.17 0.015 155);
+  --color-foreground: oklch(0.95 0.01 155);
+  --color-card: oklch(0.22 0.015 155);
+  --color-card-foreground: oklch(0.95 0.01 155);
+  --color-muted: oklch(0.26 0.015 155);
+  --color-muted-foreground: oklch(0.7 0.02 155);
+  --color-border: oklch(0.32 0.015 155);
+  --color-input: oklch(0.32 0.015 155);
+  --color-primary: oklch(0.68 0.14 160);
+  --color-primary-foreground: oklch(0.18 0.03 160);
+  --color-secondary: oklch(0.28 0.02 155);
+  --color-secondary-foreground: oklch(0.92 0.01 155);
+  --color-accent: oklch(0.3 0.03 160);
+  --color-accent-foreground: oklch(0.92 0.01 155);
+  --color-destructive: oklch(0.62 0.2 25);
+  --color-destructive-foreground: oklch(0.98 0.01 25);
+  --color-warning: oklch(0.78 0.14 75);
+  --color-warning-foreground: oklch(0.22 0.05 75);
+  --color-ring: oklch(0.68 0.14 160);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-border);
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors;
+    @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-outline {
+    @apply border border-border bg-transparent hover:bg-accent hover:text-accent-foreground;
+  }
+
+  .btn-soft {
+    @apply bg-muted text-foreground hover:bg-muted/80;
+  }
+
+  .btn-error,
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+
+  .btn-success {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+
+  .btn-neutral {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+
+  .btn-dash {
+    @apply border border-dashed border-border bg-transparent hover:bg-accent;
+  }
+
+  .btn-circle {
+    @apply aspect-square rounded-full p-2;
+  }
+
+  .btn-square {
+    @apply aspect-square p-2;
+  }
+
+  .input,
+  .textarea,
+  .select,
+  .file-input {
+    @apply w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-xs;
+    @apply placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none;
+  }
+
+  .input-sm {
+    @apply h-8 px-2 py-1 text-xs;
+  }
+
+  .textarea {
+    @apply min-h-24;
+  }
+
+  .label {
+    @apply mb-1 block text-sm font-medium text-foreground;
+  }
+
+  .fieldset {
+    @apply space-y-3 rounded-lg border border-border bg-card/50 p-4;
+  }
+
+  .fieldset-legend {
+    @apply px-1 text-base font-semibold;
+  }
+
+  .divider {
+    @apply my-4 h-px w-full bg-border;
+  }
+
+  .alert {
+    @apply flex items-start gap-3 rounded-lg border px-4 py-3 text-sm;
+  }
+
+  .alert-error {
+    @apply border-destructive/30 bg-destructive/10 text-destructive;
+  }
+
+  .alert-warning {
+    @apply border-warning/30 bg-warning/10 text-warning-foreground;
+  }
+
+  .card {
+    @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm;
+  }
+
+  .card-body {
+    @apply p-6;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold;
+  }
+
+  .navbar {
+    @apply flex h-14 items-center border-b border-border bg-card px-4 shadow-sm;
+  }
+
+  .list {
+    @apply divide-y divide-border overflow-hidden rounded-lg border border-border bg-muted;
+  }
+
+  .list-row {
+    @apply flex flex-col gap-4 p-4 sm:flex-row sm:items-center;
+  }
+
+  .list-col-grow {
+    @apply min-w-0 flex-1;
+  }
+
+  .join {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .join-vertical {
+    @apply flex-col;
+  }
+
+  .join-horizontal {
+    @apply flex-row;
+  }
+
+  .join-item {
+    @apply rounded-md;
+  }
+
+  .checkbox {
+    @apply size-4 rounded border border-input accent-primary;
+  }
+
+  .checkbox-sm {
+    @apply size-3.5;
+  }
+
+  .loading-spinner {
+    @apply inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent;
+  }
+
+  .loading-xl {
+    @apply size-10;
+  }
+
+  .loading-md {
+    @apply size-6;
+  }
+
+  .loading-sm {
+    @apply size-3.5;
+  }
+
+  .code-block {
+    @apply overflow-x-auto rounded-lg bg-muted p-4 font-mono text-sm;
+  }
+
+  .code-block pre {
+    @apply flex gap-4;
+  }
+
+  .code-block code {
+    @apply whitespace-pre;
+  }
+
+  .code-line-number {
+    @apply text-muted-foreground select-none;
+  }
+
+  .sr-only {
+    @apply absolute -m-px h-px w-px overflow-hidden border-0 p-0 whitespace-nowrap;
+    clip: rect(0, 0, 0, 0);
+  }
 }

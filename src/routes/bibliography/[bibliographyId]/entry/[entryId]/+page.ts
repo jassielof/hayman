@@ -7,7 +7,9 @@ export const ssr = false;
 
 export const load: PageLoad = async ({ params }) => {
   try {
-    const bibliography = await BibliographyService.get(params.bibliographyId);
+    const bibliography = await BibliographyService.getForLoad(
+      params.bibliographyId
+    );
     const entry = bibliography?.data[params.entryId];
 
     if (!entry) {

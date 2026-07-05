@@ -2,13 +2,19 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import BibliographyMetadataForm from '$lib/components/BibliographyMetadataForm.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
+  import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
+  import {
+    BibliographyService,
+    formatValidationErrorMessage,
+    type ValidationIssue
+  } from '$lib/services/bibliography.service';
   import {
     hayagrivaService,
     HayagrivaStructureError
   } from '$lib/services/hayagriva.service';
   import type { Bibliography } from '$lib/types/bibliography';
-  import { CircleAlert } from '@lucide/svelte';
+  import { parseAndValidateHayagriva } from '$lib/validators/parse-and-validate';
+  import { CircleAlert, ClipboardPaste, Link } from '@lucide/svelte';
 
   let newBibliography: Bibliography = $state({
     data: {},
@@ -22,6 +28,7 @@
 
   let files: FileList | undefined = $state(undefined);
   let isLoading = $state(false);
+  let validationIssues = $state<ValidationIssue[]>([]);
   let errorMessage = $state(undefined as string | undefined);
 
   $effect(() => {
@@ -31,10 +38,17 @@
       const reader = new FileReader();
       reader.onload = () => {
         try {
-          newBibliography.data = hayagrivaService.import(
-            reader.result as string
-          );
-          errorMessage = undefined;
+          const imported = hayagrivaService.import(reader.result as string);
+          const validation = parseAndValidateHayagriva(imported);
+          if (!validation.valid) {
+            validationIssues = validation.errors ?? [];
+            errorMessage = 'Imported YAML has validation errors.';
+            newBibliography.data = imported;
+          } else {
+            newBibliography.data = imported;
+            validationIssues = [];
+            errorMessage = undefined;
+          }
         } catch (error) {
           errorMessage =
             error instanceof HayagrivaStructureError
@@ -55,34 +69,107 @@
     }
   });
 
-  async function handleSubmit() {
+  let isSubmitting = $state(false);
+  let importUrl = $state('');
+  let isFetchingUrl = $state(false);
+
+  async function handlePasteImport() {
+    errorMessage = undefined;
+    validationIssues = [];
+    try {
+      const text = await navigator.clipboard.readText();
+      const imported = hayagrivaService.import(text);
+      const validation = parseAndValidateHayagriva(imported);
+      newBibliography.data = imported;
+      if (!validation.valid) {
+        validationIssues = validation.errors ?? [];
+        errorMessage = 'Pasted YAML has validation errors.';
+      }
+    } catch (error) {
+      errorMessage =
+        error instanceof HayagrivaStructureError
+          ? error.message
+          : 'Failed to parse pasted YAML.';
+    }
+  }
+
+  async function handleUrlImport() {
+    if (!importUrl.trim()) return;
+    isFetchingUrl = true;
+    errorMessage = undefined;
+    validationIssues = [];
+    try {
+      const response = await fetch(importUrl.trim());
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const text = await response.text();
+      const imported = hayagrivaService.import(text);
+      const validation = parseAndValidateHayagriva(imported);
+      newBibliography.data = imported;
+      if (!validation.valid) {
+        validationIssues = validation.errors ?? [];
+        errorMessage = 'Imported YAML has validation errors.';
+      }
+    } catch (error) {
+      errorMessage =
+        error instanceof Error ? error.message : 'Failed to import from URL.';
+    } finally {
+      isFetchingUrl = false;
+    }
+  }
+
+  async function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    isSubmitting = true;
+    errorMessage = undefined;
+    validationIssues = [];
+
     try {
       if (newBibliography.metadata.id === 'new') {
         errorMessage = '"new" is a reserved ID. Please choose another one.';
         return;
       }
 
+      if (await BibliographyService.exists(newBibliography.metadata.id)) {
+        errorMessage = 'Bibliography with this ID already exists.';
+        return;
+      }
+
+      const validation = parseAndValidateHayagriva(newBibliography.data);
+      if (!validation.valid) {
+        validationIssues = validation.errors ?? [];
+        errorMessage = 'Fix validation errors before saving.';
+        return;
+      }
+
       await BibliographyService.add(newBibliography);
       goto(resolve('/'));
-    } catch (error: unknown) {
+    } catch (err: unknown) {
+      errorMessage = formatValidationErrorMessage(err);
       if (
-        typeof error === 'object' &&
-        error !== null &&
-        'name' in error &&
-        error.name === 'ConstraintError'
+        typeof err === 'object' &&
+        err !== null &&
+        'name' in err &&
+        err.name === 'ConstraintError'
       ) {
         errorMessage = 'Bibliography with this ID already exists.';
-      } else {
-        errorMessage = 'Failed to save bibliography. Please try again.';
       }
-      console.error('Error saving bibliography:', error);
+      console.error('Error saving bibliography:', err);
+    } finally {
+      isSubmitting = false;
     }
   }
 </script>
 
 <form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
-  <fieldset class="fieldset rounded-box border border-base-300 bg-base-200 p-4">
+  <fieldset class="fieldset bg-muted/30">
     <legend class="fieldset-legend">New Bibliography</legend>
+
+    {#if validationIssues.length > 0}
+      <ValidationErrorList issues={validationIssues} />
+      <div class="divider"></div>
+    {/if}
 
     {#if errorMessage}
       <div role="alert" class="alert alert-error">
@@ -93,7 +180,7 @@
     {/if}
 
     <label for="hayagriva-file" class="label">
-      <span class="label-text">Import from a Hayagriva YAML file</span>
+      Import from a Hayagriva YAML file
     </label>
 
     <input
@@ -111,10 +198,47 @@
           .replace(/\b\w/g, (l) => l.toUpperCase());
       }}
       id="hayagriva-file"
-      accept="application/yaml"
+      accept="application/yaml,.yaml,.yml"
       bind:files
       disabled={isLoading}
     />
+
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="btn btn-outline"
+        onclick={handlePasteImport}
+        disabled={isLoading || isFetchingUrl}
+      >
+        <ClipboardPaste class="size-4" />
+        Paste YAML
+      </button>
+    </div>
+
+    <label for="import-url" class="label">Import from URL</label>
+    <div class="flex flex-wrap gap-2">
+      <input
+        id="import-url"
+        type="url"
+        class="input min-w-0 flex-1"
+        placeholder="https://example.com/bibliography.yaml"
+        bind:value={importUrl}
+        disabled={isFetchingUrl}
+      />
+      <button
+        type="button"
+        class="btn btn-outline"
+        onclick={handleUrlImport}
+        disabled={isFetchingUrl || !importUrl.trim()}
+      >
+        {#if isFetchingUrl}
+          <span class="loading loading-sm loading-spinner"></span>
+        {:else}
+          <Link class="size-4" />
+        {/if}
+        Fetch
+      </button>
+    </div>
 
     {#if isLoading && files}
       <div class="mt-4 flex items-center gap-2">
@@ -131,7 +255,12 @@
 
     <div class="divider"></div>
 
-    <button class="btn btn-primary">Save</button>
+    <button class="btn btn-primary" disabled={isSubmitting || isLoading}>
+      {#if isSubmitting}
+        <span class="loading loading-sm loading-spinner"></span>
+      {/if}
+      Save
+    </button>
     <a class="btn btn-error" href={resolve('/')}>Cancel</a>
   </fieldset>
 </form>

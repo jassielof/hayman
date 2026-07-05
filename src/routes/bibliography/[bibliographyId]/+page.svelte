@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import EntryList from '$lib/components/EntryList.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { BookPlus } from '@lucide/svelte';
@@ -8,20 +9,37 @@
 
   const bibliographyId = page.params.bibliographyId;
   const bibliographyQuery = stateQuery(() =>
-    BibliographyService.get(bibliographyId!)
+    BibliographyService.getOrNull(bibliographyId!)
   );
 
   const bibliographyQueryLoading = $derived(bibliographyQuery.isLoading);
-
   const bibliography = $derived(bibliographyQuery.current);
 </script>
 
 <main class="mx-auto flex w-full max-w-5xl flex-col p-4">
   {#if bibliographyQueryLoading}
-    <div class="flex min-h-[60vh] items-center justify-center">
-      <span class="loading loading-xl loading-spinner"></span>
+    <div
+      class="flex min-h-[60vh] items-center justify-center"
+      role="status"
+      aria-live="polite"
+    >
+      <span class="loading loading-xl loading-spinner" aria-hidden="true"
+      ></span>
+      <span class="sr-only">Loading bibliography…</span>
     </div>
-  {:else if bibliography}
+  {:else if bibliography === null || bibliography === undefined}
+    <div class="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+      <p role="alert" class="text-lg text-error">Bibliography not found.</p>
+      <a class="btn btn-primary" href={resolve('/')}>Back to home</a>
+    </div>
+  {:else}
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        { label: bibliography.metadata.title }
+      ]}
+    />
+
     <div class="flex flex-col gap-2 md:flex-row">
       <div class="mb-2 flex-auto">
         <h1 class="truncate text-2xl font-bold">

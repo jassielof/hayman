@@ -5,6 +5,6 @@ export const ssr = false;
 
 export const load: PageLoad = async ({ params }) => {
   return {
-    oldBibliography: await BibliographyService.get(params.bibliographyId)
+    oldBibliography: await BibliographyService.getForLoad(params.bibliographyId)
   };
 };

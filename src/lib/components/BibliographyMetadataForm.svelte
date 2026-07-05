@@ -14,7 +14,7 @@
   type="text"
   title="Enter a unique ID for the bibliography"
   placeholder="my-research-papers"
-  class="validator input w-full font-mono"
+  class="input w-full font-mono"
   bind:value={bibliographyMetadata.id}
   onblur={() => (bibliographyMetadata.id = bibliographyMetadata.id.trim())}
   required
@@ -26,7 +26,7 @@
   type="text"
   placeholder="My Research Papers"
   title="Enter a title for the bibliography"
-  class="validator input w-full"
+  class="input w-full"
   bind:value={bibliographyMetadata.title}
   oninput={() => {}}
   onblur={() =>

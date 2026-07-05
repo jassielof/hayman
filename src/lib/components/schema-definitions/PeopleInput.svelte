@@ -41,9 +41,7 @@
   }
 </script>
 
-<fieldset
-  class="fieldset gap-2 rounded-box border border-base-content/20 bg-base-300/50 p-4"
->
+<fieldset class="fieldset gap-2 bg-muted/30">
   <legend class="fieldset-legend">{label} </legend>
   {#if value === undefined || value === null}
     <button
