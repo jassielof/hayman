@@ -2,6 +2,7 @@
  * Hayagriva Bibliography Format
  * (Community) Schema for Hayagriva YAML bibliography files.
  * @see https://github.com/typst/hayagriva
+ * @see https://github.com/typst/hayagriva/blob/main/docs/file-format.md
  */
 
 /**
@@ -47,7 +48,7 @@ export interface BibliographyEntry {
   /**
    * The person or people primarily responsible for the creation of this entry.
    */
-  author?: Person | Person[];
+  author?: PersonOrList;
 
   /**
    * The date of publication or creation of this entry.
@@ -80,7 +81,7 @@ export interface BibliographyEntry {
   /**
    * The person or people responsible for selecting and revising the content of the entry.
    */
-  editor?: Person | Person[];
+  editor?: PersonOrList;
 
   /**
    * People involved with the entry that do not fit `author` or `editor` roles.
@@ -122,6 +123,7 @@ export interface BibliographyEntry {
 
   /**
    * The total number of volumes, parts, seasons, etc., in the series that contains this entry.
+   * Must be a positive integer.
    */
   'volume-total'?: number;
 
@@ -142,6 +144,7 @@ export interface BibliographyEntry {
 
   /**
    * The total number of pages in the entry.
+   * Must be a positive integer.
    */
   'page-total'?: number;
 
@@ -160,7 +163,7 @@ export interface BibliographyEntry {
   /**
    * The canonical public URL of the entry, which may include an access date.
    */
-  url?: string | { value: string; date?: HayagrivaDate };
+  url?: UrlValue;
 
   /**
    * Any serial number, including article numbers, associated with the entry.
@@ -172,7 +175,7 @@ export interface BibliographyEntry {
    * The language of the entry as a Unicode Language Identifier (BCP 47).
    * e.g., "en", "en-US", "zh-Hans".
    */
-  language?: string;
+  language?: Language;
 
   /**
    * The name of the institution/collection where the entry is kept.
@@ -244,6 +247,13 @@ export type Person =
     };
 
 /**
+ * A single person, or an array of persons.
+ * Mirrors the `personOrList` schema definition, reused by `author`, `editor`,
+ * and `AffiliatedRole.names`.
+ */
+export type PersonOrList = Person | Person[];
+
+/**
  * Publisher information - can be a simple string or an object with name and location.
  */
 export type Publisher =
@@ -261,7 +271,7 @@ export type Publisher =
 export interface AffiliatedRole {
   role: RoleType;
   /** The name(s) of the person or people involved in the role. */
-  names: Person | Person[];
+  names: PersonOrList;
 }
 
 /**
@@ -285,14 +295,56 @@ export type SerialNumber =
     };
 
 /**
- * The media type of the entry.
- * Note: Typst is case-insensitive for the first letter.
+ * The canonical, lowercase form of every entry type recognized by Hayagriva.
+ * This is the single source of truth for entry type names - other modules
+ * (e.g. the entry type formatter/selector) should derive from `EntryType`
+ * rather than declaring their own list.
  */
+export type EntryTypeName =
+  | 'article'
+  | 'chapter'
+  | 'entry'
+  | 'anthos'
+  | 'report'
+  | 'thesis'
+  | 'web'
+  | 'scene'
+  | 'artwork'
+  | 'patent'
+  | 'case'
+  | 'newspaper'
+  | 'legislation'
+  | 'manuscript'
+  | 'original'
+  | 'post'
+  | 'misc'
+  | 'performance'
+  | 'periodical'
+  | 'proceedings'
+  | 'book'
+  | 'blog'
+  | 'reference'
+  | 'conference'
+  | 'anthology'
+  | 'repository'
+  | 'thread'
+  | 'video'
+  | 'audio'
+  | 'exhibition';
 
-export type EntryType = (typeof ENTRY_TYPES)[number];
+/**
+ * The media type of the entry.
+ *
+ * Typst is case-insensitive for the *first* letter of the type only (the
+ * rest of the word must be lowercase), so both `'book'` and `'Book'` are
+ * valid, but `'BOOK'` or `'boOk'` are not. This mirrors the schema's
+ * `^(?:[Aa]rticle|[Bb]ook|...)$` pattern.
+ */
+export type EntryType = EntryTypeName | Capitalize<EntryTypeName>;
 
 /**
  * The role of an affiliated person.
+ * Unlike `EntryType`, roles are case-sensitive.
  */
 export type RoleType =
   | 'translator'
@@ -317,28 +369,28 @@ export type RoleType =
   | 'narrator';
 
 /**
+ * The canonical public URL of an entry, optionally with an access date.
+ */
+export type UrlValue = string | { value: string; date?: HayagrivaDate };
+
+/**
+ * A Unicode Language Identifier (BCP 47), e.g. "en", "en-US", "zh-Hans-CN".
+ * Format: language[-script][-region]
+ */
+export type Language = string;
+
+/**
  * Type aliases for common usage patterns.
  */
 
 /** Alias for EntryType. */
 export type Type = EntryType;
 
-/** Alias for HayagrivaDate. Note: This shadows the global Date type. */
-export type Date = HayagrivaDate;
-
-/** Alias for language string. */
-export type Language = string;
-
-/** Alias for author field type. */
-export type Author = Person | Person[];
+/** Alias for author/editor field type. */
+export type Author = PersonOrList;
 
 /** Alias for affiliated people (array of roles). */
 export type AffiliatedPeople = AffiliatedRole[];
 
 /** Alias for URL field type. */
-export type URL = string | { value: string; date?: HayagrivaDate };
-
-/** Type helpers for FormattableString object fields. */
-export type Value = string;
-export type ShortForm = string;
-export type Verbatim = boolean;
+export type URL = UrlValue;

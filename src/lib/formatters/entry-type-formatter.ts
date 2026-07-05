@@ -1,3 +1,4 @@
+import type { EntryTypeName } from '$lib/types/hayagriva';
 import {
   Book,
   BookOpen,
@@ -24,7 +25,7 @@ import {
   Video
 } from '@lucide/svelte';
 
-export const entryTypeIcons: Record<string, typeof BookOpen> = {
+export const entryTypeIcons: Record<EntryTypeName, typeof BookOpen> = {
   article: FileText,
   chapter: FileText,
   entry: FileText,
@@ -88,7 +89,11 @@ export const ENTRY_TYPES = [
   'video',
   'audio',
   'exhibition'
-] as const;
+] as const satisfies readonly EntryTypeName[];
+
+function isEntryTypeName(value: string): value is EntryTypeName {
+  return (ENTRY_TYPES as readonly string[]).includes(value);
+}
 
 export function formatEntryType(type: string): {
   label: string;
@@ -96,7 +101,9 @@ export function formatEntryType(type: string): {
 } {
   if (!type) return { label: '', Icon: FileArchive };
   const normalized = type.charAt(0).toLowerCase() + type.slice(1).toLowerCase();
-  const Icon = entryTypeIcons[normalized] || FileArchive;
+  const Icon = isEntryTypeName(normalized)
+    ? entryTypeIcons[normalized]
+    : FileArchive;
   const label = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   return { label, Icon };
 }
