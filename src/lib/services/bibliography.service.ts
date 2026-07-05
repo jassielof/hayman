@@ -6,6 +6,7 @@ import {
   type Hayagriva,
   type TopLevelEntry
 } from '$lib/types/hayagriva';
+import { assertHayagrivaStructure } from '$lib/validators/structure';
 import { error } from '@sveltejs/kit';
 import type { z } from 'zod';
 
@@ -35,6 +36,12 @@ function toValidationIssues(error: z.ZodError): ValidationIssue[] {
 
 function formatIssues(issues: ValidationIssue[] | null): string {
   return (issues ?? []).map((e) => `${e.path}: ${e.message}`).join('; ');
+}
+
+/** Strip Svelte proxies and reject cyclic/deep parent graphs before IndexedDB. */
+function cloneForStorage(bibliography: Bibliography): Bibliography {
+  assertHayagrivaStructure(bibliography.data);
+  return JSON.parse(JSON.stringify(bibliography));
 }
 
 /**
@@ -109,7 +116,7 @@ export class BibliographyService {
     }
 
     bibliography.metadata.updatedAt = new Date().toISOString();
-    await db.bibliographies.add(JSON.parse(JSON.stringify(bibliography)));
+    await db.bibliographies.add(cloneForStorage(bibliography));
   }
 
   /**
@@ -174,7 +181,7 @@ export class BibliographyService {
     }
 
     bibliography.metadata.updatedAt = new Date().toISOString();
-    await db.bibliographies.put(JSON.parse(JSON.stringify(bibliography)));
+    await db.bibliographies.put(cloneForStorage(bibliography));
   }
 
   /**

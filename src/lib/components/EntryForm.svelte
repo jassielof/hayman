@@ -2,6 +2,7 @@
   import EntryTypeInput from '$lib/components/schema-definitions/EntryTypeInput.svelte';
   import FormattableStringInput from '$lib/components/schema-definitions/FormattableStringInput.svelte';
   import type { BibliographyEntry } from '$lib/types/hayagriva';
+  import { MAX_PARENT_DEPTH } from '$lib/validators/structure';
   import { X } from '@lucide/svelte';
   import EntryForm from './EntryForm.svelte';
   import AffiliatedListInput from './schema-definitions/AffiliatedListInput.svelte';
@@ -16,7 +17,13 @@
   import TimestampRangeInput from './schema-definitions/TimestampRangeInput.svelte';
   import UrlInput from './schema-definitions/UrlInput.svelte';
 
-  let { entryData = $bindable() }: { entryData: BibliographyEntry } = $props();
+  let {
+    entryData = $bindable(),
+    parentDepth = 0
+  }: {
+    entryData: BibliographyEntry;
+    parentDepth?: number;
+  } = $props();
 
   const uid = $props.id();
 
@@ -208,7 +215,16 @@
       {/if}
     </span>
   </h3>
-  <EntryForm bind:entryData={entryData.parent} />
+  {#if parentDepth >= MAX_PARENT_DEPTH}
+    <p class="text-warning text-sm">
+      Parent nesting is too deep to edit further here ({MAX_PARENT_DEPTH} levels max).
+    </p>
+  {:else}
+    <EntryForm
+      bind:entryData={entryData.parent}
+      parentDepth={parentDepth + 1}
+    />
+  {/if}
 {/if}
 
 {#if parentType === 'list' && Array.isArray(entryData.parent)}
@@ -234,7 +250,17 @@
       </div>
     </div>
 
-    <EntryForm bind:entryData={entryData.parent[i]} />
+    {#if parentDepth >= MAX_PARENT_DEPTH}
+      <p class="text-warning text-sm">
+        Parent nesting is too deep to edit further here ({MAX_PARENT_DEPTH} levels
+        max).
+      </p>
+    {:else}
+      <EntryForm
+        bind:entryData={entryData.parent[i]}
+        parentDepth={parentDepth + 1}
+      />
+    {/if}
   {/each}
 
   <button

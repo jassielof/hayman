@@ -1,14 +1,36 @@
 import type { Hayagriva, TopLevelEntry } from '$lib/types/hayagriva';
+import {
+  assertHayagrivaStructure,
+  HayagrivaStructureError
+} from '$lib/validators/structure';
 import YAML from 'yaml';
+
+export { HayagrivaStructureError };
 
 /**
  * Service for managing Hayagriva YAML files.
  */
 export class HayagrivaService {
-  import(content: string) {
-    const data = YAML.parse(content, {
-      schema: 'core'
-    });
+  import(content: string): Hayagriva {
+    let data: unknown;
+
+    try {
+      data = YAML.parse(content, { schema: 'core' });
+    } catch {
+      throw new HayagrivaStructureError('Invalid YAML syntax.');
+    }
+
+    if (data === null || data === undefined) {
+      throw new HayagrivaStructureError('YAML parsed to empty content.');
+    }
+
+    if (typeof data !== 'object' || Array.isArray(data)) {
+      throw new HayagrivaStructureError(
+        'Expected a YAML mapping of citation keys to entries.'
+      );
+    }
+
+    assertHayagrivaStructure(data);
 
     return data as Hayagriva;
   }

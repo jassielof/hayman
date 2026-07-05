@@ -2,12 +2,18 @@
   import { dateFormatter } from '$lib/formatters/date-formatter';
   import { getLanguageFlag } from '$lib/formatters/language';
   import type { BibliographyEntry } from '$lib/types/hayagriva';
+  import { MAX_PARENT_DEPTH } from '$lib/validators/structure';
   import Self from './PreviewEntry.svelte';
 
   let {
     entry,
-    baseHeadingLevel = 1
-  }: { entry: BibliographyEntry; baseHeadingLevel?: number } = $props();
+    baseHeadingLevel = 1,
+    parentDepth = 0
+  }: {
+    entry: BibliographyEntry;
+    baseHeadingLevel?: number;
+    parentDepth?: number;
+  } = $props();
 
   const clamp = (n: number) => Math.min(6, Math.max(1, n));
   const titleLevel = $derived(clamp(baseHeadingLevel));
@@ -347,12 +353,26 @@
         {Array.isArray(entry.parent) ? 'Parent Entries' : 'Parent Entry'}
       </svelte:element>
 
-      {#if Array.isArray(entry.parent)}
+      {#if parentDepth >= MAX_PARENT_DEPTH}
+        <p>
+          <em
+            >Parent nesting too deep to display ({MAX_PARENT_DEPTH} levels max).</em
+          >
+        </p>
+      {:else if Array.isArray(entry.parent)}
         {#each entry.parent as p, i (i)}
-          <Self entry={p} baseHeadingLevel={baseHeadingLevel + 1} />
+          <Self
+            entry={p}
+            baseHeadingLevel={baseHeadingLevel + 1}
+            parentDepth={parentDepth + 1}
+          />
         {/each}
       {:else}
-        <Self entry={entry.parent} baseHeadingLevel={baseHeadingLevel + 1} />
+        <Self
+          entry={entry.parent}
+          baseHeadingLevel={baseHeadingLevel + 1}
+          parentDepth={parentDepth + 1}
+        />
       {/if}
     </section>
   {/if}

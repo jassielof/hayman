@@ -3,9 +3,11 @@
   import { resolve } from '$app/paths';
   import BibliographyMetadataForm from '$lib/components/BibliographyMetadataForm.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
-  import { hayagrivaService } from '$lib/services/hayagriva.service';
+  import {
+    hayagrivaService,
+    HayagrivaStructureError
+  } from '$lib/services/hayagriva.service';
   import type { Bibliography } from '$lib/types/bibliography';
-  import type { Hayagriva } from '$lib/types/hayagriva';
   import { CircleAlert } from '@lucide/svelte';
 
   let newBibliography: Bibliography = $state({
@@ -31,10 +33,13 @@
         try {
           newBibliography.data = hayagrivaService.import(
             reader.result as string
-          ) as Hayagriva;
+          );
           errorMessage = undefined;
         } catch (error) {
-          errorMessage = 'Failed to parse YAML';
+          errorMessage =
+            error instanceof HayagrivaStructureError
+              ? error.message
+              : 'Failed to parse YAML';
           files = undefined;
           console.error('Error parsing YAML:', error);
         } finally {

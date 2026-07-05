@@ -3,7 +3,10 @@
   import { resolve } from '$app/paths';
   import EntryForm from '$lib/components/EntryForm.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
-  import { hayagrivaService } from '$lib/services/hayagriva.service';
+  import {
+    hayagrivaService,
+    HayagrivaStructureError
+  } from '$lib/services/hayagriva.service';
   import type { TopLevelEntry } from '$lib/types/hayagriva';
   import { ClipboardPaste, Save, X } from '@lucide/svelte';
   import type { PageProps } from './$types';
@@ -36,24 +39,26 @@
       type="button"
       onclick={() => {
         navigator.clipboard.readText().then((text) => {
-          const data = hayagrivaService.import(text);
+          try {
+            const data = hayagrivaService.import(text);
+            const dataLength = Object.keys(data).length;
 
-          if (data === null || data === undefined) {
-            alert('Invalid bibliography.');
-            return;
+            if (dataLength > 1 || dataLength <= 0) {
+              alert(
+                `The bibliography needs to have 1 entry. It has ${dataLength} entries.`
+              );
+              return;
+            }
+
+            newEntryId = Object.keys(data)[0];
+            newEntryData = data[newEntryId];
+          } catch (err) {
+            const message =
+              err instanceof HayagrivaStructureError
+                ? err.message
+                : 'Invalid bibliography.';
+            alert(message);
           }
-
-          const dataLength = Object.keys(data).length;
-
-          if (dataLength > 1 || dataLength <= 0) {
-            alert(
-              `The bibliography needs to have 1 entry. It has ${dataLength} entries.`
-            );
-            return;
-          }
-
-          newEntryId = Object.keys(data)[0];
-          newEntryData = data[newEntryId];
         });
       }}
     >
