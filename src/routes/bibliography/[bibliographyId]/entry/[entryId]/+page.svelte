@@ -40,7 +40,7 @@
           </button>
         </div>
       </div>
-      <!-- TODO: Add a hayagriva rendered preview, powered by the Hayagriva WASM compiled module -->
+      <!-- TODO: Add a hayagriva rendered preview, powered by the Hayagriva WASM compiled module, it should ideally render the entry in 2 forms, the way it'll be cited, and the way it'll be listed in the references, each of these should be configurable to the user's preference, to the style they'll use, say IEEE, APA, ACM, etc. -->
     </div>
   </div>
 </main>

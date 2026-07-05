@@ -1,12 +1,11 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
+  import { formatAuthor } from '$lib/formatters/author';
+  import { formatEntryDateShort } from '$lib/formatters/date-formatter';
   import { formatEntryType } from '$lib/formatters/entry-type-formatter';
+  import { formatFormattableString } from '$lib/formatters/formattable-string';
   import { BibliographyService } from '$lib/services/bibliography.service';
-  import type {
-    BibliographyEntry,
-    FormattableString,
-    Hayagriva
-  } from '$lib/types/hayagriva';
+  import type { Hayagriva } from '$lib/types/hayagriva';
   import {
     Calendar,
     Ellipsis,
@@ -24,41 +23,6 @@
     entries: Hayagriva;
     bibliographyId: string;
   } = $props();
-
-  function formatTitle(title: FormattableString | undefined | null): string {
-    if (!title) return '';
-
-    if (typeof title === 'string') {
-      return title;
-    }
-
-    return title.short || title.value || '';
-  }
-
-  function formatAuthor(author: BibliographyEntry['author']): string {
-    if (!author) return '';
-    if (typeof author === 'string') return author;
-    if (Array.isArray(author)) {
-      return author.map((a) => (typeof a === 'string' ? a : a.name)).join('; ');
-    }
-    return author.name || '';
-  }
-
-  function formatEntryDate(date: BibliographyEntry['date']): string {
-    if (!date) {
-      return '';
-    }
-
-    if (typeof date === 'number') {
-      return date.toString();
-    }
-
-    if (typeof date === 'string') {
-      return date.split('T')[0];
-    }
-
-    return '';
-  }
 </script>
 
 <div class="card mt-4 shadow-md">
@@ -83,7 +47,7 @@
             </span>
             <br />
             <span class="text-lg font-semibold">
-              {formatTitle(entry.title)}
+              {formatFormattableString(entry.title)}
             </span>
             {#if entry.author}
               <br />
@@ -96,7 +60,7 @@
               <br />
               <span class="text-xs">
                 <Calendar class="inline size-[1.2em]" />
-                {formatEntryDate(entry.date)}
+                {formatEntryDateShort(entry.date)}
               </span>
             {/if}
           </div>

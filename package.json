@@ -48,11 +48,12 @@
   },
   "dependencies": {
     "@lucide/svelte": "^1.23.0",
-    "ajv": "^8.20.0",
+    "bits-ui": "^2.18.1",
     "dexie": "^4.4.4",
     "dexie-svelte-query": "^1.0.0",
     "highlight.js": "^11.11.1",
     "mode-watcher": "^1.1.0",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.0",
+    "zod": "^4.0.0"
   }
 }

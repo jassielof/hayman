@@ -7,12 +7,14 @@
   }: {
     value: Language | undefined;
   } = $props();
+
+  const uid = $props.id();
 </script>
 
-<label class="label" for="entry-language"> Language </label>
+<label class="label" for="{uid}-entry-language"> Language </label>
 <input
   type="text"
-  id="entry-language"
+  id="{uid}-entry-language"
   placeholder="en-US"
   class="validator input w-full"
   title="Language must match the Unicode Language Identifier format."

@@ -12,6 +12,8 @@
     placeholder?: string;
   } = $props();
 
+  const uid = $props.id();
+
   $effect(() => {
     if (typeof value === 'string' && /^-?\d+$/.test(value)) {
       value = parseInt(value);
@@ -19,12 +21,12 @@
   });
 </script>
 
-<label class="label" for="entry-date">{label}</label>
+<label class="label" for="{uid}-entry-date">{label}</label>
 <input
   pattern={DATE_REGEX.source}
   title="Date must match the format: YYYY, YYYY-MM, or YYYY-MM-DD."
   bind:value
-  id="entry-date"
+  id="{uid}-entry-date"
   type="text"
   class="validator input w-full"
   {placeholder}

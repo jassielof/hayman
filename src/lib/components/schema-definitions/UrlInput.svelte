@@ -12,6 +12,8 @@
     placeholder?: string;
   } = $props();
 
+  const uid = $props.id();
+
   let urlValue = $derived.by(() => {
     if (typeof value === 'string') return value;
     if (typeof value === 'object') return value.value;
@@ -36,10 +38,10 @@
 >
   <legend class="fieldset-legend"> {label} </legend>
 
-  <label class="label" for="entry-url">{label}</label>
+  <label class="label" for="{uid}-entry-url">{label}</label>
   <input
     bind:value={urlValue}
-    id="entry-url"
+    id="{uid}-entry-url"
     type="url"
     class="validator input w-full"
     {placeholder}

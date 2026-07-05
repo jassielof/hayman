@@ -1,4 +1,4 @@
-import type { EntryTypeName } from '$lib/types/hayagriva';
+import { ENTRY_TYPE_NAMES, type EntryTypeName } from '$lib/types/hayagriva';
 import {
   Book,
   BookOpen,
@@ -58,41 +58,14 @@ export const entryTypeIcons: Record<EntryTypeName, typeof BookOpen> = {
   exhibition: Eye
 };
 
-export const ENTRY_TYPES = [
-  'article',
-  'chapter',
-  'entry',
-  'anthos',
-  'report',
-  'thesis',
-  'web',
-  'scene',
-  'artwork',
-  'patent',
-  'case',
-  'newspaper',
-  'legislation',
-  'manuscript',
-  'original',
-  'post',
-  'misc',
-  'performance',
-  'periodical',
-  'proceedings',
-  'book',
-  'blog',
-  'reference',
-  'conference',
-  'anthology',
-  'repository',
-  'thread',
-  'video',
-  'audio',
-  'exhibition'
-] as const satisfies readonly EntryTypeName[];
+/**
+ * Re-exported for backwards compatibility - prefer importing
+ * `ENTRY_TYPE_NAMES` from `$lib/types/hayagriva` directly in new code.
+ */
+export const ENTRY_TYPES = ENTRY_TYPE_NAMES;
 
 function isEntryTypeName(value: string): value is EntryTypeName {
-  return (ENTRY_TYPES as readonly string[]).includes(value);
+  return (ENTRY_TYPE_NAMES as readonly string[]).includes(value);
 }
 
 export function formatEntryType(type: string): {

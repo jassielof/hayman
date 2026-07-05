@@ -1,13 +1,7 @@
-import { hayagrivaService } from '$lib/services/hayagriva.service';
+import { ROLE_TYPES } from '$lib/types/hayagriva';
 
-type AffiliatedRoleSchema = {
-  definitions: {
-    roleType: {
-      enum: string[];
-    };
-  };
-};
-
-const schema = (await hayagrivaService.getSchema()) as AffiliatedRoleSchema;
-
-export const AFFILIATED_ROLES: string[] = schema.definitions.roleType.enum;
+/**
+ * Re-exported for backwards compatibility - prefer importing `ROLE_TYPES`
+ * from `$lib/types/hayagriva` directly in new code.
+ */
+export const AFFILIATED_ROLES = ROLE_TYPES;

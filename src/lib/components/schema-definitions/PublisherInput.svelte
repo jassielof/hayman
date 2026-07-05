@@ -13,6 +13,8 @@
     locationPlaceholder?: string;
   } = $props();
 
+  const uid = $props.id();
+
   let publisherName = $state('');
   let publisherLocation: undefined | string = $state(undefined);
 
@@ -47,20 +49,21 @@
   class="fieldset rounded-box border border-base-300 bg-base-100/50 p-4"
 >
   <legend class="fieldset-legend"> {label} </legend>
-  <label for="publisher-entry" class="label">{label}</label>
+  <label for="{uid}-publisher-name" class="label">{label}</label>
   <input
     type="text"
-    id="publisher-entry"
+    id="{uid}-publisher-name"
     class="validator input w-full"
     bind:value={publisherName}
     {placeholder}
     required={publisherLocation ? true : false}
   />
 
-  <label for="publisher-entry" class="label">Location of {label}</label>
+  <label for="{uid}-publisher-location" class="label">Location of {label}</label
+  >
   <input
     type="text"
-    id="publisher-entry"
+    id="{uid}-publisher-location"
     class="input w-full"
     bind:value={publisherLocation}
     placeholder={locationPlaceholder}

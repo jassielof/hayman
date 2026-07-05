@@ -1,6 +1,6 @@
-export const LANGUAGE_REGEX = new RegExp(
-  /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$/
-);
+import { LANGUAGE_REGEX } from '$lib/types/hayagriva';
+
+export { LANGUAGE_REGEX };
 
 export function getLanguageFlag(languageCode: string): string {
   // Match the region code (2 uppercase letters at the end): en-US, es-MX, etc.

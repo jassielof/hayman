@@ -5,8 +5,6 @@ import YAML from 'yaml';
  * Service for managing Hayagriva YAML files.
  */
 export class HayagrivaService {
-  private schemaCache: unknown = null;
-
   import(content: string) {
     const data = YAML.parse(content, {
       schema: 'core'
@@ -34,7 +32,7 @@ export class HayagrivaService {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = options.filename!;
+      a.download = options.filename ?? 'bibliography.yaml';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -43,23 +41,6 @@ export class HayagrivaService {
     }
 
     return data;
-  }
-
-  async getSchema() {
-    if (this.schemaCache) {
-      return this.schemaCache;
-    }
-
-    const response = await fetch(
-      'https://jassielof.github.io/json-schemas/docs/hayagriva.schema.json'
-    );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch schema: ${response.statusText}`);
-    }
-
-    this.schemaCache = await response.json();
-    return this.schemaCache;
   }
 }
 

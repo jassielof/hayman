@@ -14,6 +14,8 @@
     multiline?: boolean;
   } = $props();
 
+  const uid = $props.id();
+
   let mainValue = $derived.by(() => {
     if (typeof value === 'object' && value) return value.value;
     if (typeof value === 'string') return value;
@@ -48,17 +50,16 @@
   <legend class="fieldset-legend">{label}</legend>
 
   {#if multiline}
-    <label class="label" for="textarea-entry-{label}">{label}</label>
+    <label class="label" for="{uid}-textarea-entry">{label}</label>
     <textarea
-      id="textarea-entry-{label}"
+      id="{uid}-textarea-entry"
       class="textarea w-full"
       {placeholder}
-      bind:value={mainValue}
-    ></textarea>
+      bind:value={mainValue}></textarea>
   {:else}
-    <label for="main-value-{label}" class="label">{label}</label>
+    <label for="{uid}-main-value" class="label">{label}</label>
     <input
-      id="main-value-{label}"
+      id="{uid}-main-value"
       type="text"
       class="input w-full"
       {placeholder}
@@ -66,9 +67,9 @@
     />
   {/if}
 
-  <label for="short-form-{label}" class="label">Short form of {label}</label>
+  <label for="{uid}-short-form" class="label">Short form of {label}</label>
   <input
-    id="short-form-{label}"
+    id="{uid}-short-form"
     type="text"
     placeholder={shortPlaceholder}
     class="input w-full"

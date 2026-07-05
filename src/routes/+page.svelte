@@ -18,7 +18,7 @@
   const bibliographyQueryLoading = $derived(bibliographyQuery.isLoading);
   const bibliographies = $derived(bibliographyQuery.current);
 
-  function formatDate(date: Date) {
+  function formatDate(date: string) {
     return new Intl.DateTimeFormat(undefined, {
       year: 'numeric',
       month: 'long',

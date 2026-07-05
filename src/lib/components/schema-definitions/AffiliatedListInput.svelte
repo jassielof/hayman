@@ -6,6 +6,8 @@
 
   let { value = $bindable() }: { value?: AffiliatedPeople } = $props();
 
+  const uid = $props.id();
+
   function addAffiliated() {
     const newAffiliated = { role: 'translator' as const, names: '' };
     if (value) {
@@ -43,9 +45,9 @@
             </button>
           </div>
 
-          <label for={`role-${i}`} class="label">Role</label>
+          <label for={`${uid}-role-${i}`} class="label">Role</label>
           <select
-            id={`role-${i}`}
+            id={`${uid}-role-${i}`}
             class="select w-full"
             bind:value={affiliation.role}
           >

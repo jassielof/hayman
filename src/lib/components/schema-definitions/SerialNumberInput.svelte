@@ -13,6 +13,8 @@
     value: BibliographyEntry['serial-number'];
   } = $props();
 
+  const uid = $props.id();
+
   const KNOWN_KEYS = [
     'serial',
     'doi',
@@ -153,9 +155,9 @@
 
   <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
     <div>
-      <label for="serial-number-serial" class="label pb-1">Serial</label>
+      <label for="{uid}-serial-number-serial" class="label pb-1">Serial</label>
       <input
-        id="serial-number-serial"
+        id="{uid}-serial-number-serial"
         type="text"
         placeholder="SN12345"
         class="input input-sm w-full"
@@ -163,9 +165,9 @@
       />
     </div>
     <div>
-      <label for="serial-number-doi" class="label pb-1">DOI</label>
+      <label for="{uid}-serial-number-doi" class="label pb-1">DOI</label>
       <input
-        id="serial-number-doi"
+        id="{uid}-serial-number-doi"
         type="text"
         placeholder="10.1103/PhysRevB.102.165126"
         class="input input-sm w-full"
@@ -173,9 +175,9 @@
       />
     </div>
     <div>
-      <label for="serial-number-isbn" class="label pb-1">ISBN</label>
+      <label for="{uid}-serial-number-isbn" class="label pb-1">ISBN</label>
       <input
-        id="serial-number-isbn"
+        id="{uid}-serial-number-isbn"
         type="text"
         placeholder="978-3-16-148410-0"
         class="input input-sm w-full"
@@ -183,9 +185,9 @@
       />
     </div>
     <div>
-      <label for="serial-number-issn" class="label pb-1">ISSN</label>
+      <label for="{uid}-serial-number-issn" class="label pb-1">ISSN</label>
       <input
-        id="serial-number-issn"
+        id="{uid}-serial-number-issn"
         type="text"
         placeholder="2049-3630"
         class="input input-sm w-full"
@@ -193,9 +195,9 @@
       />
     </div>
     <div>
-      <label for="serial-number-pmid" class="label pb-1">PMID</label>
+      <label for="{uid}-serial-number-pmid" class="label pb-1">PMID</label>
       <input
-        id="serial-number-pmid"
+        id="{uid}-serial-number-pmid"
         type="text"
         placeholder="17284678"
         class="input input-sm w-full"
@@ -203,9 +205,9 @@
       />
     </div>
     <div>
-      <label for="serial-number-pmcid" class="label pb-1">PMCID</label>
+      <label for="{uid}-serial-number-pmcid" class="label pb-1">PMCID</label>
       <input
-        id="serial-number-pmcid"
+        id="{uid}-serial-number-pmcid"
         type="text"
         placeholder="PMC1790863"
         class="input input-sm w-full"
@@ -213,9 +215,9 @@
       />
     </div>
     <div class="md:col-span-2">
-      <label for="serial-number-arxiv" class="label pb-1">ArXiv</label>
+      <label for="{uid}-serial-number-arxiv" class="label pb-1">ArXiv</label>
       <input
-        id="serial-number-arxiv"
+        id="{uid}-serial-number-arxiv"
         type="text"
         placeholder="2003.13722"
         class="input input-sm w-full"
@@ -229,9 +231,9 @@
   {#each customSerials as serialItem, i (i)}
     <div class="flex items-end gap-2">
       <div class="flex-1">
-        <label for="custom-serial-key-{i}" class="label pb-1">Key</label>
+        <label for="{uid}-custom-serial-key-{i}" class="label pb-1">Key</label>
         <input
-          id="custom-serial-key-{i}"
+          id="{uid}-custom-serial-key-{i}"
           type="text"
           placeholder="zbl"
           class="input input-sm w-full"
@@ -239,9 +241,11 @@
         />
       </div>
       <div class="flex-1">
-        <label for="custom-serial-value-{i}" class="label pb-1">Value</label>
+        <label for="{uid}-custom-serial-value-{i}" class="label pb-1"
+          >Value</label
+        >
         <input
-          id="custom-serial-value-{i}"
+          id="{uid}-custom-serial-value-{i}"
           type="text"
           placeholder="0634.60011"
           class="input input-sm w-full"

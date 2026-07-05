@@ -10,13 +10,15 @@
     naturalSet?: boolean;
     placeholder: string;
   } = $props();
+
+  const uid = $props.id();
 </script>
 
-<label for="integer-input-{label}" class="label">{label}</label>
+<label for="{uid}-integer-input" class="label">{label}</label>
 <input
   type="number"
   min={naturalSet ? '0' : undefined}
-  id="integer-input-{label}"
+  id="{uid}-integer-input"
   class="input w-full"
   bind:value
   {placeholder}

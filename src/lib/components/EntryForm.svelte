@@ -18,6 +18,8 @@
 
   let { entryData = $bindable() }: { entryData: BibliographyEntry } = $props();
 
+  const uid = $props.id();
+
   let parentType: 'none' | 'single' | 'list' = $state('none');
 
   $effect(() => {
@@ -183,9 +185,9 @@
 
 <div class="divider"></div>
 
-<label for="parent-type" class="label">Parent Type</label>
+<label for="{uid}-parent-type" class="label">Parent Type</label>
 <select
-  id="parent-type"
+  id="{uid}-parent-type"
   class="select w-full"
   value={parentType}
   onchange={handleParentTypeChange}

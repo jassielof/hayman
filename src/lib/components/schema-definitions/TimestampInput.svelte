@@ -7,6 +7,8 @@
     label?: string;
   } = $props();
 
+  const uid = $props.id();
+
   // Use $state for reactive individual fields
   let day = $state<string>('');
   let hour = $state<string>('');
@@ -134,12 +136,17 @@
 </script>
 
 {#if label}
-  <label for={label} class="label">
+  <label id="{uid}-timestamp-label" class="label" for="{uid}-timestamp-minute">
     {label}
   </label>
 {/if}
-<div class="join w-full">
+<div
+  class="join w-full"
+  role="group"
+  aria-labelledby={label ? `${uid}-timestamp-label` : undefined}
+>
   <input
+    id="{uid}-timestamp-day"
     type="number"
     min="0"
     placeholder="DD"
@@ -148,6 +155,7 @@
     oninput={handleDayInput}
   />
   <input
+    id="{uid}-timestamp-hour"
     type="number"
     min="0"
     max={day ? 23 : undefined}
@@ -158,6 +166,7 @@
     oninput={handleHourInput}
   />
   <input
+    id="{uid}-timestamp-minute"
     type="number"
     min="0"
     max={hour ? 59 : undefined}
@@ -168,6 +177,7 @@
     oninput={handleMinuteInput}
   />
   <input
+    id="{uid}-timestamp-second"
     type="number"
     min="0"
     max={minute ? 59 : undefined}
@@ -178,6 +188,7 @@
     oninput={handleSecondInput}
   />
   <input
+    id="{uid}-timestamp-ms"
     type="number"
     min="0"
     placeholder="ms"

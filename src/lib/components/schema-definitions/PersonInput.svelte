@@ -6,6 +6,8 @@
   let { value = $bindable(), remove }: { value: Person; remove: () => void } =
     $props();
 
+  const uid = $props.id();
+
   let isDetailed = $state(false);
 
   // State for all form fields
@@ -79,9 +81,9 @@
   </legend>
 
   {#if !isDetailed}
-    <label class="label" for="full-name"> Full Name </label>
+    <label class="label" for="{uid}-full-name"> Full Name </label>
     <input
-      id="full-name"
+      id="{uid}-full-name"
       type="text"
       class="input w-full"
       placeholder="Rowling, J. K."
@@ -91,9 +93,9 @@
   {:else}
     <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
       <div>
-        <label for="prefix" class="label pb-2">Prefix</label>
+        <label for="{uid}-prefix" class="label pb-2">Prefix</label>
         <input
-          id="prefix"
+          id="{uid}-prefix"
           type="text"
           placeholder="Dr."
           class="input w-full"
@@ -102,9 +104,9 @@
         />
       </div>
       <div>
-        <label for="suffix" class="label pb-2">Suffix</label>
+        <label for="{uid}-suffix" class="label pb-2">Suffix</label>
         <input
-          id="suffix"
+          id="{uid}-suffix"
           type="text"
           placeholder="Jr."
           class="input w-full"
@@ -113,9 +115,9 @@
         />
       </div>
       <div>
-        <label for="given-name" class="label pb-2">Given Name</label>
+        <label for="{uid}-given-name" class="label pb-2">Given Name</label>
         <input
-          id="given-name"
+          id="{uid}-given-name"
           type="text"
           placeholder="Jane"
           class="input w-full"
@@ -124,9 +126,9 @@
         />
       </div>
       <div>
-        <label for="name" class="label pb-2">Family Name</label>
+        <label for="{uid}-name" class="label pb-2">Family Name</label>
         <input
-          id="name"
+          id="{uid}-name"
           type="text"
           required
           placeholder="Doe"
@@ -136,9 +138,9 @@
         />
       </div>
       <div class="md:col-span-2">
-        <label for="alias" class="label pb-2">Alias</label>
+        <label for="{uid}-alias" class="label pb-2">Alias</label>
         <input
-          id="alias"
+          id="{uid}-alias"
           type="text"
           placeholder="bell hooks"
           class="input w-full"

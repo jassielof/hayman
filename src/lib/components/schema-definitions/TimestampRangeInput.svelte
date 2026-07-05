@@ -10,6 +10,8 @@
     label?: string;
   } = $props();
 
+  const uid = $props.id();
+
   let start: string | undefined = $state();
   let end: string | undefined = $state();
 
@@ -76,11 +78,15 @@
 
 <div class="form-control w-full">
   {#if label}
-    <label for={label} class="label">
+    <span id="{uid}-timestamp-range-label" class="label">
       <span class="label-text">{label}</span>
-    </label>
+    </span>
   {/if}
-  <div class="flex items-center gap-2">
+  <div
+    class="flex items-center gap-2"
+    role="group"
+    aria-labelledby={label ? `${uid}-timestamp-range-label` : undefined}
+  >
     <div class="flex-1">
       <TimestampInput bind:value={start} />
     </div>

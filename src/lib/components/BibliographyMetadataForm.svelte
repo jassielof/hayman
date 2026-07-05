@@ -42,5 +42,4 @@
   bind:value={bibliographyMetadata.description}
   onblur={() =>
     (bibliographyMetadata.description =
-      bibliographyMetadata.description?.trim())}
-></textarea>
+      bibliographyMetadata.description?.trim())}></textarea>

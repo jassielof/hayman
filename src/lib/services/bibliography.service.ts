@@ -1,61 +1,40 @@
 import { db } from '$lib/db';
 import type { Bibliography } from '$lib/types/bibliography';
-import type { Hayagriva, TopLevelEntry } from '$lib/types/hayagriva';
+import {
+  hayagrivaBibliographySchema,
+  topLevelEntrySchema,
+  type Hayagriva,
+  type TopLevelEntry
+} from '$lib/types/hayagriva';
 import { error } from '@sveltejs/kit';
-import Ajv, { type ErrorObject, type ValidateFunction } from 'ajv';
-import { hayagrivaService } from './hayagriva.service';
+import type { z } from 'zod';
 
-// AJV instance with strict mode disabled for more lenient validation
-const ajv = new Ajv({ allErrors: true, strict: false });
-
-// Cached validators
-let hayagrivaValidator: ValidateFunction | null = null;
-let entryValidator: ValidateFunction | null = null;
+/**
+ * A single validation issue, with a dotted path to the offending field
+ * (e.g. `"harry.author.0.name"`) so the UI can point users at what to fix.
+ */
+export interface ValidationIssue {
+  path: string;
+  message: string;
+}
 
 /**
  * Result of a validation operation.
  */
 export interface ValidationResult {
   valid: boolean;
-  errors: ErrorObject[] | null;
+  errors: ValidationIssue[] | null;
 }
 
-/**
- * Gets or creates the Hayagriva schema validator.
- * Caches the compiled validator for performance.
- */
-async function getHayagrivaValidator(): Promise<ValidateFunction> {
-  if (hayagrivaValidator) {
-    return hayagrivaValidator;
-  }
-
-  const schema = await hayagrivaService.getSchema();
-  hayagrivaValidator = ajv.compile(schema as object);
-  return hayagrivaValidator;
+function toValidationIssues(error: z.ZodError): ValidationIssue[] {
+  return error.issues.map((issue) => ({
+    path: issue.path.join('.') || '(root)',
+    message: issue.message
+  }));
 }
 
-/**
- * Gets or creates the entry validator using the topLevelEntry definition.
- * Caches the compiled validator for performance.
- */
-async function getEntryValidator(): Promise<ValidateFunction> {
-  if (entryValidator) {
-    return entryValidator;
-  }
-
-  const schema = (await hayagrivaService.getSchema()) as {
-    definitions?: Record<string, unknown>;
-    $defs?: Record<string, unknown>;
-  };
-
-  // Create a schema that validates a single entry using the topLevelEntry definition
-  const entrySchema = {
-    $ref: '#/definitions/topLevelEntry',
-    definitions: schema.definitions || schema.$defs
-  };
-
-  entryValidator = ajv.compile(entrySchema);
-  return entryValidator;
+function formatIssues(issues: ValidationIssue[] | null): string {
+  return (issues ?? []).map((e) => `${e.path}: ${e.message}`).join('; ');
 }
 
 /**
@@ -91,11 +70,10 @@ export class BibliographyService {
    * @returns A validation result with errors if invalid.
    */
   static async validateHayagriva(data: Hayagriva): Promise<ValidationResult> {
-    const validate = await getHayagrivaValidator();
-    const valid = validate(data);
+    const result = hayagrivaBibliographySchema.safeParse(data);
     return {
-      valid,
-      errors: valid ? null : (validate.errors ?? null)
+      valid: result.success,
+      errors: result.success ? null : toValidationIssues(result.error)
     };
   }
 
@@ -105,11 +83,10 @@ export class BibliographyService {
    * @returns A validation result with errors if invalid.
    */
   static async validateEntry(entry: TopLevelEntry): Promise<ValidationResult> {
-    const validate = await getEntryValidator();
-    const valid = validate(entry);
+    const result = topLevelEntrySchema.safeParse(entry);
     return {
-      valid,
-      errors: valid ? null : (validate.errors ?? null)
+      valid: result.success,
+      errors: result.success ? null : toValidationIssues(result.error)
     };
   }
 
@@ -126,11 +103,12 @@ export class BibliographyService {
       if (!validation.valid) {
         console.error('Invalid bibliography data:', validation.errors);
         throw new Error(
-          `Invalid bibliography: ${validation.errors?.map((e) => e.message).join(', ')}`
+          `Invalid bibliography: ${formatIssues(validation.errors)}`
         );
       }
     }
 
+    bibliography.metadata.updatedAt = new Date().toISOString();
     await db.bibliographies.add(JSON.parse(JSON.stringify(bibliography)));
   }
 
@@ -190,11 +168,12 @@ export class BibliographyService {
       if (!validation.valid) {
         console.error('Invalid bibliography data:', validation.errors);
         throw new Error(
-          `Invalid bibliography: ${validation.errors?.map((e) => e.message).join(', ')}`
+          `Invalid bibliography: ${formatIssues(validation.errors)}`
         );
       }
     }
 
+    bibliography.metadata.updatedAt = new Date().toISOString();
     await db.bibliographies.put(JSON.parse(JSON.stringify(bibliography)));
   }
 
@@ -217,9 +196,7 @@ export class BibliographyService {
       const validation = await this.validateEntry(newEntryData);
       if (!validation.valid) {
         console.error('Invalid entry data:', validation.errors);
-        throw new Error(
-          `Invalid entry: ${validation.errors?.map((e) => e.message).join(', ')}`
-        );
+        throw new Error(`Invalid entry: ${formatIssues(validation.errors)}`);
       }
     }
 
@@ -265,30 +242,37 @@ export class BibliographyService {
    * @param updatedEntryData - The updated entry data.
    * @param oldEntryId - The previous unique identifier of the entry (if the ID changed).
    * @param skipValidation - If true, skips schema validation.
-   * @throws {Error} If the bibliography is not found or validation fails.
+   * @throws {Error} If the bibliography is not found, the new ID collides with a
+   *   different existing entry, or validation fails.
    * @returns A promise that resolves when the entry has been updated.
    */
   static async updateEntry(
     bibliographyId: string,
     updatedEntryId: string,
     updatedEntryData: TopLevelEntry,
-    oldEntryId?: string,
+    oldEntryId: string,
     skipValidation = false
   ) {
     if (!skipValidation) {
       const validation = await this.validateEntry(updatedEntryData);
       if (!validation.valid) {
         console.error('Invalid entry data:', validation.errors);
-        throw new Error(
-          `Invalid entry: ${validation.errors?.map((e) => e.message).join(', ')}`
-        );
+        throw new Error(`Invalid entry: ${formatIssues(validation.errors)}`);
       }
     }
 
     const bibliography = await this.get(bibliographyId);
     if (!bibliography) throw new Error('Bibliography not found');
-    if (!bibliography.data[updatedEntryId]) {
-      delete bibliography.data[oldEntryId!];
+
+    const isRename = updatedEntryId !== oldEntryId;
+    if (isRename && bibliography.data[updatedEntryId]) {
+      throw new Error(
+        `Entry "${updatedEntryId}" already exists in this bibliography`
+      );
+    }
+
+    if (isRename) {
+      delete bibliography.data[oldEntryId];
     }
 
     bibliography.data[updatedEntryId] = updatedEntryData;
