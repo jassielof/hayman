@@ -1,6 +1,7 @@
 @import '@ibm/plex-sans/css/ibm-plex-sans-all';
 @import '@ibm/plex-mono/css/ibm-plex-mono-all';
 @import '@ibm/plex-serif/css/ibm-plex-serif-all';
+
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
