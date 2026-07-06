@@ -35,5 +35,14 @@ jobs:
       - name: Test
         run: bun run test
 
-      - name: Build
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+
+      - name: Build (preview)
+        run: bun run build
+
+      - name: Capture PWA screenshots
+        run: bun run screenshots
+
+      - name: Build (with screenshots)
         run: bun run build

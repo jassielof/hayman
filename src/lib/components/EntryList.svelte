@@ -87,21 +87,15 @@
   );
 
   function toggleSelect(id: string) {
-    const next = new SvelteSet(selected);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    selected = next;
+    if (selected.has(id)) selected.delete(id);
+    else selected.add(id);
   }
 
   function toggleSelectAll() {
     if (allVisibleSelected) {
-      const next = new SvelteSet(selected);
-      for (const [id] of filteredEntries) next.delete(id);
-      selected = next;
+      for (const [id] of filteredEntries) selected.delete(id);
     } else {
-      const next = new SvelteSet(selected);
-      for (const [id] of filteredEntries) next.add(id);
-      selected = next;
+      for (const [id] of filteredEntries) selected.add(id);
     }
   }
 
@@ -117,7 +111,6 @@
     await BibliographyService.deleteEntry(bibliographyId, pendingDeleteId);
     delete entries[pendingDeleteId];
     selected.delete(pendingDeleteId);
-    selected = new SvelteSet(selected);
     pendingDeleteId = null;
   }
 
@@ -126,7 +119,7 @@
       await BibliographyService.deleteEntry(bibliographyId, id);
       delete entries[id];
     }
-    selected = new SvelteSet();
+    selected.clear();
   }
 
   async function copySelected() {

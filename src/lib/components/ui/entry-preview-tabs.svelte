@@ -1,25 +1,42 @@
 <script lang="ts">
+  import CitationStyleControls from '$lib/components/CitationStyleControls.svelte';
+  import TypstPreview from '$lib/components/TypstPreview.svelte';
   import PreviewEntry from '$lib/components/views/PreviewEntry.svelte';
-  import type { TopLevelEntry } from '$lib/types/hayagriva';
+  import { SettingsService } from '$lib/services/settings.service';
+  import { renderEntryCitationSvg } from '$lib/services/typst-preview.service';
+  import type { AppSettings } from '$lib/types/app-settings';
+  import type { Hayagriva, TopLevelEntry } from '$lib/types/hayagriva';
+  import { resolveCitationStyle } from '$lib/utils/citation-style';
   import { cn } from '$lib/utils/cn';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
   import 'highlight.js/styles/github-dark.css';
-  import { Clipboard, Code, Eye } from '@lucide/svelte';
+  import { BookOpen, Clipboard, Code, Eye } from '@lucide/svelte';
 
   hljs.registerLanguage('yaml', yaml);
 
   let {
     entry,
+    entryId,
+    bibliographyData,
     entryYamlData
   }: {
     entry: TopLevelEntry;
+    entryId: string;
+    bibliographyData: Hayagriva;
     entryYamlData: string[];
   } = $props();
 
   let tab = $state('preview');
   let copied = $state(false);
+  let settings = $state<AppSettings | null>(null);
+  let styleInput = $state('ieee');
+  let useDefaultStyle = $state(true);
+  let citationSvg = $state<string | undefined>();
+  let citationLoading = $state(false);
+  let citationError = $state<string | undefined>();
+  let citationAutoRendered = $state(false);
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
@@ -31,6 +48,49 @@
     copied = true;
     setTimeout(() => (copied = false), 2000);
   }
+
+  async function renderCitation() {
+    citationLoading = true;
+    citationError = undefined;
+    try {
+      const loaded = settings ?? (await SettingsService.get());
+      settings = loaded;
+      const resolved = resolveCitationStyle(
+        useDefaultStyle ? loaded.citation.defaultStyle : styleInput,
+        loaded
+      );
+      citationSvg = await renderEntryCitationSvg(
+        bibliographyData,
+        entryId,
+        resolved.typstStyle,
+        resolved.label,
+        loaded.fonts.sans,
+        resolved.useCustomCsl ? loaded.citation.customCslBytes : undefined
+      );
+    } catch (err) {
+      citationError =
+        err instanceof Error
+          ? err.message
+          : 'Failed to render citation preview.';
+      citationSvg = undefined;
+    } finally {
+      citationLoading = false;
+    }
+  }
+
+  $effect(() => {
+    if (tab !== 'citation') {
+      citationAutoRendered = false;
+      return;
+    }
+
+    if (citationAutoRendered || citationLoading || citationSvg) {
+      return;
+    }
+
+    citationAutoRendered = true;
+    queueMicrotask(() => renderCitation());
+  });
 </script>
 
 <Tabs.Root bind:value={tab} class="w-full">
@@ -56,6 +116,16 @@
     >
       <Code class="size-4" />
       Code preview
+    </Tabs.Trigger>
+    <Tabs.Trigger
+      value="citation"
+      class={cn(
+        'inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
+        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+      )}
+    >
+      <BookOpen class="size-4" />
+      Citation preview
     </Tabs.Trigger>
   </Tabs.List>
 
@@ -91,5 +161,19 @@
         </span>
       {/if}
     </div>
+  </Tabs.Content>
+
+  <Tabs.Content value="citation" class="mt-4 space-y-4">
+    <CitationStyleControls
+      bind:settings
+      bind:styleInput
+      bind:useDefaultStyle
+      onRender={renderCitation}
+    />
+    <TypstPreview
+      svg={citationSvg}
+      loading={citationLoading}
+      error={citationError}
+    />
   </Tabs.Content>
 </Tabs.Root>

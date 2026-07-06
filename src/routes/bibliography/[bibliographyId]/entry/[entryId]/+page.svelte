@@ -32,5 +32,10 @@
     </a>
   </div>
 
-  <EntryPreviewTabs entry={data.entry} entryYamlData={data.entryYamlData} />
+  <EntryPreviewTabs
+    entry={data.entry}
+    entryId={params.entryId}
+    bibliographyData={data.bibliographyData}
+    entryYamlData={data.entryYamlData}
+  />
 </main>

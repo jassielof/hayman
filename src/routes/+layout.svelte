@@ -1,7 +1,8 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
+  import SettingsBootstrap from '$lib/components/SettingsBootstrap.svelte';
   import { ModeWatcher, toggleMode } from 'mode-watcher';
-  import { Moon, Sun } from '@lucide/svelte';
+  import { Moon, Settings, Sun } from '@lucide/svelte';
   import './layout.css';
 
   let { children } = $props();
@@ -12,10 +13,18 @@
 </svelte:head>
 
 <ModeWatcher />
+<SettingsBootstrap />
 
 <header class="navbar">
   <a href={resolve('/')} class="btn text-xl btn-ghost">Hayagriva Manager</a>
-  <div class="ml-auto">
+  <div class="ml-auto flex items-center gap-1">
+    <a
+      href={resolve('/settings')}
+      class="btn btn-ghost btn-square"
+      aria-label="Settings"
+    >
+      <Settings class="size-5" />
+    </a>
     <button
       type="button"
       class="btn btn-ghost btn-square"

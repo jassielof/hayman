@@ -26,7 +26,8 @@ export const load: PageLoad = async ({ params }) => {
 
     return {
       entry,
-      entryYamlData
+      entryYamlData,
+      bibliographyData: bibliography.data
     };
   } catch (err) {
     console.error('Error loading entry:', error);

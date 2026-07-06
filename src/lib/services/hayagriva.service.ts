@@ -7,6 +7,12 @@ import YAML from 'yaml';
 
 export { HayagrivaStructureError };
 
+export function toYaml(content: Hayagriva | TopLevelEntry): string {
+  return YAML.stringify(content, {
+    schema: 'core'
+  });
+}
+
 /**
  * Service for managing Hayagriva YAML files.
  */
@@ -43,9 +49,7 @@ export class HayagrivaService {
       filename?: string;
     } = {}
   ) {
-    const data = YAML.stringify(content, {
-      schema: 'core'
-    });
+    const data = toYaml(content);
 
     if (options.toClipboard) return navigator.clipboard.writeText(data);
 

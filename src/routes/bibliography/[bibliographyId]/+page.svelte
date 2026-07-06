@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
+  import BibliographyTypstPreview from '$lib/components/BibliographyTypstPreview.svelte';
   import EntryList from '$lib/components/EntryList.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { BookPlus } from '@lucide/svelte';
@@ -66,5 +67,7 @@
       entries={bibliography.data}
       bibliographyId={bibliography.metadata.id}
     />
+
+    <BibliographyTypstPreview bibliographyData={bibliography.data} />
   {/if}
 </main>

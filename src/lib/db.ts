@@ -1,4 +1,5 @@
 import type { Bibliography } from './types/bibliography';
+import type { AppSettings } from './types/app-settings';
 import Dexie, { type Table } from 'dexie';
 
 /**
@@ -7,10 +8,16 @@ import Dexie, { type Table } from 'dexie';
  */
 export class HayagrivaManagerDB extends Dexie {
   bibliographies!: Table<Bibliography, string>;
-  constructor(dbName: string = 'hayagriva-manager', dbVersion: number = 1) {
+  settings!: Table<AppSettings, string>;
+
+  constructor(dbName: string = 'hayagriva-manager') {
     super(dbName);
-    this.version(dbVersion).stores({
+    this.version(1).stores({
       bibliographies: 'metadata.id'
+    });
+    this.version(2).stores({
+      bibliographies: 'metadata.id',
+      settings: 'id'
     });
   }
 }
