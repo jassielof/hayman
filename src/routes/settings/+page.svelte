@@ -1,4 +1,5 @@
 <script lang="ts">
+  // TODO: Since the settings is accessible from any page, there should be an option to go back to such page instead of just going back to the home page.
   import { resolve } from '$app/paths';
   import { reinitTypstPreview } from '$lib/services/typst-preview.service';
   import { SettingsService } from '$lib/services/settings.service';

@@ -71,6 +71,7 @@
         aria-label="Export backup of all bibliographies"
         onclick={exportAllBackup}
       >
+      <!-- TODO: This should export it as an compressed archive, either way, the user should be able to select which ones to export/backup, and which format, either as Zip or Tarball. -->
         <Archive class="size-[1.2em]" />
         Export all
       </button>
@@ -155,6 +156,7 @@
                 <Pencil class="size-[1.2em]" />
               </a>
 
+              <!-- TODO: The layout of these buttons just looks ugly, it's all vertical, and there's too much blank space between the bibliography and the buttons -->
               <button
                 class="btn join-item btn-soft"
                 aria-label={`Download ${bib.metadata.title} as YAML`}

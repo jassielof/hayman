@@ -50,6 +50,8 @@
   }
 </script>
 
+<!-- TODO: The preview become unreadable when the theme is in dark mode, because the font is still in dark mode, fix that, but also I wanna see how HTML looks, so add one (just for testing and temporarily) to see how it might look.  -->
+ <!-- TODO: The position of this being at the bottom makes it really hard to preview it, as one needs to scroll fully to the bottom just to look at it, we need better UX, maybe using the top header bar. -->
 <details class="fieldset mt-6" bind:open>
   <summary class="fieldset-legend cursor-pointer select-none">
     Rendered bibliography (Typst)

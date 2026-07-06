@@ -26,6 +26,12 @@ const BIB_STYLE_LET = `#let bib-style = if sys.inputs.at("csl") != "" {
   sys.inputs.at("style")
 }`;
 
+// TODO: There's no need to download fonts, this is just for preview, font is irrelevant, the Typst compiler has its default fonts, this could be relevant if we want to preview custom font or use a font that doesn't support given characters, such as CJK, but not an issue right now.
+// TODO: This should be read from a templates directory.
+// TODO: Font shouldn't be set at all, defaults will be fine, as it's compiled to SVG either way, it'll scale decently.
+// TODO: For both cases, adjust the page height to auto, otherwise there's too much blank space. Also there's no need for the 1.2 em vertical space, let it be default.
+
+// TODO: For entry main, let's use the `#lorem()` function instead of manual lorem text, also let's try to use all citation forms.
 const ENTRY_MAIN = `#set page(margin: 1.5cm)
 #set text(font: "${TYPST_PREVIEW_FONT}", size: 11pt)
 
@@ -42,6 +48,7 @@ habitant morbi tristique senectus et netus #cite(
 ${BIB_STYLE_LET}
 #bibliography(bytes(sys.inputs.at("yaml")), style: bib-style)`;
 
+// TODO: No need to add a bibliography preview title, the same bibliography function offers a custom title.
 const BIBLIOGRAPHY_MAIN = `#set page(margin: 1.5cm)
 #set text(font: "${TYPST_PREVIEW_FONT}", size: 11pt)
 #set par(justify: true)

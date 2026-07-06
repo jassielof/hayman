@@ -226,6 +226,7 @@
 
   <div class="divider">Custom serials</div>
 
+  <!-- TODO: For each known serial, add a verify button, to either ping or redirect to validate they are valid serials, to known pages. -->
   {#each customSerials as serialItem, i (i)}
     <div class="flex items-end gap-2">
       <div class="flex-1">

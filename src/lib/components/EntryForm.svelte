@@ -283,6 +283,7 @@
       <TimestampInput bind:value={entryData.runtime} label="Runtime" />
     {/if}
     {#if visible('url')}
+    <!-- TODO: Add a ping/fetch button to validate if the URL is accessible or reachable. This should happen on demand, not automatically. -->
       <UrlInput bind:value={entryData.url} />
     {/if}
   </FormSection>

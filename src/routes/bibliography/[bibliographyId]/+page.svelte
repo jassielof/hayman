@@ -63,6 +63,7 @@
       </div>
     </div>
 
+    <!-- TODO: The 3 dots for the dropdown menu aren't being spaced to the right, so they are just being glued along the entry title. -->
     <EntryList
       entries={bibliography.data}
       bibliographyId={bibliography.metadata.id}

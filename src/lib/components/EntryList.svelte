@@ -180,6 +180,7 @@
         </label>
 
         <label class="label">
+        <!-- TODO: Each type should have its own icon just as each entry has it. Either using emojis, or awesome font, or lucide icons.-->
           <span class="sr-only">Filter by type</span>
           <select class="select" bind:value={typeFilter}>
             <option value="">All types</option>
