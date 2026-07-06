@@ -13,6 +13,7 @@
   import { SvelteSet } from 'svelte/reactivity';
   import {
     Calendar,
+    ChevronDown,
     Copy,
     Ellipsis,
     Eye,
@@ -179,16 +180,50 @@
           </span>
         </label>
 
-        <label class="label">
-        <!-- TODO: Each type should have its own icon just as each entry has it. Either using emojis, or awesome font, or lucide icons.-->
+        <div class="label">
           <span class="sr-only">Filter by type</span>
-          <select class="select" bind:value={typeFilter}>
-            <option value="">All types</option>
-            {#each ENTRY_TYPE_NAMES as typeName (typeName)}
-              <option value={typeName}>{typeName}</option>
-            {/each}
-          </select>
-        </label>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger
+              class="select flex w-full items-center justify-between gap-2"
+            >
+              {#if typeFilter}
+                {@const { Icon, label } = formatEntryType(typeFilter)}
+                <span class="flex min-w-0 items-center gap-2">
+                  <Icon class="size-4 shrink-0" />
+                  <span class="truncate">{label}</span>
+                </span>
+              {:else}
+                <span>All types</span>
+              {/if}
+              <ChevronDown class="size-4 shrink-0 opacity-60" />
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                class={cn(
+                  'z-50 max-h-64 min-w-[12rem] overflow-y-auto rounded-md border border-border bg-card p-1 shadow-md'
+                )}
+              >
+                <DropdownMenu.Item
+                  class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                  onSelect={() => (typeFilter = '')}
+                >
+                  All types
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator class="my-1 h-px bg-border" />
+                {#each ENTRY_TYPE_NAMES as typeName (typeName)}
+                  {@const { Icon, label } = formatEntryType(typeName)}
+                  <DropdownMenu.Item
+                    class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                    onSelect={() => (typeFilter = typeName)}
+                  >
+                    <Icon class="size-4" />
+                    {label}
+                  </DropdownMenu.Item>
+                {/each}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
 
         <label class="label">
           <span class="sr-only">Sort entries</span>
@@ -230,7 +265,9 @@
     </div>
 
     <ul class="list">
-      <li class="list-row bg-muted/50 text-xs font-medium uppercase">
+      <li
+        class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-muted/50 p-4 text-xs font-medium uppercase"
+      >
         <div class="flex items-center">
           <input
             type="checkbox"
@@ -240,8 +277,8 @@
             onchange={toggleSelectAll}
           />
         </div>
-        <div class="list-col-grow">Entry</div>
-        <div>Actions</div>
+        <div>Entry</div>
+        <div class="text-right">Actions</div>
       </li>
 
       {#if filteredEntries.length === 0}
@@ -251,7 +288,9 @@
       {:else}
         {#each filteredEntries as [id, entry] (id)}
           {@const { label, Icon } = formatEntryType(entry.type)}
-          <li class="list-row">
+          <li
+            class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4"
+          >
             <div class="flex items-center">
               <input
                 type="checkbox"
@@ -261,7 +300,7 @@
                 onchange={() => toggleSelect(id)}
               />
             </div>
-            <div>
+            <div class="min-w-0">
               <div
                 class="flex items-center gap-2 text-xs text-muted-foreground"
               >
@@ -291,13 +330,13 @@
                 </span>
               {/if}
             </div>
-            <div class="flex flex-col items-center justify-center">
+            <div class="flex items-center justify-end">
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger
-                  class="btn m-1"
+                  class="btn btn-sm btn-ghost btn-square"
                   aria-label={`Actions for entry ${id}`}
                 >
-                  <Ellipsis class="inline-block" />
+                  <Ellipsis class="size-4" />
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                   <DropdownMenu.Content

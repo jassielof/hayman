@@ -1,69 +1,18 @@
+import type { AppFontSettings } from '$lib/types/app-settings';
 import type { Hayagriva } from '$lib/types/hayagriva';
 import { toYaml } from '$lib/services/hayagriva.service';
+import { getTypstFontProviders } from '$lib/typst/fonts';
+import {
+  BIBLIOGRAPHY_FULL_TEMPLATE,
+  ENTRY_CITATION_TEMPLATE
+} from '$lib/typst/templates';
 
 const TYPST_COMPILER_WASM =
   'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@0.7.0/pkg/typst_ts_web_compiler_bg.wasm';
 const TYPST_RENDERER_WASM =
   'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-renderer@0.7.0/pkg/typst_ts_renderer_bg.wasm';
 
-const FONT_CDN =
-  'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts';
-
-export const TYPST_PREVIEW_FONT = 'New Computer Modern';
-
-const MINIMAL_TYST_FONTS = [
-  `${FONT_CDN}/NewCM10-Regular.otf`,
-  `${FONT_CDN}/NewCM10-Bold.otf`,
-  `${FONT_CDN}/NewCM10-Italic.otf`,
-  `${FONT_CDN}/NewCM10-BoldItalic.otf`
-];
-
 const RENDER_TIMEOUT_MS = 120_000;
-
-const BIB_STYLE_LET = `#let bib-style = if sys.inputs.at("csl") != "" {
-  bytes(sys.inputs.at("csl"))
-} else {
-  sys.inputs.at("style")
-}`;
-
-// TODO: There's no need to download fonts, this is just for preview, font is irrelevant, the Typst compiler has its default fonts, this could be relevant if we want to preview custom font or use a font that doesn't support given characters, such as CJK, but not an issue right now.
-// TODO: This should be read from a templates directory.
-// TODO: Font shouldn't be set at all, defaults will be fine, as it's compiled to SVG either way, it'll scale decently.
-// TODO: For both cases, adjust the page height to auto, otherwise there's too much blank space. Also there's no need for the 1.2 em vertical space, let it be default.
-
-// TODO: For entry main, let's use the `#lorem()` function instead of manual lorem text, also let's try to use all citation forms.
-const ENTRY_MAIN = `#set page(margin: 1.5cm)
-#set text(font: "${TYPST_PREVIEW_FONT}", size: 11pt)
-
-#text(size: 12pt, fill: gray)[Style: #sys.inputs.at("style-label")]
-#v(0.5em)
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque
-habitant morbi tristique senectus et netus #cite(
-  label(sys.inputs.at("entry-key")),
-  form: "prose",
-).
-
-#v(1.2em)
-${BIB_STYLE_LET}
-#bibliography(bytes(sys.inputs.at("yaml")), style: bib-style)`;
-
-// TODO: No need to add a bibliography preview title, the same bibliography function offers a custom title.
-const BIBLIOGRAPHY_MAIN = `#set page(margin: 1.5cm)
-#set text(font: "${TYPST_PREVIEW_FONT}", size: 11pt)
-#set par(justify: true)
-
-#text(size: 14pt, weight: "bold")[
-  Bibliography preview — #sys.inputs.at("style-label")
-]
-#v(0.8em)
-
-${BIB_STYLE_LET}
-#bibliography(
-  bytes(sys.inputs.at("yaml")),
-  style: bib-style,
-  full: true,
-)`;
 
 let initPromise: Promise<void> | null = null;
 
@@ -112,15 +61,12 @@ async function ensureTypst() {
   }
 
   initPromise = (async () => {
-    const [{ $typst }, { TypstSnippet }, wasmUrls] = await Promise.all([
-      import('@myriaddreamin/typst.ts'),
+    const [{ $typst }, wasmUrls] = await Promise.all([
       import('@myriaddreamin/typst.ts/contrib/snippet'),
       resolveWasmUrls()
     ]);
 
-    $typst.use(TypstSnippet.disableDefaultFontAssets());
-    $typst.use(TypstSnippet.preloadFonts(MINIMAL_TYST_FONTS));
-    $typst.use(TypstSnippet.fetchPackageRegistry());
+    $typst.use(...getTypstFontProviders());
 
     $typst.setCompilerInitOptions({
       getModule: () => wasmUrls.compiler
@@ -137,23 +83,41 @@ function buildInputs(
   data: Hayagriva,
   typstStyle: string,
   styleLabel: string,
-  customCslBytes?: Uint8Array,
-  entryKey?: string
+  fonts: AppFontSettings,
+  customCsl?: string,
+  entryKey?: string,
+  compact?: boolean
 ): Record<string, string> {
   const inputs: Record<string, string> = {
     yaml: toYaml(data),
     style: typstStyle,
     'style-label': styleLabel,
-    csl: customCslBytes?.byteLength
-      ? new TextDecoder().decode(customCslBytes)
-      : ''
+    csl: customCsl ?? '',
+    'font-sans': fonts.sans,
+    'font-serif': fonts.serif
   };
 
   if (entryKey) {
     inputs['entry-key'] = entryKey;
   }
 
+  if (compact) {
+    inputs.compact = 'true';
+  }
+
   return inputs;
+}
+
+/** Strip fixed SVG dimensions so CSS can scale to the container width. */
+export function makeSvgResponsive(svg: string): string {
+  return svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+    const cleaned = attrs
+      .replace(/\s+width="[^"]*"/gi, '')
+      .replace(/\s+height="[^"]*"/gi, '')
+      .replace(/\s+style="[^"]*"/gi, '');
+
+    return `<svg${cleaned} width="100%" style="display:block;max-width:100%;height:auto;">`;
+  });
 }
 
 async function renderSvg(
@@ -161,16 +125,18 @@ async function renderSvg(
   inputs: Record<string, string>
 ): Promise<string> {
   await ensureTypst();
-  const { $typst } = await import('@myriaddreamin/typst.ts');
+  const { $typst } = await import('@myriaddreamin/typst.ts/contrib/snippet');
 
-  return withTimeout(
+  const svg = await withTimeout(
     $typst.svg({ mainContent, inputs }),
     RENDER_TIMEOUT_MS,
-    'Typst preview timed out. The first compile downloads ~8MB of WebAssembly and fonts — try again on a stable connection.'
+    'Typst preview timed out. The first compile downloads WebAssembly (~8MB) — try again on a stable connection.'
   );
+
+  return makeSvgResponsive(svg);
 }
 
-/** Clears cached init so WASM/font options are reapplied on next render. */
+/** Clears cached init so WASM options are reapplied on next render. */
 export async function reinitTypstPreview() {
   initPromise = null;
 }
@@ -179,12 +145,12 @@ export async function renderBibliographySvg(
   data: Hayagriva,
   typstStyle: string,
   styleLabel: string,
-  _sansFont: string,
-  customCslBytes?: Uint8Array
+  fonts: AppFontSettings,
+  customCsl?: string
 ): Promise<string> {
   return renderSvg(
-    BIBLIOGRAPHY_MAIN,
-    buildInputs(data, typstStyle, styleLabel, customCslBytes)
+    BIBLIOGRAPHY_FULL_TEMPLATE,
+    buildInputs(data, typstStyle, styleLabel, fonts, customCsl)
   );
 }
 
@@ -193,11 +159,20 @@ export async function renderEntryCitationSvg(
   entryId: string,
   typstStyle: string,
   styleLabel: string,
-  _sansFont: string,
-  customCslBytes?: Uint8Array
+  fonts: AppFontSettings,
+  customCsl?: string,
+  compact = false
 ): Promise<string> {
   return renderSvg(
-    ENTRY_MAIN,
-    buildInputs(data, typstStyle, styleLabel, customCslBytes, entryId)
+    ENTRY_CITATION_TEMPLATE,
+    buildInputs(
+      data,
+      typstStyle,
+      styleLabel,
+      fonts,
+      customCsl,
+      entryId,
+      compact
+    )
   );
 }

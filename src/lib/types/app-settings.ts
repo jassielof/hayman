@@ -9,7 +9,7 @@ export interface AppFontSettings {
 export interface AppCitationSettings {
   defaultStyle: string;
   customCslName?: string;
-  customCslBytes?: Uint8Array;
+  customCsl?: string;
 }
 
 export interface AppSettings {

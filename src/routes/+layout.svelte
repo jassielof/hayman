@@ -1,11 +1,14 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
+  import { page } from '$app/state';
   import SettingsBootstrap from '$lib/components/SettingsBootstrap.svelte';
   import { ModeWatcher, toggleMode } from 'mode-watcher';
   import { Moon, Settings, Sun } from '@lucide/svelte';
   import './layout.css';
 
   let { children } = $props();
+
+  const settingsFrom = $derived(encodeURIComponent(page.url.pathname));
 </script>
 
 <svelte:head>
@@ -19,7 +22,7 @@
   <a href={resolve('/')} class="btn text-xl btn-ghost">Hayagriva Manager</a>
   <div class="ml-auto flex items-center gap-1">
     <a
-      href={resolve('/settings')}
+      href="{resolve('/settings')}?from={settingsFrom}"
       class="btn btn-ghost btn-square"
       aria-label="Settings"
     >

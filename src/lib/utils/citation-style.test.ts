@@ -17,19 +17,19 @@ describe('resolveCitationStyle', () => {
     expect(resolved.typstStyle).toBe('ieee');
   });
 
-  it('maps custom style to shadow CSL path when bytes exist', () => {
+  it('maps custom style when CSL text exists', () => {
     const settings = {
       ...DEFAULT_APP_SETTINGS,
       citation: {
         ...DEFAULT_APP_SETTINGS.citation,
         defaultStyle: CUSTOM_CSL_STYLE,
         customCslName: 'my-style.csl',
-        customCslBytes: new Uint8Array([60, 115, 116, 121, 108, 101, 62])
+        customCsl: '<style></style>'
       }
     };
 
     const resolved = resolveCitationStyle(CUSTOM_CSL_STYLE, settings);
-    expect(resolved.typstStyle).toBe('/styles/custom.csl');
+    expect(resolved.typstStyle).toBe('custom');
     expect(resolved.label).toBe('my-style.csl');
     expect(resolved.useCustomCsl).toBe(true);
   });

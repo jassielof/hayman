@@ -8,9 +8,11 @@
   import { resolveCitationStyle } from '$lib/utils/citation-style';
 
   let {
-    bibliographyData
+    bibliographyData,
+    active = false
   }: {
     bibliographyData: Hayagriva;
+    active?: boolean;
   } = $props();
 
   let settings = $state<AppSettings | null>(null);
@@ -19,7 +21,13 @@
   let svg = $state<string | undefined>();
   let loading = $state(false);
   let error = $state<string | undefined>();
-  let open = $state(false);
+  let previewRendered = $state(false);
+
+  function customCslText(loaded: AppSettings) {
+    return loaded.citation.customCsl?.trim()
+      ? loaded.citation.customCsl
+      : undefined;
+  }
 
   async function renderPreview() {
     loading = true;
@@ -35,9 +43,10 @@
         bibliographyData,
         resolved.typstStyle,
         resolved.label,
-        loaded.fonts.sans,
-        resolved.useCustomCsl ? loaded.citation.customCslBytes : undefined
+        loaded.fonts,
+        resolved.useCustomCsl ? customCslText(loaded) : undefined
       );
+      previewRendered = true;
     } catch (err) {
       error =
         err instanceof Error
@@ -48,22 +57,19 @@
       loading = false;
     }
   }
+
+  $effect(() => {
+    if (!active || previewRendered || loading) return;
+    queueMicrotask(() => renderPreview());
+  });
 </script>
 
-<!-- TODO: The preview become unreadable when the theme is in dark mode, because the font is still in dark mode, fix that, but also I wanna see how HTML looks, so add one (just for testing and temporarily) to see how it might look.  -->
- <!-- TODO: The position of this being at the bottom makes it really hard to preview it, as one needs to scroll fully to the bottom just to look at it, we need better UX, maybe using the top header bar. -->
-<details class="fieldset mt-6" bind:open>
-  <summary class="fieldset-legend cursor-pointer select-none">
-    Rendered bibliography (Typst)
-  </summary>
-
-  <div class="mt-4 space-y-4">
-    <CitationStyleControls
-      bind:settings
-      bind:styleInput
-      bind:useDefaultStyle
-      onRender={renderPreview}
-    />
-    <TypstPreview {svg} {loading} {error} />
-  </div>
-</details>
+<div class="space-y-4">
+  <CitationStyleControls
+    bind:settings
+    bind:styleInput
+    bind:useDefaultStyle
+    onRender={renderPreview}
+  />
+  <TypstPreview {svg} {loading} {error} />
+</div>

@@ -1,6 +1,7 @@
 <script lang="ts">
-  // TODO: Since the settings is accessible from any page, there should be an option to go back to such page instead of just going back to the home page.
+  import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
+  import { page } from '$app/state';
   import { reinitTypstPreview } from '$lib/services/typst-preview.service';
   import { SettingsService } from '$lib/services/settings.service';
   import {
@@ -8,13 +9,24 @@
     FONT_PRESETS,
     type AppSettings
   } from '$lib/types/app-settings';
-  import { CircleAlert, Save } from '@lucide/svelte';
+  import { ArrowLeft, CircleAlert, Save } from '@lucide/svelte';
 
   let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
   let errorMessage = $state<string | undefined>();
   let savedMessage = $state<string | undefined>();
   let isSubmitting = $state(false);
   let cslFile: FileList | undefined = $state(undefined);
+
+  const returnTo = $derived(page.url.searchParams.get('from'));
+  const backHref = $derived.by(() => {
+    if (returnTo && returnTo.startsWith('/')) {
+      return (resolve as (href: string) => string)(returnTo);
+    }
+    return resolve('/');
+  });
+  const backLabel = $derived(
+    returnTo && returnTo.startsWith('/') ? 'Back' : 'Back to home'
+  );
 
   $effect(() => {
     SettingsService.get().then((loaded) => {
@@ -27,12 +39,11 @@
     const file = cslFile[0];
     const reader = new FileReader();
     reader.onload = () => {
-      const buffer = reader.result as ArrayBuffer;
-      settings.citation.customCslBytes = new Uint8Array(buffer);
+      settings.citation.customCsl = String(reader.result ?? '');
       settings.citation.customCslName = file.name;
       cslFile = undefined;
     };
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file);
   });
 
   async function handleSubmit(event: SubmitEvent) {
@@ -71,8 +82,8 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
       <p class="text-sm text-muted-foreground">
-        Applied across the app and Typst citation previews. Changing fonts
-        requires recompiling previews.
+        Applied across the web UI. Typst previews use the compiler’s default
+        fonts.
       </p>
 
       <label class="label" for="font-sans">Sans-serif</label>
@@ -155,7 +166,14 @@
         <Save class="size-4" />
         Save settings
       </button>
-      <a class="btn btn-outline" href={resolve('/')}>Back to home</a>
+      <button
+        type="button"
+        class="btn btn-outline"
+        onclick={() => goto(backHref)}
+      >
+        <ArrowLeft class="size-4" />
+        {backLabel}
+      </button>
     </div>
   </form>
 </main>

@@ -18,11 +18,11 @@ export function resolveCitationStyle(
 
   if (
     trimmed === CUSTOM_CSL_STYLE &&
-    settings.citation.customCslBytes &&
-    settings.citation.customCslBytes.byteLength > 0
+    settings.citation.customCsl &&
+    settings.citation.customCsl.trim().length > 0
   ) {
     return {
-      typstStyle: '/styles/custom.csl',
+      typstStyle: 'custom',
       label: settings.citation.customCslName ?? 'Custom CSL',
       useCustomCsl: true
     };

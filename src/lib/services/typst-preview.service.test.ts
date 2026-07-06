@@ -1,28 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Hayagriva } from '$lib/types/hayagriva';
+import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
 
-const svgMock = vi
-  .fn()
-  .mockResolvedValue('<svg width="100" height="50"></svg>');
+const { svgMock } = vi.hoisted(() => ({
+  svgMock: vi
+    .fn()
+    .mockResolvedValue(
+      '<svg width="400" height="200" viewBox="0 0 400 200"></svg>'
+    )
+}));
 
-vi.mock('@myriaddreamin/typst.ts', () => ({
+vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
   $typst: {
     use: vi.fn(),
     setCompilerInitOptions: vi.fn(),
     setRendererInitOptions: vi.fn(),
     svg: svgMock
-  }
-}));
-
-vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
+  },
   TypstSnippet: {
-    disableDefaultFontAssets: () => ({}),
-    preloadFonts: () => ({}),
-    fetchPackageRegistry: () => ({})
+    fetchPackageRegistry: () => ({}),
+    preloadFontAssets: () => ({}),
+    preloadFonts: () => ({})
   }
 }));
 
 import {
+  makeSvgResponsive,
   renderBibliographySvg,
   renderEntryCitationSvg,
   reinitTypstPreview
@@ -32,10 +35,22 @@ const sampleData: Hayagriva = {
   entry1: { type: 'article', title: 'Sample' }
 };
 
+const sampleFonts = DEFAULT_APP_SETTINGS.fonts;
+
 describe('typst-preview.service', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     await reinitTypstPreview();
+  });
+
+  it('makes SVG scale to container width', () => {
+    const responsive = makeSvgResponsive(
+      '<svg width="400" height="200" viewBox="0 0 400 200"></svg>'
+    );
+
+    expect(responsive).toContain('width="100%"');
+    expect(responsive).not.toContain('width="400"');
+    expect(responsive).not.toContain('height="200"');
   });
 
   it('renders bibliography SVG via $typst.svg', async () => {
@@ -43,17 +58,20 @@ describe('typst-preview.service', () => {
       sampleData,
       'ieee',
       'ieee',
-      'IBM Plex Sans'
+      sampleFonts
     );
 
     expect(svg).toContain('<svg');
+    expect(svg).toContain('width="100%"');
     expect(svgMock).toHaveBeenCalledWith(
       expect.objectContaining({
         mainContent: expect.stringContaining('#bibliography('),
         inputs: expect.objectContaining({
           style: 'ieee',
           yaml: expect.stringContaining('entry1'),
-          csl: ''
+          csl: '',
+          'font-sans': sampleFonts.sans,
+          'font-serif': sampleFonts.serif
         })
       })
     );
@@ -65,7 +83,7 @@ describe('typst-preview.service', () => {
       'entry1',
       'apa',
       'apa',
-      'IBM Plex Sans'
+      sampleFonts
     );
 
     expect(svgMock).toHaveBeenCalledWith(
@@ -79,14 +97,34 @@ describe('typst-preview.service', () => {
     );
   });
 
+  it('passes compact flag for mobile citation preview', async () => {
+    await renderEntryCitationSvg(
+      sampleData,
+      'entry1',
+      'apa',
+      'apa',
+      sampleFonts,
+      undefined,
+      true
+    );
+
+    expect(svgMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mainContent: expect.stringContaining('compact'),
+        inputs: expect.objectContaining({
+          compact: 'true'
+        })
+      })
+    );
+  });
+
   it('passes custom CSL through inputs', async () => {
-    const csl = new TextEncoder().encode('<style></style>');
     await renderBibliographySvg(
       sampleData,
       'custom',
       'Custom',
-      'IBM Plex Sans',
-      csl
+      sampleFonts,
+      '<style></style>'
     );
 
     expect(svgMock).toHaveBeenCalledWith(

@@ -2,11 +2,13 @@
   let {
     svg,
     loading = false,
-    error = undefined as string | undefined
+    error = undefined as string | undefined,
+    variant = 'default' as 'default' | 'citation'
   }: {
     svg?: string;
     loading?: boolean;
     error?: string;
+    variant?: 'default' | 'citation';
   } = $props();
 </script>
 
@@ -19,8 +21,8 @@
       <span class="loading loading-md loading-spinner"></span>
       <span>Compiling Typst preview…</span>
       <span class="max-w-sm text-xs text-muted-foreground">
-        The first preview downloads WebAssembly and fonts (~8MB) and may take up
-        to a minute. The tab can look frozen while the compiler initializes.
+        The first preview downloads WebAssembly (~8MB) and may take up to a
+        minute. The tab can look frozen while the compiler initializes.
       </span>
     </div>
   {:else if error}
@@ -33,7 +35,8 @@
     </p>
   {:else}
     <div
-      class="typst-preview overflow-x-auto [&_svg]:h-auto [&_svg]:max-w-[720px] [&_svg]:w-full"
+      class="typst-paper typst-preview w-full"
+      class:typst-preview--citation={variant === 'citation'}
       role="img"
       aria-label="Typst citation preview"
     >

@@ -60,6 +60,7 @@
     "bits-ui": "^2.18.1",
     "dexie": "^4.4.4",
     "dexie-svelte-query": "^1.0.0",
+    "fflate": "^0.8.3",
     "highlight.js": "^11.11.1",
     "mode-watcher": "^1.1.0",
     "yaml": "^2.9.0",

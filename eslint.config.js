@@ -44,5 +44,17 @@ export default defineConfig(
     rules: {
       'svelte/no-at-html-tags': 'off'
     }
+  },
+  {
+    files: ['src/lib/components/TypstPreview.svelte'],
+    rules: {
+      'svelte/no-at-html-tags': 'off'
+    }
+  },
+  {
+    files: ['src/routes/settings/+page.svelte'],
+    rules: {
+      'svelte/no-navigation-without-resolve': 'off'
+    }
   }
 );

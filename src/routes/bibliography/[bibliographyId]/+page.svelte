@@ -5,6 +5,8 @@
   import BibliographyTypstPreview from '$lib/components/BibliographyTypstPreview.svelte';
   import EntryList from '$lib/components/EntryList.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
+  import { cn } from '$lib/utils/cn';
+  import { Tabs } from 'bits-ui';
   import { BookPlus } from '@lucide/svelte';
   import { stateQuery } from 'dexie-svelte-query';
 
@@ -15,6 +17,7 @@
 
   const bibliographyQueryLoading = $derived(bibliographyQuery.isLoading);
   const bibliography = $derived(bibliographyQuery.current);
+  let tab = $state('entries');
 </script>
 
 <main class="mx-auto flex w-full max-w-5xl flex-col p-4">
@@ -63,12 +66,43 @@
       </div>
     </div>
 
-    <!-- TODO: The 3 dots for the dropdown menu aren't being spaced to the right, so they are just being glued along the entry title. -->
-    <EntryList
-      entries={bibliography.data}
-      bibliographyId={bibliography.metadata.id}
-    />
+    <Tabs.Root bind:value={tab} class="w-full">
+      <Tabs.List
+        class="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground"
+      >
+        <Tabs.Trigger
+          value="entries"
+          class={cn(
+            'rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
+            'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+          )}
+        >
+          Entries
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="preview"
+          class={cn(
+            'rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
+            'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+          )}
+        >
+          Rendered bibliography
+        </Tabs.Trigger>
+      </Tabs.List>
 
-    <BibliographyTypstPreview bibliographyData={bibliography.data} />
+      <Tabs.Content value="entries" class="mt-4">
+        <EntryList
+          entries={bibliography.data}
+          bibliographyId={bibliography.metadata.id}
+        />
+      </Tabs.Content>
+
+      <Tabs.Content value="preview" class="mt-4">
+        <BibliographyTypstPreview
+          bibliographyData={bibliography.data}
+          active={tab === 'preview'}
+        />
+      </Tabs.Content>
+    </Tabs.Root>
   {/if}
 </main>

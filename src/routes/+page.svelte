@@ -1,19 +1,20 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
+  import ExportBackupDialog from '$lib/components/ExportBackupDialog.svelte';
   import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
   import { db } from '$lib/db';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { hayagrivaService } from '$lib/services/hayagriva.service';
   import type { Bibliography } from '$lib/types/bibliography';
   import {
+    Archive,
     BookOpen,
     BookPlus,
     Copy,
     Download,
     Library,
     Pencil,
-    Trash,
-    Archive
+    Trash
   } from '@lucide/svelte';
   import { stateQuery } from 'dexie-svelte-query';
 
@@ -22,6 +23,7 @@
   const bibliographies = $derived(bibliographyQuery.current);
 
   let deleteOpen = $state(false);
+  let exportOpen = $state(false);
   let pendingDelete = $state<Bibliography | null>(null);
   let copyFeedback = $state<string | null>(null);
 
@@ -49,17 +51,6 @@
     copyFeedback = bib.metadata.id;
     setTimeout(() => (copyFeedback = null), 2000);
   }
-
-  function exportAllBackup() {
-    const payload = JSON.stringify(bibliographies ?? [], null, 2);
-    const blob = new Blob([payload], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `hayagriva-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 {#snippet actions()}
@@ -68,12 +59,11 @@
       <button
         type="button"
         class="btn btn-outline"
-        aria-label="Export backup of all bibliographies"
-        onclick={exportAllBackup}
+        aria-label="Export backup of bibliographies"
+        onclick={() => (exportOpen = true)}
       >
-      <!-- TODO: This should export it as an compressed archive, either way, the user should be able to select which ones to export/backup, and which format, either as Zip or Tarball. -->
         <Archive class="size-[1.2em]" />
-        Export all
+        Export backup
       </button>
     {/if}
     <a
@@ -86,6 +76,11 @@
     </a>
   </div>
 {/snippet}
+
+<ExportBackupDialog
+  bind:open={exportOpen}
+  bibliographies={bibliographies ?? []}
+/>
 
 <ConfirmDialog
   bind:open={deleteOpen}
@@ -123,42 +118,42 @@
     <div class="overflow-x-auto">
       <ul class="list shadow-md">
         {#each bibliographies as bib (bib.metadata.id)}
-          <li class="list-row">
-            <div class="flex h-full items-center justify-center">
-              <Library class="size-[1.2em]" aria-hidden="true" />
+          <li
+            class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4"
+          >
+            <div class="flex items-center justify-center">
+              <Library class="size-6 shrink-0" aria-hidden="true" />
             </div>
-            <div class="list-col-grow flex flex-col items-start justify-center">
-              <h6 class="font-bold">{bib.metadata.title}</h6>
+            <div class="min-w-0">
+              <h6 class="truncate font-bold">{bib.metadata.title}</h6>
               <time class="text-xs text-muted-foreground">
                 Created: {formatDate(bib.metadata.createdAt)}
               </time>
               <time class="text-xs text-muted-foreground">
-                Updated: {formatDate(bib.metadata.updatedAt)}
+                · Updated: {formatDate(bib.metadata.updatedAt)}
               </time>
-              <p class="mt-1 text-sm text-muted-foreground">
+              <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">
                 {bib.metadata.description || 'No description provided.'}
               </p>
             </div>
 
-            <div class="join join-vertical lg:join-horizontal">
+            <div class="flex shrink-0 flex-row items-center gap-1">
               <a
                 href={resolve(`/bibliography/${bib.metadata.id}`)}
-                class="btn join-item btn-soft"
+                class="btn btn-sm btn-soft"
                 aria-label={`View entries in ${bib.metadata.title}`}
               >
-                <BookOpen class="size-[1.2em]" />
+                <BookOpen class="size-4" />
               </a>
               <a
-                class="btn join-item btn-soft"
+                class="btn btn-sm btn-soft"
                 href={resolve(`/bibliography/${bib.metadata.id}/edit`)}
                 aria-label={`Edit metadata for ${bib.metadata.title}`}
               >
-                <Pencil class="size-[1.2em]" />
+                <Pencil class="size-4" />
               </a>
-
-              <!-- TODO: The layout of these buttons just looks ugly, it's all vertical, and there's too much blank space between the bibliography and the buttons -->
               <button
-                class="btn join-item btn-soft"
+                class="btn btn-sm btn-soft"
                 aria-label={`Download ${bib.metadata.title} as YAML`}
                 onclick={() =>
                   hayagrivaService.export(bib.data, {
@@ -166,27 +161,25 @@
                     filename: `${bib.metadata.id}.yaml`
                   })}
               >
-                <Download class="size-[1.2em]" />
+                <Download class="size-4" />
               </button>
-
               <button
-                class="btn join-item btn-soft"
+                class="btn btn-sm btn-soft"
                 aria-label={`Copy ${bib.metadata.title} YAML to clipboard`}
                 onclick={() => copyYaml(bib)}
               >
-                <Copy class="size-[1.2em]" />
+                <Copy class="size-4" />
+              </button>
+              <button
+                class="btn btn-sm btn-soft btn-error"
+                aria-label={`Delete bibliography ${bib.metadata.title}`}
+                onclick={() => requestDelete(bib)}
+              >
+                <Trash class="size-4" />
               </button>
               {#if copyFeedback === bib.metadata.id}
                 <span class="text-xs text-primary" role="status">Copied!</span>
               {/if}
-
-              <button
-                class="btn join-item btn-soft btn-error"
-                aria-label={`Delete bibliography ${bib.metadata.title}`}
-                onclick={() => requestDelete(bib)}
-              >
-                <Trash class="size-[1.2em]" />
-              </button>
             </div>
           </li>
         {/each}

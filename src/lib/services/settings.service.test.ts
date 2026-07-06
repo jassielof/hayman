@@ -31,14 +31,14 @@ describe('SettingsService', () => {
       citation: {
         defaultStyle: 'custom',
         customCslName: 'ieee.csl',
-        customCslBytes: new Uint8Array([1, 2, 3])
+        customCsl: '<style></style>'
       }
     });
 
     await SettingsService.clearCustomCsl();
     const settings = await SettingsService.get();
     expect(settings.citation.customCslName).toBeUndefined();
-    expect(settings.citation.customCslBytes).toBeUndefined();
+    expect(settings.citation.customCsl).toBeUndefined();
     expect(settings.citation.defaultStyle).toBe('custom');
   });
 });

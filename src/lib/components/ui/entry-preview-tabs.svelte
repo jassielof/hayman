@@ -1,34 +1,32 @@
 <script lang="ts">
   import CitationStyleControls from '$lib/components/CitationStyleControls.svelte';
   import TypstPreview from '$lib/components/TypstPreview.svelte';
-  import PreviewEntry from '$lib/components/views/PreviewEntry.svelte';
   import { SettingsService } from '$lib/services/settings.service';
   import { renderEntryCitationSvg } from '$lib/services/typst-preview.service';
   import type { AppSettings } from '$lib/types/app-settings';
-  import type { Hayagriva, TopLevelEntry } from '$lib/types/hayagriva';
+  import type { Hayagriva } from '$lib/types/hayagriva';
   import { resolveCitationStyle } from '$lib/utils/citation-style';
+  import { watchMobileViewport } from '$lib/utils/match-mobile';
   import { cn } from '$lib/utils/cn';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
   import 'highlight.js/styles/github-dark.css';
-  import { BookOpen, Clipboard, Code, Eye } from '@lucide/svelte';
+  import { BookOpen, Clipboard, Code } from '@lucide/svelte';
 
   hljs.registerLanguage('yaml', yaml);
 
   let {
-    entry,
     entryId,
     bibliographyData,
     entryYamlData
   }: {
-    entry: TopLevelEntry;
     entryId: string;
     bibliographyData: Hayagriva;
     entryYamlData: string[];
   } = $props();
 
-  let tab = $state('preview');
+  let tab = $state('code');
   let copied = $state(false);
   let settings = $state<AppSettings | null>(null);
   let styleInput = $state('ieee');
@@ -37,6 +35,8 @@
   let citationLoading = $state(false);
   let citationError = $state<string | undefined>();
   let citationAutoRendered = $state(false);
+  let isMobile = $state(false);
+  let lastRenderedCompact: boolean | undefined;
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
@@ -64,9 +64,11 @@
         entryId,
         resolved.typstStyle,
         resolved.label,
-        loaded.fonts.sans,
-        resolved.useCustomCsl ? loaded.citation.customCslBytes : undefined
+        loaded.fonts,
+        resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
+        isMobile
       );
+      lastRenderedCompact = isMobile;
     } catch (err) {
       citationError =
         err instanceof Error
@@ -79,12 +81,25 @@
   }
 
   $effect(() => {
+    return watchMobileViewport((mobile) => {
+      isMobile = mobile;
+    });
+  });
+
+  $effect(() => {
     if (tab !== 'citation') {
       citationAutoRendered = false;
+      lastRenderedCompact = undefined;
       return;
     }
 
-    if (citationAutoRendered || citationLoading || citationSvg) {
+    const compact = isMobile;
+    const needsInitialRender =
+      !citationAutoRendered && !citationLoading && !citationSvg;
+    const compactChanged =
+      lastRenderedCompact !== undefined && lastRenderedCompact !== compact;
+
+    if (!needsInitialRender && !compactChanged) {
       return;
     }
 
@@ -95,22 +110,12 @@
 
 <Tabs.Root bind:value={tab} class="w-full">
   <Tabs.List
-    class="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground"
+    class="inline-flex h-10 w-full flex-wrap items-center justify-center gap-1 rounded-md bg-muted p-1 text-muted-foreground sm:w-auto"
   >
-    <Tabs.Trigger
-      value="preview"
-      class={cn(
-        'inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
-        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
-      )}
-    >
-      <Eye class="size-4" />
-      Entry preview
-    </Tabs.Trigger>
     <Tabs.Trigger
       value="code"
       class={cn(
-        'inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
+        'inline-flex flex-1 items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none',
         'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
       )}
     >
@@ -120,7 +125,7 @@
     <Tabs.Trigger
       value="citation"
       class={cn(
-        'inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
+        'inline-flex flex-1 items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none',
         'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
       )}
     >
@@ -130,15 +135,8 @@
   </Tabs.List>
 
   <Tabs.Content
-    value="preview"
-    class="mt-4 rounded-lg border border-border bg-card p-6"
-  >
-    <PreviewEntry {entry} baseHeadingLevel={1} />
-  </Tabs.Content>
-
-  <Tabs.Content
     value="code"
-    class="mt-4 rounded-lg border border-border bg-card p-6"
+    class="mt-4 rounded-lg border border-border bg-card p-4 sm:p-6"
   >
     <div class="relative">
       <pre class="code-block w-full overflow-x-auto"><code
@@ -174,6 +172,7 @@
       svg={citationSvg}
       loading={citationLoading}
       error={citationError}
+      variant="citation"
     />
   </Tabs.Content>
 </Tabs.Root>

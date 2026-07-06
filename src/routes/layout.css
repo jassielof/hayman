@@ -259,4 +259,26 @@
     @apply absolute -m-px h-px w-px overflow-hidden border-0 p-0 whitespace-nowrap;
     clip: rect(0, 0, 0, 0);
   }
+
+  .typst-paper {
+    @apply rounded-md bg-white p-2 sm:p-4;
+    color: #171717;
+  }
+
+  .typst-preview {
+    @apply w-full min-w-0;
+  }
+
+  .typst-preview :is(svg) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (max-width: 639px) {
+    .typst-paper.typst-preview--citation {
+      @apply px-1 py-2;
+    }
+  }
 }

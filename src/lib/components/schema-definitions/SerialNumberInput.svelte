@@ -1,6 +1,14 @@
 <script lang="ts">
   import type { BibliographyEntry } from '$lib/types/hayagriva';
-  import { Plus, X } from '@lucide/svelte';
+  import {
+    arxivResolverUrl,
+    doiResolverUrl,
+    isbnResolverUrl,
+    issnResolverUrl,
+    pmcidResolverUrl,
+    pmidResolverUrl
+  } from '$lib/utils/identifier-links';
+  import { ExternalLink, Plus, X } from '@lucide/svelte';
 
   type SerialNumberObject = Exclude<
     NonNullable<BibliographyEntry['serial-number']>,
@@ -41,6 +49,10 @@
     return typeof v === 'string' ? v : v == null ? '' : String(v);
   }
 
+  function openResolver(url: string) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   // Populate form fields from parent value (incoming data)
   $effect(() => {
     if (typeof value === 'string' || typeof value === 'number') {
@@ -54,7 +66,6 @@
       customSerials = [];
     } else if (value && typeof value === 'object') {
       const serialObject = value as SerialNumberObject;
-      // Use nullish coalescing to avoid "undefined" text in inputs
       serial = toNonEmptyString(serialObject.serial ?? '');
       doi = toNonEmptyString(serialObject.doi ?? '');
       isbn = toNonEmptyString(serialObject.isbn ?? '');
@@ -100,7 +111,6 @@
     }
 
     if (serial && !hasStandard && validCustoms.length === 0) {
-      // keep as string to mirror UrlInput behavior
       return serial;
     }
 
@@ -125,7 +135,7 @@
     const aIsObj = a && typeof a === 'object';
     const bIsObj = b && typeof b === 'object';
     if (aIsObj !== bIsObj) return false;
-    if (!aIsObj) return false; // primitives already handled above
+    if (!aIsObj) return false;
 
     const aRecord = a as Record<string, unknown>;
     const bRecord = b as Record<string, unknown>;
@@ -139,7 +149,6 @@
     return true;
   }
 
-  // Reformat content for outgoing data (for the parent)
   $effect(() => {
     const next = buildOutgoing();
     if (!deepEqualSerial(value, next)) {
@@ -164,69 +173,140 @@
     </div>
     <div>
       <label for="{uid}-serial-number-doi" class="label pb-1">DOI</label>
-      <input
-        id="{uid}-serial-number-doi"
-        type="text"
-        placeholder="10.1103/PhysRevB.102.165126"
-        class="input input-sm w-full"
-        bind:value={doi}
-      />
+      <div class="flex gap-1">
+        <input
+          id="{uid}-serial-number-doi"
+          type="text"
+          placeholder="10.1103/PhysRevB.102.165126"
+          class="input input-sm min-w-0 flex-1"
+          bind:value={doi}
+        />
+        {#if doi.trim()}
+          <button
+            type="button"
+            class="btn btn-square btn-sm btn-outline shrink-0"
+            aria-label="Open DOI resolver"
+            onclick={() => openResolver(doiResolverUrl(doi))}
+          >
+            <ExternalLink class="size-4" />
+          </button>
+        {/if}
+      </div>
     </div>
     <div>
       <label for="{uid}-serial-number-isbn" class="label pb-1">ISBN</label>
-      <input
-        id="{uid}-serial-number-isbn"
-        type="text"
-        placeholder="978-3-16-148410-0"
-        class="input input-sm w-full"
-        bind:value={isbn}
-      />
+      <div class="flex gap-1">
+        <input
+          id="{uid}-serial-number-isbn"
+          type="text"
+          placeholder="978-3-16-148410-0"
+          class="input input-sm min-w-0 flex-1"
+          bind:value={isbn}
+        />
+        {#if isbn.trim()}
+          <button
+            type="button"
+            class="btn btn-square btn-sm btn-outline shrink-0"
+            aria-label="Look up ISBN on WorldCat"
+            onclick={() => openResolver(isbnResolverUrl(isbn))}
+          >
+            <ExternalLink class="size-4" />
+          </button>
+        {/if}
+      </div>
     </div>
     <div>
       <label for="{uid}-serial-number-issn" class="label pb-1">ISSN</label>
-      <input
-        id="{uid}-serial-number-issn"
-        type="text"
-        placeholder="2049-3630"
-        class="input input-sm w-full"
-        bind:value={issn}
-      />
+      <div class="flex gap-1">
+        <input
+          id="{uid}-serial-number-issn"
+          type="text"
+          placeholder="2049-3630"
+          class="input input-sm min-w-0 flex-1"
+          bind:value={issn}
+        />
+        {#if issn.trim()}
+          <button
+            type="button"
+            class="btn btn-square btn-sm btn-outline shrink-0"
+            aria-label="Look up ISSN"
+            onclick={() => openResolver(issnResolverUrl(issn))}
+          >
+            <ExternalLink class="size-4" />
+          </button>
+        {/if}
+      </div>
     </div>
     <div>
       <label for="{uid}-serial-number-pmid" class="label pb-1">PMID</label>
-      <input
-        id="{uid}-serial-number-pmid"
-        type="text"
-        placeholder="17284678"
-        class="input input-sm w-full"
-        bind:value={pmid}
-      />
+      <div class="flex gap-1">
+        <input
+          id="{uid}-serial-number-pmid"
+          type="text"
+          placeholder="17284678"
+          class="input input-sm min-w-0 flex-1"
+          bind:value={pmid}
+        />
+        {#if pmid.trim()}
+          <button
+            type="button"
+            class="btn btn-square btn-sm btn-outline shrink-0"
+            aria-label="Open PubMed record"
+            onclick={() => openResolver(pmidResolverUrl(pmid))}
+          >
+            <ExternalLink class="size-4" />
+          </button>
+        {/if}
+      </div>
     </div>
     <div>
       <label for="{uid}-serial-number-pmcid" class="label pb-1">PMCID</label>
-      <input
-        id="{uid}-serial-number-pmcid"
-        type="text"
-        placeholder="PMC1790863"
-        class="input input-sm w-full"
-        bind:value={pmcid}
-      />
+      <div class="flex gap-1">
+        <input
+          id="{uid}-serial-number-pmcid"
+          type="text"
+          placeholder="PMC1790863"
+          class="input input-sm min-w-0 flex-1"
+          bind:value={pmcid}
+        />
+        {#if pmcid.trim()}
+          <button
+            type="button"
+            class="btn btn-square btn-sm btn-outline shrink-0"
+            aria-label="Open PubMed Central article"
+            onclick={() => openResolver(pmcidResolverUrl(pmcid))}
+          >
+            <ExternalLink class="size-4" />
+          </button>
+        {/if}
+      </div>
     </div>
     <div class="md:col-span-2">
       <label for="{uid}-serial-number-arxiv" class="label pb-1">ArXiv</label>
-      <input
-        id="{uid}-serial-number-arxiv"
-        type="text"
-        placeholder="2003.13722"
-        class="input input-sm w-full"
-        bind:value={arxiv}
-      />
+      <div class="flex gap-1">
+        <input
+          id="{uid}-serial-number-arxiv"
+          type="text"
+          placeholder="2003.13722"
+          class="input input-sm min-w-0 flex-1"
+          bind:value={arxiv}
+        />
+        {#if arxiv.trim()}
+          <button
+            type="button"
+            class="btn btn-square btn-sm btn-outline shrink-0"
+            aria-label="Open arXiv abstract"
+            onclick={() => openResolver(arxivResolverUrl(arxiv))}
+          >
+            <ExternalLink class="size-4" />
+          </button>
+        {/if}
+      </div>
     </div>
   </div>
 
   <div class="divider">Custom serials</div>
 
-  <!-- TODO: For each known serial, add a verify button, to either ping or redirect to validate they are valid serials, to known pages. -->
   {#each customSerials as serialItem, i (i)}
     <div class="flex items-end gap-2">
       <div class="flex-1">

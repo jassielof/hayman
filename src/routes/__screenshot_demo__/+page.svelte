@@ -12,7 +12,9 @@
         ready = true;
       } catch (err) {
         error =
-          err instanceof Error ? err.message : 'Failed to seed screenshot data.';
+          err instanceof Error
+            ? err.message
+            : 'Failed to seed screenshot data.';
       }
     })();
   });
