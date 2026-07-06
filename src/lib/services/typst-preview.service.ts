@@ -1,11 +1,6 @@
 import type { Hayagriva } from '$lib/types/hayagriva';
 import { toYaml } from '$lib/services/hayagriva.service';
 
-const BIBLIOGRAPHY_YAML_PATH = '/data/bibliography.yaml';
-const CUSTOM_CSL_PATH = '/styles/custom.csl';
-const ENTRY_TEMPLATE_PATH = '/templates/entry-citation.typ';
-const BIBLIOGRAPHY_TEMPLATE_PATH = '/templates/bibliography-full.typ';
-
 const TYPST_COMPILER_WASM =
   'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@0.7.0/pkg/typst_ts_web_compiler_bg.wasm';
 const TYPST_RENDERER_WASM =
@@ -14,7 +9,6 @@ const TYPST_RENDERER_WASM =
 const FONT_CDN =
   'https://cdn.jsdelivr.net/gh/typst/typst-assets@v0.13.1/files/fonts';
 
-/** Font family bundled with Typst text assets — avoids loading the full font pack. */
 export const TYPST_PREVIEW_FONT = 'New Computer Modern';
 
 const MINIMAL_TYST_FONTS = [
@@ -26,12 +20,45 @@ const MINIMAL_TYST_FONTS = [
 
 const RENDER_TIMEOUT_MS = 120_000;
 
-const encoder = new TextEncoder();
+const BIB_STYLE_LET = `#let bib-style = if sys.inputs.at("csl") != "" {
+  bytes(sys.inputs.at("csl"))
+} else {
+  sys.inputs.at("style")
+}`;
 
-let snippetInstance:
-  import('@myriaddreamin/typst.ts/contrib/snippet').TypstSnippet | null = null;
+const ENTRY_MAIN = `#set page(margin: 1.5cm)
+#set text(font: "${TYPST_PREVIEW_FONT}", size: 11pt)
+
+#text(size: 12pt, fill: gray)[Style: #sys.inputs.at("style-label")]
+#v(0.5em)
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque
+habitant morbi tristique senectus et netus #cite(
+  label(sys.inputs.at("entry-key")),
+  form: "prose",
+).
+
+#v(1.2em)
+${BIB_STYLE_LET}
+#bibliography(bytes(sys.inputs.at("yaml")), style: bib-style)`;
+
+const BIBLIOGRAPHY_MAIN = `#set page(margin: 1.5cm)
+#set text(font: "${TYPST_PREVIEW_FONT}", size: 11pt)
+#set par(justify: true)
+
+#text(size: 14pt, weight: "bold")[
+  Bibliography preview — #sys.inputs.at("style-label")
+]
+#v(0.8em)
+
+${BIB_STYLE_LET}
+#bibliography(
+  bytes(sys.inputs.at("yaml")),
+  style: bib-style,
+  full: true,
+)`;
+
 let initPromise: Promise<void> | null = null;
-let templatesLoaded = false;
 
 async function resolveWasmUrls() {
   if (import.meta.env.DEV) {
@@ -71,95 +98,74 @@ function withTimeout<T>(
   });
 }
 
-async function getSnippet() {
-  if (snippetInstance) {
-    return snippetInstance;
+async function ensureTypst() {
+  if (initPromise) {
+    await initPromise;
+    return;
   }
 
-  if (!initPromise) {
-    initPromise = (async () => {
-      const { TypstSnippet } =
-        await import('@myriaddreamin/typst.ts/contrib/snippet');
-      const wasmUrls = await resolveWasmUrls();
+  initPromise = (async () => {
+    const [{ $typst }, { TypstSnippet }, wasmUrls] = await Promise.all([
+      import('@myriaddreamin/typst.ts'),
+      import('@myriaddreamin/typst.ts/contrib/snippet'),
+      resolveWasmUrls()
+    ]);
 
-      const instance = new TypstSnippet();
-      instance.use(TypstSnippet.disableDefaultFontAssets());
-      instance.use(TypstSnippet.preloadFonts(MINIMAL_TYST_FONTS));
-      instance.use(TypstSnippet.fetchPackageRegistry());
+    $typst.use(TypstSnippet.disableDefaultFontAssets());
+    $typst.use(TypstSnippet.preloadFonts(MINIMAL_TYST_FONTS));
+    $typst.use(TypstSnippet.fetchPackageRegistry());
 
-      instance.setCompilerInitOptions({
-        getModule: () => wasmUrls.compiler
-      });
-      instance.setRendererInitOptions({
-        getModule: () => wasmUrls.renderer
-      });
-
-      snippetInstance = instance;
-    })();
-  }
+    $typst.setCompilerInitOptions({
+      getModule: () => wasmUrls.compiler
+    });
+    $typst.setRendererInitOptions({
+      getModule: () => wasmUrls.renderer
+    });
+  })();
 
   await initPromise;
-  return snippetInstance!;
 }
 
-async function loadTemplates(snippet: Awaited<ReturnType<typeof getSnippet>>) {
-  if (templatesLoaded) return;
-
-  const [entryTemplate, bibliographyTemplate] = await Promise.all([
-    import('$lib/typst/templates/entry-citation.typ?raw'),
-    import('$lib/typst/templates/bibliography-full.typ?raw')
-  ]);
-
-  await snippet.addSource(ENTRY_TEMPLATE_PATH, entryTemplate.default);
-  await snippet.addSource(
-    BIBLIOGRAPHY_TEMPLATE_PATH,
-    bibliographyTemplate.default
-  );
-  templatesLoaded = true;
-}
-
-async function mapBibliographyAndStyle(
-  snippet: Awaited<ReturnType<typeof getSnippet>>,
+function buildInputs(
   data: Hayagriva,
   typstStyle: string,
   styleLabel: string,
-  customCslBytes?: Uint8Array
-) {
-  const yaml = toYaml(data);
-  await snippet.resetShadow();
-  await snippet.mapShadow(BIBLIOGRAPHY_YAML_PATH, encoder.encode(yaml));
-  if (customCslBytes) {
-    await snippet.mapShadow(CUSTOM_CSL_PATH, customCslBytes);
+  customCslBytes?: Uint8Array,
+  entryKey?: string
+): Record<string, string> {
+  const inputs: Record<string, string> = {
+    yaml: toYaml(data),
+    style: typstStyle,
+    'style-label': styleLabel,
+    csl: customCslBytes?.byteLength
+      ? new TextDecoder().decode(customCslBytes)
+      : ''
+  };
+
+  if (entryKey) {
+    inputs['entry-key'] = entryKey;
   }
 
-  return {
-    inputs: {
-      style: typstStyle,
-      'style-label': styleLabel,
-      'sans-font': TYPST_PREVIEW_FONT
-    }
-  };
+  return inputs;
 }
 
 async function renderSvg(
-  mainFilePath: string,
+  mainContent: string,
   inputs: Record<string, string>
 ): Promise<string> {
+  await ensureTypst();
+  const { $typst } = await import('@myriaddreamin/typst.ts');
+
   return withTimeout(
-    (async () => {
-      const snippet = await getSnippet();
-      await loadTemplates(snippet);
-      return snippet.svg({ mainFilePath, inputs });
-    })(),
+    $typst.svg({ mainContent, inputs }),
     RENDER_TIMEOUT_MS,
     'Typst preview timed out. The first compile downloads ~8MB of WebAssembly and fonts — try again on a stable connection.'
   );
 }
 
+/** Clears cached init so WASM/font options are reapplied on next render. */
 export async function reinitTypstPreview() {
-  snippetInstance = null;
   initPromise = null;
-  templatesLoaded = false;
 }
 
 export async function renderBibliographySvg(
@@ -169,16 +175,10 @@ export async function renderBibliographySvg(
   _sansFont: string,
   customCslBytes?: Uint8Array
 ): Promise<string> {
-  const snippet = await getSnippet();
-  const base = await mapBibliographyAndStyle(
-    snippet,
-    data,
-    typstStyle,
-    styleLabel,
-    customCslBytes
+  return renderSvg(
+    BIBLIOGRAPHY_MAIN,
+    buildInputs(data, typstStyle, styleLabel, customCslBytes)
   );
-
-  return renderSvg(BIBLIOGRAPHY_TEMPLATE_PATH, base.inputs);
 }
 
 export async function renderEntryCitationSvg(
@@ -189,17 +189,8 @@ export async function renderEntryCitationSvg(
   _sansFont: string,
   customCslBytes?: Uint8Array
 ): Promise<string> {
-  const snippet = await getSnippet();
-  const base = await mapBibliographyAndStyle(
-    snippet,
-    data,
-    typstStyle,
-    styleLabel,
-    customCslBytes
+  return renderSvg(
+    ENTRY_MAIN,
+    buildInputs(data, typstStyle, styleLabel, customCslBytes, entryId)
   );
-
-  return renderSvg(ENTRY_TEMPLATE_PATH, {
-    ...base.inputs,
-    'entry-key': entryId
-  });
 }

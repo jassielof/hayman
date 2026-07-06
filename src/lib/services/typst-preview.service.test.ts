@@ -4,38 +4,22 @@ import type { Hayagriva } from '$lib/types/hayagriva';
 const svgMock = vi
   .fn()
   .mockResolvedValue('<svg width="100" height="50"></svg>');
-const resetShadowMock = vi.fn().mockResolvedValue(undefined);
-const mapShadowMock = vi.fn().mockResolvedValue(undefined);
-const addSourceMock = vi.fn().mockResolvedValue(undefined);
 
-vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
-  TypstSnippet: class {
-    use() {
-      return this;
-    }
-    setCompilerInitOptions() {}
-    setRendererInitOptions() {}
-    addSource = addSourceMock;
-    resetShadow = resetShadowMock;
-    mapShadow = mapShadowMock;
-    svg = svgMock;
-    static fetchPackageRegistry() {
-      return () => {};
-    }
-    static disableDefaultFontAssets() {
-      return () => {};
-    }
-    static preloadFonts() {
-      return () => {};
-    }
+vi.mock('@myriaddreamin/typst.ts', () => ({
+  $typst: {
+    use: vi.fn(),
+    setCompilerInitOptions: vi.fn(),
+    setRendererInitOptions: vi.fn(),
+    svg: svgMock
   }
 }));
 
-vi.mock('$lib/typst/templates/entry-citation.typ?raw', () => ({
-  default: '#entry template'
-}));
-vi.mock('$lib/typst/templates/bibliography-full.typ?raw', () => ({
-  default: '#bibliography template'
+vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
+  TypstSnippet: {
+    disableDefaultFontAssets: () => ({}),
+    preloadFonts: () => ({}),
+    fetchPackageRegistry: () => ({})
+  }
 }));
 
 import {
@@ -54,7 +38,7 @@ describe('typst-preview.service', () => {
     await reinitTypstPreview();
   });
 
-  it('renders bibliography SVG via typst snippet', async () => {
+  it('renders bibliography SVG via $typst.svg', async () => {
     const svg = await renderBibliographySvg(
       sampleData,
       'ieee',
@@ -63,14 +47,13 @@ describe('typst-preview.service', () => {
     );
 
     expect(svg).toContain('<svg');
-    expect(resetShadowMock).toHaveBeenCalled();
-    expect(mapShadowMock).toHaveBeenCalled();
     expect(svgMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        mainFilePath: '/templates/bibliography-full.typ',
+        mainContent: expect.stringContaining('#bibliography('),
         inputs: expect.objectContaining({
           style: 'ieee',
-          'sans-font': 'New Computer Modern'
+          yaml: expect.stringContaining('entry1'),
+          csl: ''
         })
       })
     );
@@ -87,22 +70,31 @@ describe('typst-preview.service', () => {
 
     expect(svgMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        mainFilePath: '/templates/entry-citation.typ',
-        inputs: expect.objectContaining({ 'entry-key': 'entry1', style: 'apa' })
+        mainContent: expect.stringContaining('#cite('),
+        inputs: expect.objectContaining({
+          'entry-key': 'entry1',
+          style: 'apa'
+        })
       })
     );
   });
 
-  it('maps custom CSL bytes into shadow filesystem', async () => {
+  it('passes custom CSL through inputs', async () => {
     const csl = new TextEncoder().encode('<style></style>');
     await renderBibliographySvg(
       sampleData,
-      '/styles/custom.csl',
+      'custom',
       'Custom',
       'IBM Plex Sans',
       csl
     );
 
-    expect(mapShadowMock).toHaveBeenCalledWith('/styles/custom.csl', csl);
+    expect(svgMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputs: expect.objectContaining({
+          csl: '<style></style>'
+        })
+      })
+    );
   });
 });

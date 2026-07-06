@@ -9,6 +9,8 @@ const root = path.resolve(__dirname, '..');
 const screenshotsDir = path.join(root, 'static', 'screenshots');
 const previewUrl = 'http://127.0.0.1:4174';
 const demoBibId = 'screenshot-demo';
+const demoBibTitle = 'Sample Bibliography';
+const demoEntryTitle = 'Clean Code';
 
 async function waitForServer(url, timeoutMs = 120_000) {
   const start = Date.now();
@@ -47,11 +49,40 @@ async function seedDemoData(page) {
   await page.goto(`${previewUrl}/__screenshot_demo__`, {
     waitUntil: 'domcontentloaded'
   });
+
+  const error = page.locator('[data-screenshot-error="true"]');
+  if (await error.count()) {
+    throw new Error(`Seed failed: ${await error.textContent()}`);
+  }
+
   await page.waitForSelector('[data-screenshot-ready="true"]', {
     state: 'attached',
     timeout: 60_000
   });
-  await page.waitForTimeout(1000);
+}
+
+async function waitForPageReady(page) {
+  const spinner = page.locator('main .loading-xl.loading-spinner');
+  if (await spinner.count()) {
+    await spinner.waitFor({ state: 'detached', timeout: 60_000 });
+  }
+}
+
+async function waitForBibliographyDetail(page) {
+  await waitForPageReady(page);
+  await page
+    .getByRole('heading', { name: demoBibTitle, level: 1 })
+    .waitFor({ timeout: 60_000 });
+  await page.getByText(demoEntryTitle).first().waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(500);
+}
+
+async function waitForHomeWithBibliography(page) {
+  await waitForPageReady(page);
+  await page
+    .getByRole('heading', { name: demoBibTitle, level: 6 })
+    .waitFor({ timeout: 60_000 });
+  await page.waitForTimeout(500);
 }
 
 async function capture(page, filePath) {
@@ -77,12 +108,12 @@ async function run() {
     await page.goto(`${previewUrl}/bibliography/${demoBibId}`, {
       waitUntil: 'domcontentloaded'
     });
-    await page.waitForTimeout(800);
+    await waitForBibliographyDetail(page);
     await capture(page, path.join(screenshotsDir, 'desktop.png'));
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(previewUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(800);
+    await waitForHomeWithBibliography(page);
     await capture(page, path.join(screenshotsDir, 'mobile.png'));
   } finally {
     await browser?.close();
