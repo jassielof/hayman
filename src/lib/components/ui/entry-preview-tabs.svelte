@@ -6,7 +6,7 @@
   import type { AppSettings } from '$lib/types/app-settings';
   import type { Hayagriva } from '$lib/types/hayagriva';
   import { resolveCitationStyle } from '$lib/utils/citation-style';
-  import { watchMobileViewport } from '$lib/utils/match-mobile';
+  import { isMobileViewport } from '$lib/utils/match-mobile';
   import { cn } from '$lib/utils/cn';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
@@ -34,9 +34,7 @@
   let citationSvg = $state<string | undefined>();
   let citationLoading = $state(false);
   let citationError = $state<string | undefined>();
-  let citationAutoRendered = $state(false);
-  let isMobile = $state(false);
-  let lastRenderedCompact: boolean | undefined;
+  let citationRendered = $state(false);
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
@@ -66,14 +64,16 @@
         resolved.label,
         loaded.fonts,
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
-        isMobile
+        isMobileViewport()
       );
-      lastRenderedCompact = isMobile;
+      citationRendered = true;
     } catch (err) {
       citationError =
         err instanceof Error
           ? err.message
-          : 'Failed to render citation preview.';
+          : typeof err === 'string'
+            ? err
+            : 'Failed to render citation preview.';
       citationSvg = undefined;
     } finally {
       citationLoading = false;
@@ -81,29 +81,13 @@
   }
 
   $effect(() => {
-    return watchMobileViewport((mobile) => {
-      isMobile = mobile;
-    });
-  });
-
-  $effect(() => {
     if (tab !== 'citation') {
-      citationAutoRendered = false;
-      lastRenderedCompact = undefined;
+      citationRendered = false;
       return;
     }
 
-    const compact = isMobile;
-    const needsInitialRender =
-      !citationAutoRendered && !citationLoading && !citationSvg;
-    const compactChanged =
-      lastRenderedCompact !== undefined && lastRenderedCompact !== compact;
+    if (citationRendered || citationLoading) return;
 
-    if (!needsInitialRender && !compactChanged) {
-      return;
-    }
-
-    citationAutoRendered = true;
     queueMicrotask(() => renderCitation());
   });
 </script>

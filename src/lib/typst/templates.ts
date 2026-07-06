@@ -1,10 +1,9 @@
 /** Typst source embedded here so previews do not depend on separate template files. */
 
 export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") == "true"
-#let page-width = if compact { 9cm } else { 17cm }
 #set page(
   margin: if compact { 1cm } else { 1.5cm },
-  width: page-width,
+  width: if compact { 9cm } else { 17cm },
   height: auto,
 )
 #set text(
@@ -31,7 +30,7 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
   sys.inputs.at("style")
 }
 
-#if compact {
+#if compact [
   #lorem(6)
   #cite(key)
 
@@ -43,7 +42,7 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
     style: bib-style,
     title: [References],
   )
-} else {
+] else [
   #lorem(12)
   #cite(key, form: "prose")
 
@@ -64,7 +63,7 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
     style: bib-style,
     title: [References],
   )
-}
+]
 `;
 
 export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1.5cm, height: auto)

@@ -10,8 +10,13 @@ const { svgMock } = vi.hoisted(() => ({
     )
 }));
 
+vi.mock('$lib/typst/fonts', () => ({
+  getTypstFontProviders: () => [{}, {}]
+}));
+
 vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
   $typst: {
+    providers: [],
     use: vi.fn(),
     setCompilerInitOptions: vi.fn(),
     setRendererInitOptions: vi.fn(),
@@ -113,6 +118,26 @@ describe('typst-preview.service', () => {
         mainContent: expect.stringContaining('compact'),
         inputs: expect.objectContaining({
           compact: 'true'
+        })
+      })
+    );
+  });
+
+  it('passes compact false on desktop citation preview', async () => {
+    await renderEntryCitationSvg(
+      sampleData,
+      'entry1',
+      'apa',
+      'apa',
+      sampleFonts,
+      undefined,
+      false
+    );
+
+    expect(svgMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputs: expect.objectContaining({
+          compact: 'false'
         })
       })
     );

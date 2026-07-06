@@ -7,6 +7,14 @@ import {
   ENTRY_CITATION_TEMPLATE
 } from '$lib/typst/templates';
 
+type TypstSnippetState = {
+  providers?: unknown[];
+  use: (...providers: unknown[]) => void;
+  setCompilerInitOptions: (options: Record<string, unknown>) => void;
+  setRendererInitOptions: (options: Record<string, unknown>) => void;
+  svg: (options: Record<string, unknown>) => Promise<string>;
+};
+
 const TYPST_COMPILER_WASM =
   'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@0.7.0/pkg/typst_ts_web_compiler_bg.wasm';
 const TYPST_RENDERER_WASM =
@@ -15,6 +23,7 @@ const TYPST_RENDERER_WASM =
 const RENDER_TIMEOUT_MS = 120_000;
 
 let initPromise: Promise<void> | null = null;
+let renderChain: Promise<unknown> = Promise.resolve();
 
 async function resolveWasmUrls() {
   if (import.meta.env.DEV) {
@@ -61,12 +70,16 @@ async function ensureTypst() {
   }
 
   initPromise = (async () => {
-    const [{ $typst }, wasmUrls] = await Promise.all([
+    const [{ $typst: typstImport }, wasmUrls] = await Promise.all([
       import('@myriaddreamin/typst.ts/contrib/snippet'),
       resolveWasmUrls()
     ]);
+    const $typst = typstImport as unknown as TypstSnippetState;
 
-    $typst.use(...getTypstFontProviders());
+    // Providers can only be registered once per $typst lifetime.
+    if (Array.isArray($typst.providers)) {
+      $typst.use(...getTypstFontProviders());
+    }
 
     $typst.setCompilerInitOptions({
       getModule: () => wasmUrls.compiler
@@ -74,7 +87,10 @@ async function ensureTypst() {
     $typst.setRendererInitOptions({
       getModule: () => wasmUrls.renderer
     });
-  })();
+  })().catch((error) => {
+    initPromise = null;
+    throw error;
+  });
 
   await initPromise;
 }
@@ -101,9 +117,7 @@ function buildInputs(
     inputs['entry-key'] = entryKey;
   }
 
-  if (compact) {
-    inputs.compact = 'true';
-  }
+  inputs.compact = compact ? 'true' : 'false';
 
   return inputs;
 }
@@ -124,21 +138,36 @@ async function renderSvg(
   mainContent: string,
   inputs: Record<string, string>
 ): Promise<string> {
-  await ensureTypst();
-  const { $typst } = await import('@myriaddreamin/typst.ts/contrib/snippet');
+  const task = renderChain.then(async () => {
+    await ensureTypst();
+    const { $typst: typstImport } =
+      await import('@myriaddreamin/typst.ts/contrib/snippet');
+    const $typst = typstImport as unknown as TypstSnippetState;
 
-  const svg = await withTimeout(
-    $typst.svg({ mainContent, inputs }),
-    RENDER_TIMEOUT_MS,
-    'Typst preview timed out. The first compile downloads WebAssembly (~8MB) — try again on a stable connection.'
-  );
+    const svg = await withTimeout(
+      $typst.svg({ mainContent, inputs }),
+      RENDER_TIMEOUT_MS,
+      'Typst preview timed out. The first compile downloads WebAssembly (~8MB) — try again on a stable connection.'
+    );
 
-  return makeSvgResponsive(svg);
+    return makeSvgResponsive(svg);
+  });
+
+  renderChain = task.catch(() => {});
+  return task;
 }
 
 /** Clears cached init so WASM options are reapplied on next render. */
 export async function reinitTypstPreview() {
   initPromise = null;
+  renderChain = Promise.resolve();
+
+  const { $typst: typstImport } =
+    await import('@myriaddreamin/typst.ts/contrib/snippet');
+  const $typst = typstImport as unknown as TypstSnippetState;
+  if ($typst.providers === undefined) {
+    $typst.providers = [];
+  }
 }
 
 export async function renderBibliographySvg(
