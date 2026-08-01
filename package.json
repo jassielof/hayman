@@ -53,6 +53,6 @@
     "dexie-svelte-query": "^1.0.0",
     "highlight.js": "^11.11.1",
     "mode-watcher": "^1.1.0",
-    "yaml": "^2.8.3"
+    "yaml": "^2.9.0"
   }
 }
