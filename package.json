@@ -16,7 +16,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@eslint/js": "^10.0.1",
-    "@ibm/plex-mono": "^1.1.0",
+    "@ibm/plex-mono": "^2.5.0",
     "@ibm/plex-sans": "^1.1.0",
     "@ibm/plex-serif": "^2.0.0",
     "@internationalized/date": "^3.12.1",
