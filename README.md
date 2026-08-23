@@ -2,17 +2,7 @@
 
 A Zotero-like manager for Hayagriva. It allows you to manage multiple Hayagriva bibliographies locally (in your browser).
 
-## Technologies
-
-- SvelteKit
-- TS
-- Bun
-- DaisyUI/TailwindCSS
-- IndexedDB for local storage (Dexie.js)
-
-> All latest version.
-
-## Functional Requirements
+<!-- ## Functional Requirements
 
 ### Client-side Only
 
@@ -97,4 +87,4 @@ All operations are performed in the browser, or well, since it's supposed to wor
 
 - It should be a PWA and usable offline.
   - The PWA is kinda already done with SvelteKitPWA vite plugin.
-  - Aside of that I'll need to ensure the rest of features with dev tools.
+  - Aside of that I'll need to ensure the rest of features with dev tools. -->
