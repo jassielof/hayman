@@ -33,10 +33,14 @@ export class SettingsService {
 
   static async clearCustomCsl() {
     const current = await this.get();
+    const nextDefaultStyle =
+      current.citation.defaultStyle === 'custom'
+        ? 'ieee'
+        : current.citation.defaultStyle;
     const next: AppSettings = {
       ...current,
       id: SETTINGS_ROW_ID,
-      citation: { defaultStyle: current.citation.defaultStyle }
+      citation: { defaultStyle: nextDefaultStyle }
     };
     await db.settings.put(next);
     applyFontSettings(next.fonts);

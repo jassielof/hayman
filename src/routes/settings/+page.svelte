@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { reinitTypstPreview } from '$lib/services/typst-preview.service';
   import { SettingsService } from '$lib/services/settings.service';
+  import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
   import {
     DEFAULT_APP_SETTINGS,
     FONT_PRESETS,
@@ -16,6 +17,8 @@
   let savedMessage = $state<string | undefined>();
   let isSubmitting = $state(false);
   let cslFile: FileList | undefined = $state(undefined);
+  let defaultKind = $state<'bundled' | 'custom-csl'>('bundled');
+  let bundledDefaultStyle = $state(DEFAULT_APP_SETTINGS.citation.defaultStyle);
 
   const returnTo = $derived(page.url.searchParams.get('from'));
   const backHref = $derived.by(() => {
@@ -31,6 +34,19 @@
   $effect(() => {
     SettingsService.get().then((loaded) => {
       settings = loaded;
+      if (
+        loaded.citation.defaultStyle === CUSTOM_CSL_STYLE &&
+        loaded.citation.customCsl?.trim()
+      ) {
+        defaultKind = 'custom-csl';
+        bundledDefaultStyle = 'ieee';
+      } else {
+        defaultKind = 'bundled';
+        bundledDefaultStyle =
+          loaded.citation.defaultStyle === CUSTOM_CSL_STYLE
+            ? 'ieee'
+            : loaded.citation.defaultStyle || 'ieee';
+      }
     });
   });
 
@@ -41,6 +57,7 @@
     reader.onload = () => {
       settings.citation.customCsl = String(reader.result ?? '');
       settings.citation.customCslName = file.name;
+      defaultKind = 'custom-csl';
       cslFile = undefined;
     };
     reader.readAsText(file);
@@ -54,10 +71,24 @@
     errorMessage = undefined;
     savedMessage = undefined;
 
+    const citation = {
+      ...settings.citation,
+      defaultStyle:
+        defaultKind === 'custom-csl'
+          ? CUSTOM_CSL_STYLE
+          : bundledDefaultStyle.trim() || 'ieee'
+    };
+
+    if (defaultKind === 'custom-csl' && !citation.customCsl?.trim()) {
+      errorMessage = 'Upload a CSL file or choose a built-in Typst style.';
+      isSubmitting = false;
+      return;
+    }
+
     try {
       await SettingsService.update({
         fonts: settings.fonts,
-        citation: settings.citation
+        citation
       });
       await reinitTypstPreview();
       savedMessage = 'Settings saved.';
@@ -72,6 +103,11 @@
   async function clearCsl() {
     await SettingsService.clearCustomCsl();
     settings = await SettingsService.get();
+    defaultKind = 'bundled';
+    bundledDefaultStyle =
+      settings.citation.defaultStyle === CUSTOM_CSL_STYLE
+        ? 'ieee'
+        : settings.citation.defaultStyle;
   }
 </script>
 
@@ -109,40 +145,81 @@
     </fieldset>
 
     <fieldset class="fieldset">
-      <legend class="fieldset-legend">Citation preview</legend>
-
-      <label class="label" for="default-style">Default style</label>
-      <input
-        id="default-style"
-        class="input font-mono"
-        placeholder="ieee"
-        bind:value={settings.citation.defaultStyle}
-      />
-      <p class="text-xs text-muted-foreground">
-        Built-in Typst style name (e.g. ieee, apa, chicago-author-date, mla) or
-        use <code class="font-mono">custom</code> with a CSL file below.
+      <legend class="fieldset-legend">Citation preview default</legend>
+      <p class="text-sm text-muted-foreground">
+        Choose one default for previews. Typst built-in styles and an uploaded
+        CSL file are mutually exclusive defaults.
       </p>
 
-      <label class="label" for="csl-upload">Custom CSL file</label>
-      <div class="flex flex-wrap items-center gap-2">
+      <label class="label flex cursor-pointer items-start gap-2 font-normal">
         <input
-          id="csl-upload"
-          type="file"
-          class="file-input"
-          accept=".csl,application/xml,text/xml"
-          bind:files={cslFile}
+          type="radio"
+          class="radio mt-0.5"
+          name="citation-default-kind"
+          checked={defaultKind === 'bundled'}
+          onchange={() => (defaultKind = 'bundled')}
         />
-        {#if settings.citation.customCslName}
-          <span class="text-sm">{settings.citation.customCslName}</span>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline"
-            onclick={clearCsl}
-          >
-            Clear
-          </button>
-        {/if}
-      </div>
+        <span>
+          Typst built-in style
+          <span class="block text-xs text-muted-foreground">
+            e.g. ieee, apa, chicago-author-date, mla
+          </span>
+        </span>
+      </label>
+
+      {#if defaultKind === 'bundled'}
+        <input
+          id="default-style"
+          class="input font-mono"
+          placeholder="ieee"
+          bind:value={bundledDefaultStyle}
+        />
+      {/if}
+
+      <label class="label mt-3 flex cursor-pointer items-start gap-2 font-normal">
+        <input
+          type="radio"
+          class="radio mt-0.5"
+          name="citation-default-kind"
+          checked={defaultKind === 'custom-csl'}
+          onchange={() => (defaultKind = 'custom-csl')}
+        />
+        <span>
+          Uploaded CSL file
+          <span class="block text-xs text-muted-foreground">
+            Uses your CSL instead of a Typst bundled style.
+          </span>
+        </span>
+      </label>
+
+      {#if defaultKind === 'custom-csl'}
+        <label class="label" for="csl-upload">Custom CSL file</label>
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            id="csl-upload"
+            type="file"
+            class="file-input"
+            accept=".csl,application/xml,text/xml"
+            bind:files={cslFile}
+          />
+          {#if settings.citation.customCslName}
+            <span class="text-sm">{settings.citation.customCslName}</span>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline"
+              onclick={clearCsl}
+            >
+              Clear
+            </button>
+          {/if}
+        </div>
+      {:else if settings.citation.customCslName}
+        <p class="text-xs text-muted-foreground">
+          Stored CSL ({settings.citation.customCslName}) is kept but inactive
+          while a built-in style is the default. Switch to “Uploaded CSL file”
+          to use it.
+        </p>
+      {/if}
     </fieldset>
 
     {#if errorMessage}

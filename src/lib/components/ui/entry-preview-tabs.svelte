@@ -5,7 +5,9 @@
   import { renderEntryCitationSvg } from '$lib/services/typst-preview.service';
   import type { AppSettings } from '$lib/types/app-settings';
   import type { Hayagriva } from '$lib/types/hayagriva';
-  import { resolveCitationStyle } from '$lib/utils/citation-style';
+  import {
+    resolvePreviewCitationStyle
+  } from '$lib/utils/citation-style';
   import { isMobileViewport } from '$lib/utils/match-mobile';
   import { cn } from '$lib/utils/cn';
   import { Tabs } from 'bits-ui';
@@ -31,6 +33,7 @@
   let settings = $state<AppSettings | null>(null);
   let styleInput = $state('ieee');
   let useDefaultStyle = $state(true);
+  let overrideKind = $state<'bundled' | 'custom-csl'>('bundled');
   let citationSvg = $state<string | undefined>();
   let citationLoading = $state(false);
   let citationError = $state<string | undefined>();
@@ -53,10 +56,11 @@
     try {
       const loaded = settings ?? (await SettingsService.get());
       settings = loaded;
-      const resolved = resolveCitationStyle(
-        useDefaultStyle ? loaded.citation.defaultStyle : styleInput,
-        loaded
-      );
+      const resolved = resolvePreviewCitationStyle(loaded, {
+        useSettingsDefault: useDefaultStyle,
+        overrideKind,
+        bundledStyle: styleInput
+      });
       citationSvg = await renderEntryCitationSvg(
         bibliographyData,
         entryId,
@@ -150,6 +154,7 @@
       bind:settings
       bind:styleInput
       bind:useDefaultStyle
+      bind:overrideKind
       onRender={renderCitation}
     />
     <TypstPreview

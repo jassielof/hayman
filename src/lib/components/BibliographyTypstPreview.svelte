@@ -5,7 +5,7 @@
   import { renderBibliographySvg } from '$lib/services/typst-preview.service';
   import type { AppSettings } from '$lib/types/app-settings';
   import type { Hayagriva } from '$lib/types/hayagriva';
-  import { resolveCitationStyle } from '$lib/utils/citation-style';
+  import { resolvePreviewCitationStyle } from '$lib/utils/citation-style';
 
   let {
     bibliographyData,
@@ -18,6 +18,7 @@
   let settings = $state<AppSettings | null>(null);
   let styleInput = $state('ieee');
   let useDefaultStyle = $state(true);
+  let overrideKind = $state<'bundled' | 'custom-csl'>('bundled');
   let svg = $state<string | undefined>();
   let loading = $state(false);
   let error = $state<string | undefined>();
@@ -35,10 +36,11 @@
     try {
       const loaded = settings ?? (await SettingsService.get());
       settings = loaded;
-      const resolved = resolveCitationStyle(
-        useDefaultStyle ? loaded.citation.defaultStyle : styleInput,
-        loaded
-      );
+      const resolved = resolvePreviewCitationStyle(loaded, {
+        useSettingsDefault: useDefaultStyle,
+        overrideKind,
+        bundledStyle: styleInput
+      });
       svg = await renderBibliographySvg(
         bibliographyData,
         resolved.typstStyle,
@@ -69,6 +71,7 @@
     bind:settings
     bind:styleInput
     bind:useDefaultStyle
+    bind:overrideKind
     onRender={renderPreview}
   />
   <TypstPreview {svg} {loading} {error} />

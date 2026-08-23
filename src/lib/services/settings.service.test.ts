@@ -39,6 +39,6 @@ describe('SettingsService', () => {
     const settings = await SettingsService.get();
     expect(settings.citation.customCslName).toBeUndefined();
     expect(settings.citation.customCsl).toBeUndefined();
-    expect(settings.citation.defaultStyle).toBe('custom');
+    expect(settings.citation.defaultStyle).toBe('ieee');
   });
 });
