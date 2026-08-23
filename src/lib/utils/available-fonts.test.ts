@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ALWAYS_AVAILABLE_FONTS,
-  classifyFontFamily,
+  BUNDLED_FONT_OPTIONS,
+  SYSTEM_FONT_OPTIONS,
   isCssGenericFamily,
   toFontStack
 } from '$lib/utils/available-fonts';
@@ -23,17 +23,15 @@ describe('available-fonts', () => {
     expect(toFontStack('monospace', 'monospace')).toBe('monospace');
   });
 
-  it('classifies common family names', () => {
-    expect(classifyFontFamily('IBM Plex Sans')).toBe('sans');
-    expect(classifyFontFamily('IBM Plex Serif')).toBe('serif');
-    expect(classifyFontFamily('IBM Plex Mono')).toBe('mono');
-    expect(classifyFontFamily('Cascadia Code')).toBe('mono');
-    expect(classifyFontFamily('Times New Roman')).toBe('serif');
+  it('lists bundled app fonts explicitly', () => {
+    expect(BUNDLED_FONT_OPTIONS.sans).toContain('IBM Plex Sans');
+    expect(BUNDLED_FONT_OPTIONS.serif).toContain('IBM Plex Serif');
+    expect(BUNDLED_FONT_OPTIONS.mono).toContain('IBM Plex Mono');
   });
 
-  it('always includes portable generics', () => {
-    expect(ALWAYS_AVAILABLE_FONTS.sans).toContain('system-ui');
-    expect(ALWAYS_AVAILABLE_FONTS.serif).toContain('serif');
-    expect(ALWAYS_AVAILABLE_FONTS.mono).toContain('monospace');
+  it('always includes portable system stacks', () => {
+    expect(SYSTEM_FONT_OPTIONS.sans).toContain('system-ui');
+    expect(SYSTEM_FONT_OPTIONS.serif).toContain('serif');
+    expect(SYSTEM_FONT_OPTIONS.mono).toContain('monospace');
   });
 });

@@ -15,7 +15,6 @@
     Calendar,
     ChevronDown,
     Copy,
-    Ellipsis,
     Eye,
     Hash,
     Pencil,
@@ -158,7 +157,7 @@
   onConfirm={confirmBulkDelete}
 />
 
-<div class="card mt-4 shadow-md">
+<div class="card mt-4 overflow-hidden shadow-md">
   {#if entryList.length === 0}
     <div class="card-body">
       <p class="text-center text-muted-foreground">
@@ -264,7 +263,7 @@
       {/if}
     </div>
 
-    <ul class="list">
+    <ul class="divide-y divide-border">
       <li
         class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 bg-muted/50 p-4 text-xs font-medium uppercase"
       >
@@ -330,60 +329,31 @@
                 </span>
               {/if}
             </div>
-            <div class="flex items-center justify-end">
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger
-                  class="btn btn-sm btn-ghost btn-square"
-                  aria-label={`Actions for entry ${id}`}
-                >
-                  <Ellipsis class="size-4" />
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.Content
-                    class={cn(
-                      'z-50 min-w-40 rounded-md border border-border bg-card p-1 shadow-md'
-                    )}
-                    side="left"
-                  >
-                    <DropdownMenu.Item>
-                      {#snippet child({ props })}
-                        <a
-                          {...props}
-                          href={resolve(
-                            `/bibliography/${bibliographyId}/entry/${id}`
-                          )}
-                          class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                        >
-                          <Eye class="size-4" />
-                          View
-                        </a>
-                      {/snippet}
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Item>
-                      {#snippet child({ props })}
-                        <a
-                          {...props}
-                          href={resolve(
-                            `/bibliography/${bibliographyId}/entry/${id}/edit`
-                          )}
-                          class="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                        >
-                          <Pencil class="size-4" />
-                          Edit
-                        </a>
-                      {/snippet}
-                    </DropdownMenu.Item>
-                    <DropdownMenu.Separator class="my-1 h-px bg-border" />
-                    <DropdownMenu.Item
-                      class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
-                      onSelect={() => requestDelete(id)}
-                    >
-                      <Trash class="size-4" />
-                      Delete
-                    </DropdownMenu.Item>
-                  </DropdownMenu.Content>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Root>
+            <div class="flex flex-wrap items-center justify-end gap-1">
+              <a
+                class="btn btn-sm btn-soft"
+                href={resolve(`/bibliography/${bibliographyId}/entry/${id}`)}
+              >
+                <Eye class="size-4" />
+                <span class="hidden sm:inline">View</span>
+              </a>
+              <a
+                class="btn btn-sm btn-soft"
+                href={resolve(
+                  `/bibliography/${bibliographyId}/entry/${id}/edit`
+                )}
+              >
+                <Pencil class="size-4" />
+                <span class="hidden sm:inline">Edit</span>
+              </a>
+              <button
+                type="button"
+                class="btn btn-sm btn-soft btn-error"
+                onclick={() => requestDelete(id)}
+              >
+                <Trash class="size-4" />
+                <span class="hidden sm:inline">Delete</span>
+              </button>
             </div>
           </li>
         {/each}

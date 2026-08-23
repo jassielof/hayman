@@ -5,19 +5,17 @@
   import { renderEntryCitationSvg } from '$lib/services/typst-preview.service';
   import type { AppSettings } from '$lib/types/app-settings';
   import type { Hayagriva } from '$lib/types/hayagriva';
-  import {
-    resolvePreviewCitationStyle
-  } from '$lib/utils/citation-style';
+  import { resolvePreviewCitationStyle } from '$lib/utils/citation-style';
   import { isMobileViewport } from '$lib/utils/match-mobile';
   import { cn } from '$lib/utils/cn';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
-  import { BookOpen, Clipboard, Code } from '@lucide/svelte';
+  import { BookOpen, Check, Clipboard, Code } from '@lucide/svelte';
 
   hljs.registerLanguage('yaml', yaml);
 
-  let { 
+  let {
     entryId,
     bibliographyData,
     entryYamlData
@@ -33,14 +31,27 @@
   let styleInput = $state('ieee');
   let useDefaultStyle = $state(true);
   let overrideKind = $state<'bundled' | 'custom-csl'>('bundled');
+  let styleInputDebounced = $state('ieee');
   let citationSvg = $state<string | undefined>();
   let citationLoading = $state(false);
   let citationError = $state<string | undefined>();
-  let citationRendered = $state(false);
+  let lastRenderedStyleKey = $state<string | null>(null);
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
     hljs.highlight(yamlSource, { language: 'yaml' }).value
+  );
+
+  const previewStyleKey = $derived(
+    settings
+      ? JSON.stringify({
+          useDefaultStyle,
+          overrideKind,
+          style: styleInputDebounced.trim(),
+          defaultStyle: settings.citation.defaultStyle,
+          cslName: settings.citation.customCslName ?? ''
+        })
+      : null
   );
 
   async function copyYaml() {
@@ -58,7 +69,7 @@
       const resolved = resolvePreviewCitationStyle(loaded, {
         useSettingsDefault: useDefaultStyle,
         overrideKind,
-        bundledStyle: styleInput
+        bundledStyle: styleInputDebounced
       });
       citationSvg = await renderEntryCitationSvg(
         bibliographyData,
@@ -69,7 +80,7 @@
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
         isMobileViewport()
       );
-      citationRendered = true;
+      lastRenderedStyleKey = previewStyleKey;
     } catch (err) {
       citationError =
         err instanceof Error
@@ -84,12 +95,27 @@
   }
 
   $effect(() => {
-    if (tab !== 'citation') {
-      citationRendered = false;
+    const value = styleInput;
+    if (useDefaultStyle || overrideKind !== 'bundled') {
+      styleInputDebounced = value;
       return;
     }
 
-    if (citationRendered || citationLoading) return;
+    const timer = setTimeout(() => {
+      styleInputDebounced = value;
+    }, 400);
+
+    return () => clearTimeout(timer);
+  });
+
+  $effect(() => {
+    if (tab !== 'citation') {
+      lastRenderedStyleKey = null;
+      return;
+    }
+
+    const key = previewStyleKey;
+    if (!key || citationLoading || key === lastRenderedStyleKey) return;
 
     queueMicrotask(() => renderCitation());
   });
@@ -125,26 +151,29 @@
     value="code"
     class="mt-4 rounded-lg border border-border bg-card p-4 sm:p-6"
   >
-    <div class="relative">
+    <div class="space-y-2">
+      <div class="flex items-center justify-end">
+        <button
+          type="button"
+          class={cn(
+            'btn btn-sm',
+            copied ? 'btn-success' : 'btn-outline'
+          )}
+          aria-label={copied ? 'YAML copied to clipboard' : 'Copy YAML to clipboard'}
+          onclick={copyYaml}
+        >
+          {#if copied}
+            <Check class="size-4" />
+            Copied
+          {:else}
+            <Clipboard class="size-4" />
+            Copy YAML
+          {/if}
+        </button>
+      </div>
       <pre class="code-block w-full overflow-x-auto"><code
           class="hljs language-yaml">{@html highlightedYaml}</code
         ></pre>
-      <button
-        type="button"
-        class="btn btn-sm btn-neutral absolute top-2 right-2"
-        aria-label="Copy YAML to clipboard"
-        onclick={copyYaml}
-      >
-        <Clipboard class="size-4" />
-      </button>
-      {#if copied}
-        <span
-          class="absolute top-2 right-24 rounded bg-primary px-2 py-1 text-xs text-primary-foreground"
-          role="status"
-        >
-          Copied!
-        </span>
-      {/if}
     </div>
   </Tabs.Content>
 

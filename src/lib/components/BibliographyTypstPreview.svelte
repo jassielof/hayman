@@ -19,10 +19,23 @@
   let styleInput = $state('ieee');
   let useDefaultStyle = $state(true);
   let overrideKind = $state<'bundled' | 'custom-csl'>('bundled');
+  let styleInputDebounced = $state('ieee');
   let svg = $state<string | undefined>();
   let loading = $state(false);
   let error = $state<string | undefined>();
-  let previewRendered = $state(false);
+  let lastRenderedStyleKey = $state<string | null>(null);
+
+  const previewStyleKey = $derived(
+    settings
+      ? JSON.stringify({
+          useDefaultStyle,
+          overrideKind,
+          style: styleInputDebounced.trim(),
+          defaultStyle: settings.citation.defaultStyle,
+          cslName: settings.citation.customCslName ?? ''
+        })
+      : null
+  );
 
   function customCslText(loaded: AppSettings) {
     return loaded.citation.customCsl?.trim()
@@ -39,7 +52,7 @@
       const resolved = resolvePreviewCitationStyle(loaded, {
         useSettingsDefault: useDefaultStyle,
         overrideKind,
-        bundledStyle: styleInput
+        bundledStyle: styleInputDebounced
       });
       svg = await renderBibliographySvg(
         bibliographyData,
@@ -48,7 +61,7 @@
         loaded.fonts,
         resolved.useCustomCsl ? customCslText(loaded) : undefined
       );
-      previewRendered = true;
+      lastRenderedStyleKey = previewStyleKey;
     } catch (err) {
       error =
         err instanceof Error
@@ -61,7 +74,28 @@
   }
 
   $effect(() => {
-    if (!active || previewRendered || loading) return;
+    const value = styleInput;
+    if (useDefaultStyle || overrideKind !== 'bundled') {
+      styleInputDebounced = value;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      styleInputDebounced = value;
+    }, 400);
+
+    return () => clearTimeout(timer);
+  });
+
+  $effect(() => {
+    if (!active) {
+      lastRenderedStyleKey = null;
+      return;
+    }
+
+    const key = previewStyleKey;
+    if (!key || loading || key === lastRenderedStyleKey) return;
+
     queueMicrotask(() => renderPreview());
   });
 </script>

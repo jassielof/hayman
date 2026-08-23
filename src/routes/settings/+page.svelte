@@ -139,13 +139,12 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
       <p class="text-sm text-muted-foreground">
-        Lists CSS generics, fonts this app has loaded, and system faces detected
-        in this browser. Dropping a bundled webfont removes it from the list
-        automatically. Typst previews use the compiler’s own font set.
+        System stacks plus app-bundled webfonts (when loaded). Typst previews
+        use the compiler’s own font set.
       </p>
 
       {#if fontsLoading}
-        <p class="text-sm text-muted-foreground">Detecting available fonts…</p>
+        <p class="text-sm text-muted-foreground">Loading font options…</p>
       {/if}
 
       <label class="label" for="font-sans">Sans-serif</label>
