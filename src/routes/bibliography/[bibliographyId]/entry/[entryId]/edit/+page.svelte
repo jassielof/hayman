@@ -132,7 +132,7 @@
 
     <EntryForm bind:entryData={newEntryData} />
 
-    <button class="btn mt-4 btn-success" disabled={isSubmitting}>
+    <button class="btn btn-success mt-4" disabled={isSubmitting}>
       {#if isSubmitting}
         <span class="loading loading-sm loading-spinner"></span>
       {:else}

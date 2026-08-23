@@ -20,7 +20,7 @@
 <SettingsBootstrap />
 
 <header class="navbar">
-  <a href={resolve('/')} class="btn text-xl btn-ghost">Hayagriva Manager</a>
+  <a href={resolve('/')} class="btn btn-ghost text-xl">Hayagriva Manager</a>
   <div class="ml-auto flex items-center gap-1">
     <a
       href="{resolve('/settings')}?from={settingsFrom}"

@@ -29,9 +29,10 @@
       settings = loaded;
       if (useDefaultStyle) return;
       if (overrideKind === 'bundled' && !styleInput.trim()) {
-        styleInput = loaded.citation.defaultStyle === 'custom'
-          ? 'ieee'
-          : loaded.citation.defaultStyle || 'ieee';
+        styleInput =
+          loaded.citation.defaultStyle === 'custom'
+            ? 'ieee'
+            : loaded.citation.defaultStyle || 'ieee';
       }
     });
   });
@@ -54,7 +55,9 @@
       : null
   );
 
-  const customCslAvailable = $derived(settings ? hasCustomCsl(settings) : false);
+  const customCslAvailable = $derived(
+    settings ? hasCustomCsl(settings) : false
+  );
 </script>
 
 <div class="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
@@ -127,7 +130,9 @@
         />
         Uploaded CSL from settings
         {#if settings?.citation.customCslName}
-          <span class="font-mono text-xs">({settings.citation.customCslName})</span>
+          <span class="font-mono text-xs"
+            >({settings.citation.customCslName})</span
+          >
         {/if}
       </label>
 

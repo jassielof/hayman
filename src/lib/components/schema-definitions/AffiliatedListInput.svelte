@@ -60,7 +60,7 @@
     </div>
   {/if}
 
-  <button type="button" class="btn w-full btn-outline" onclick={addAffiliated}>
+  <button type="button" class="btn btn-outline w-full" onclick={addAffiliated}>
     <Plus class="size-[1.2em]" />
     Add Affiliated Person
   </button>

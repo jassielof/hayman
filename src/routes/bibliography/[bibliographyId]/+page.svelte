@@ -33,7 +33,7 @@
     </div>
   {:else if bibliography === null || bibliography === undefined}
     <div class="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-      <p role="alert" class="text-lg text-error">Bibliography not found.</p>
+      <p role="alert" class="text-error text-lg">Bibliography not found.</p>
       <a class="btn btn-primary" href={resolve('/')}>Back to home</a>
     </div>
   {:else}

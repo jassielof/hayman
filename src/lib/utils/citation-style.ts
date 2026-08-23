@@ -19,7 +19,8 @@ export function hasCustomCsl(settings: AppSettings): boolean {
 /** Whether settings use the uploaded CSL as the default preview style. */
 export function usesCustomCslDefault(settings: AppSettings): boolean {
   return (
-    settings.citation.defaultStyle === CUSTOM_CSL_STYLE && hasCustomCsl(settings)
+    settings.citation.defaultStyle === CUSTOM_CSL_STYLE &&
+    hasCustomCsl(settings)
   );
 }
 
@@ -62,10 +63,7 @@ export function resolveCitationStyle(
 ): ResolvedCitationStyle {
   const trimmed = styleInput.trim();
 
-  if (
-    trimmed === CUSTOM_CSL_STYLE &&
-    hasCustomCsl(settings)
-  ) {
+  if (trimmed === CUSTOM_CSL_STYLE && hasCustomCsl(settings)) {
     return {
       typstStyle: CUSTOM_CSL_STYLE,
       label: settings.citation.customCslName ?? 'Custom CSL',

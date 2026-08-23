@@ -46,7 +46,7 @@
   {#if value === undefined || value === null}
     <button
       type="button"
-      class="btn w-full btn-outline btn-success"
+      class="btn btn-outline btn-success w-full"
       onclick={addPerson}
     >
       <Plus class="size-[1.2em]" /> Add {label}
@@ -58,7 +58,7 @@
 
     <button
       type="button"
-      class="btn mt-2 w-full btn-outline btn-success"
+      class="btn btn-outline btn-success mt-2 w-full"
       onclick={addPerson}
     >
       <Plus class="size-[1.2em]" /> Add Person
@@ -68,7 +68,7 @@
 
     <button
       type="button"
-      class="btn mt-2 w-full btn-outline btn-success"
+      class="btn btn-outline btn-success mt-2 w-full"
       onclick={addPerson}
     >
       <Plus class="size-[1.2em]" /> Add Person

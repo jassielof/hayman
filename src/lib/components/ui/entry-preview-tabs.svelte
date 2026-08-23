@@ -155,11 +155,10 @@
       <div class="flex items-center justify-end">
         <button
           type="button"
-          class={cn(
-            'btn btn-sm',
-            copied ? 'btn-success' : 'btn-outline'
-          )}
-          aria-label={copied ? 'YAML copied to clipboard' : 'Copy YAML to clipboard'}
+          class={cn('btn btn-sm', copied ? 'btn-success' : 'btn-outline')}
+          aria-label={copied
+            ? 'YAML copied to clipboard'
+            : 'Copy YAML to clipboard'}
           onclick={copyYaml}
         >
           {#if copied}

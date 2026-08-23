@@ -216,7 +216,9 @@
         />
       {/if}
 
-      <label class="label mt-3 flex cursor-pointer items-start gap-2 font-normal">
+      <label
+        class="label mt-3 flex cursor-pointer items-start gap-2 font-normal"
+      >
         <input
           type="radio"
           class="radio mt-0.5"

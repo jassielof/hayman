@@ -148,7 +148,7 @@
       </div>
     </div>
   {/if}
-  <button class="btn mt-2 btn-error" type="button" onclick={() => remove()}
+  <button class="btn btn-error mt-2" type="button" onclick={() => remove()}
     >Remove</button
   >
 </fieldset>

@@ -345,7 +345,7 @@
 
   <button
     type="button"
-    class="btn w-full btn-outline btn-sm"
+    class="btn btn-outline btn-sm w-full"
     onclick={() => {
       customSerials.push({ key: '', value: '' });
     }}
