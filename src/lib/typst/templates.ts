@@ -5,7 +5,12 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
   margin: if compact { 1cm } else { 1.5cm },
   width: if compact { 9cm } else { 17cm },
   height: auto,
+  header: text(
+    size: if compact { 10pt } else { 12pt },
+    fill: gray,
+  )[Style: #sys.inputs.at("style-label")]
 )
+
 #set text(
   font: (
     sys.inputs.at("font-sans"),
@@ -18,11 +23,6 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
   size: if compact { 11pt } else { 12pt },
 )
 
-#text(
-  size: if compact { 10pt } else { 12pt },
-  fill: gray,
-)[Style: #sys.inputs.at("style-label")]
-
 #let key = label(sys.inputs.at("entry-key"))
 #let bib-style = if sys.inputs.at("csl") != "" {
   bytes(sys.inputs.at("csl"))
@@ -30,40 +30,20 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
   sys.inputs.at("style")
 }
 
-#if compact [
-  #lorem(6)
-  #cite(key)
+According to~#cite(key), #lorem(5)~#cite(key, form: "prose").
 
-  #lorem(4)
-  #cite(key, form: "prose")
+#cite(key, form: "author") described it in the year #cite(key, form: "year").
 
-  #bibliography(
-    bytes(sys.inputs.at("yaml")),
-    style: bib-style,
-    title: [References],
-  )
-] else [
-  #lorem(12)
-  #cite(key, form: "prose")
+#if not compact [
+  #cite(key)#cite(key).
 
-  #lorem(8)
-  #cite(key)
-
-  #lorem(8)
-  #cite(key, form: "author")
-
-  #lorem(8)
-  #cite(key, form: "year")
-
-  #lorem(8)
-  #cite(key, form: "full")
-
-  #bibliography(
-    bytes(sys.inputs.at("yaml")),
-    style: bib-style,
-    title: [References],
-  )
+  #cite(key, supplement: [pp. 1--5]).
 ]
+
+#bibliography(
+  bytes(sys.inputs.at("yaml")),
+  style: bib-style,
+)
 `;
 
 export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1.5cm, height: auto)
