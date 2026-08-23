@@ -5,6 +5,7 @@
   import { ModeWatcher, toggleMode } from 'mode-watcher';
   import { Moon, Settings, Sun } from '@lucide/svelte';
   import './layout.css';
+  import './hljs-theme.css';
 
   let { children } = $props();
 

@@ -5,9 +5,9 @@
   import { reinitTypstPreview } from '$lib/services/typst-preview.service';
   import { SettingsService } from '$lib/services/settings.service';
   import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
+  import { listAvailableFonts } from '$lib/utils/available-fonts';
   import {
     DEFAULT_APP_SETTINGS,
-    FONT_PRESETS,
     type AppSettings
   } from '$lib/types/app-settings';
   import { ArrowLeft, CircleAlert, Save } from '@lucide/svelte';
@@ -19,6 +19,12 @@
   let cslFile: FileList | undefined = $state(undefined);
   let defaultKind = $state<'bundled' | 'custom-csl'>('bundled');
   let bundledDefaultStyle = $state(DEFAULT_APP_SETTINGS.citation.defaultStyle);
+  let availableFonts = $state<Record<'sans' | 'serif' | 'mono', string[]>>({
+    sans: [DEFAULT_APP_SETTINGS.fonts.sans],
+    serif: [DEFAULT_APP_SETTINGS.fonts.serif],
+    mono: [DEFAULT_APP_SETTINGS.fonts.mono]
+  });
+  let fontsLoading = $state(true);
 
   const returnTo = $derived(page.url.searchParams.get('from'));
   const backHref = $derived.by(() => {
@@ -32,7 +38,10 @@
   );
 
   $effect(() => {
-    SettingsService.get().then((loaded) => {
+    let cancelled = false;
+
+    SettingsService.get().then(async (loaded) => {
+      if (cancelled) return;
       settings = loaded;
       if (
         loaded.citation.defaultStyle === CUSTOM_CSL_STYLE &&
@@ -47,7 +56,19 @@
             ? 'ieee'
             : loaded.citation.defaultStyle || 'ieee';
       }
+
+      fontsLoading = true;
+      try {
+        const fonts = await listAvailableFonts({ current: loaded.fonts });
+        if (!cancelled) availableFonts = fonts;
+      } finally {
+        if (!cancelled) fontsLoading = false;
+      }
     });
+
+    return () => {
+      cancelled = true;
+    };
   });
 
   $effect(() => {
@@ -118,27 +139,47 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
       <p class="text-sm text-muted-foreground">
-        Applied across the web UI. Typst previews use the compiler’s default
-        fonts.
+        Lists CSS generics, fonts this app has loaded, and system faces detected
+        in this browser. Dropping a bundled webfont removes it from the list
+        automatically. Typst previews use the compiler’s own font set.
       </p>
 
+      {#if fontsLoading}
+        <p class="text-sm text-muted-foreground">Detecting available fonts…</p>
+      {/if}
+
       <label class="label" for="font-sans">Sans-serif</label>
-      <select id="font-sans" class="select" bind:value={settings.fonts.sans}>
-        {#each FONT_PRESETS.sans as font (font)}
+      <select
+        id="font-sans"
+        class="select"
+        bind:value={settings.fonts.sans}
+        disabled={fontsLoading}
+      >
+        {#each availableFonts.sans as font (font)}
           <option value={font}>{font}</option>
         {/each}
       </select>
 
       <label class="label" for="font-serif">Serif</label>
-      <select id="font-serif" class="select" bind:value={settings.fonts.serif}>
-        {#each FONT_PRESETS.serif as font (font)}
+      <select
+        id="font-serif"
+        class="select"
+        bind:value={settings.fonts.serif}
+        disabled={fontsLoading}
+      >
+        {#each availableFonts.serif as font (font)}
           <option value={font}>{font}</option>
         {/each}
       </select>
 
       <label class="label" for="font-mono">Monospace</label>
-      <select id="font-mono" class="select" bind:value={settings.fonts.mono}>
-        {#each FONT_PRESETS.mono as font (font)}
+      <select
+        id="font-mono"
+        class="select"
+        bind:value={settings.fonts.mono}
+        disabled={fontsLoading}
+      >
+        {#each availableFonts.mono as font (font)}
           <option value={font}>{font}</option>
         {/each}
       </select>

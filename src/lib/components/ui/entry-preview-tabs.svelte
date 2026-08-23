@@ -13,12 +13,11 @@
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
-  import 'highlight.js/styles/github-dark.css';
   import { BookOpen, Clipboard, Code } from '@lucide/svelte';
 
   hljs.registerLanguage('yaml', yaml);
 
-  let {
+  let { 
     entryId,
     bibliographyData,
     entryYamlData
