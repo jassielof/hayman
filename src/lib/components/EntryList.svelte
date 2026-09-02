@@ -173,7 +173,7 @@
       </p>
     </div>
   {:else}
-    <div class="card-body space-y-6 border-b border-border">
+    <div class="card-body border-b border-border">
       <label class="label mb-0 w-full">
         <span class="sr-only">Search entries</span>
         <span class="input flex items-center gap-2">
@@ -186,7 +186,7 @@
         </span>
       </label>
 
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="mt-6 flex flex-wrap items-center gap-3">
         <div class="label mb-0 w-full sm:w-56">
           <span class="sr-only">Filter by type</span>
           <Select.Root type="single" bind:value={typeFilter}>
