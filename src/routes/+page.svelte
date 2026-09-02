@@ -136,25 +136,28 @@
             </div>
 
             <div
-              class="col-span-2 flex shrink-0 flex-row items-center justify-end gap-1 sm:col-span-1"
+              class="col-span-2 flex shrink-0 flex-row flex-wrap items-center justify-end gap-2 sm:col-span-1"
             >
               <a
                 href={resolve(`/bibliography/${bib.metadata.id}`)}
-                class="btn btn-sm btn-soft"
+                class="btn btn-sm btn-outline"
                 aria-label={`View entries in ${bib.metadata.title}`}
               >
                 <BookOpen class="size-4" />
+                <span>View</span>
               </a>
               <a
-                class="btn btn-sm btn-soft"
+                class="btn btn-sm btn-outline"
                 href={resolve(`/bibliography/${bib.metadata.id}/edit`)}
                 aria-label={`Edit metadata for ${bib.metadata.title}`}
               >
                 <Pencil class="size-4" />
+                <span>Edit</span>
               </a>
               <button
-                class="btn btn-sm btn-soft"
+                class="btn btn-sm btn-outline"
                 aria-label={`Download ${bib.metadata.title} as YAML`}
+                title="Download YAML"
                 onclick={() =>
                   hayagrivaService.export(bib.data, {
                     asFile: true,
@@ -162,20 +165,24 @@
                   })}
               >
                 <Download class="size-4" />
+                <span class="sr-only">Download YAML</span>
               </button>
               <button
-                class="btn btn-sm btn-soft"
+                class="btn btn-sm btn-outline"
                 aria-label={`Copy ${bib.metadata.title} YAML to clipboard`}
+                title="Copy YAML"
                 onclick={() => copyYaml(bib)}
               >
                 <Copy class="size-4" />
+                <span class="sr-only">Copy YAML</span>
               </button>
               <button
-                class="btn btn-sm btn-soft btn-error"
+                class="btn btn-sm btn-destructive"
                 aria-label={`Delete bibliography ${bib.metadata.title}`}
                 onclick={() => requestDelete(bib)}
               >
                 <Trash class="size-4" />
+                <span>Delete</span>
               </button>
               {#if copyFeedback === bib.metadata.id}
                 <span class="text-xs text-primary" role="status">Copied!</span>

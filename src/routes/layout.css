@@ -34,9 +34,9 @@
   --color-warning: oklch(0.72 0.15 75);
   --color-warning-foreground: oklch(0.28 0.05 75);
   --color-ring: oklch(0.55 0.14 160);
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
 }
 
 .dark {
@@ -70,44 +70,54 @@
 
   body {
     @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium;
-    @apply transition-[color,background-color,box-shadow,transform,border-color];
+    @apply inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-4 text-sm font-semibold whitespace-nowrap;
+    @apply shadow-xs transition-[color,background-color,box-shadow,transform,border-color] duration-150;
     @apply focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none;
     @apply disabled:pointer-events-none disabled:opacity-50;
+    @apply active:translate-y-px;
   }
 
   .btn-sm {
-    @apply h-8 px-3 text-xs;
+    @apply h-9 px-3 text-sm;
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply border-border bg-card text-foreground hover:border-primary/30 hover:bg-accent;
   }
 
   .btn-ghost {
-    @apply hover:bg-accent hover:text-accent-foreground;
+    @apply border-transparent bg-transparent shadow-none hover:bg-accent hover:text-accent-foreground;
   }
 
   .btn-outline {
-    @apply border border-border bg-transparent hover:bg-accent hover:text-accent-foreground hover:shadow-md;
+    @apply border-border bg-card text-foreground hover:border-primary/30 hover:bg-accent hover:text-accent-foreground;
   }
 
   .btn-soft {
-    @apply bg-muted text-foreground shadow-xs hover:-translate-y-px hover:bg-muted/80 hover:shadow-md;
+    @apply border-border/70 bg-muted/70 text-foreground hover:border-primary/25 hover:bg-accent;
   }
 
   .btn-error,
   .btn-destructive {
-    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md;
+    @apply border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md;
   }
 
   .btn-success {
@@ -127,15 +137,19 @@
   }
 
   .btn-square {
-    @apply aspect-square p-2;
+    @apply aspect-square w-10 p-0;
+  }
+
+  .btn-sm.btn-square {
+    @apply w-9 p-0;
   }
 
   .input,
   .textarea,
   .select,
   .file-input {
-    @apply w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-xs;
-    @apply placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none;
+    @apply min-h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-xs;
+    @apply transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground hover:border-foreground/25 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none;
   }
 
   .input-sm {
@@ -175,7 +189,7 @@
   }
 
   .card {
-    @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm;
+    @apply rounded-lg border border-border bg-card text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)];
   }
 
   .card-body {
@@ -196,7 +210,7 @@
   }
 
   .list {
-    @apply divide-y divide-border overflow-hidden rounded-lg border border-border bg-muted;
+    @apply divide-y divide-border overflow-hidden rounded-lg border border-border bg-card;
   }
 
   .list-row {

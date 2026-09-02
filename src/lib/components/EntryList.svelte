@@ -9,11 +9,13 @@
   import { hayagrivaService } from '$lib/services/hayagriva.service';
   import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import { cn } from '$lib/utils/cn';
-  import { DropdownMenu } from 'bits-ui';
+  import { Select } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';
   import {
     Calendar,
+    Check,
     ChevronDown,
+    ChevronsUpDown,
     Copy,
     Eye,
     Hash,
@@ -32,6 +34,13 @@
   } = $props();
 
   type SortKey = 'id' | 'title' | 'type' | 'date';
+
+  const sortOptions: { value: SortKey; label: string }[] = [
+    { value: 'id', label: 'ID' },
+    { value: 'title', label: 'Title' },
+    { value: 'type', label: 'Type' },
+    { value: 'date', label: 'Date' },
+  ];
 
   let search = $state('');
   let typeFilter = $state('');
@@ -181,9 +190,10 @@
 
         <div class="label">
           <span class="sr-only">Filter by type</span>
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger
+          <Select.Root type="single" bind:value={typeFilter}>
+            <Select.Trigger
               class="select flex w-full items-center justify-between gap-2"
+              aria-label="Filter by type"
             >
               {#if typeFilter}
                 {@const { Icon, label } = formatEntryType(typeFilter)}
@@ -194,45 +204,96 @@
               {:else}
                 <span>All types</span>
               {/if}
-              <ChevronDown class="size-4 shrink-0 opacity-60" />
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
+              <ChevronsUpDown class="size-4 shrink-0 opacity-50" />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Content
                 class={cn(
-                  'z-50 max-h-64 min-w-[12rem] overflow-y-auto rounded-md border border-border bg-card p-1 shadow-md',
+                  'z-50 max-h-72 min-w-[var(--bits-select-anchor-width)] overflow-hidden rounded-lg border border-border bg-card p-1.5 shadow-xl',
+                  'data-[state=open]:animate-in data-[state=closed]:animate-out',
                 )}
+                sideOffset={6}
               >
-                <DropdownMenu.Item
-                  class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                  onSelect={() => (typeFilter = '')}
+                <Select.ScrollUpButton
+                  class="flex h-6 items-center justify-center text-muted-foreground"
                 >
-                  All types
-                </DropdownMenu.Item>
-                <DropdownMenu.Separator class="my-1 h-px bg-border" />
-                {#each ENTRY_TYPE_NAMES as typeName (typeName)}
-                  {@const { Icon, label } = formatEntryType(typeName)}
-                  <DropdownMenu.Item
-                    class="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-                    onSelect={() => (typeFilter = typeName)}
+                  <ChevronDown class="size-4 rotate-180" />
+                </Select.ScrollUpButton>
+                <Select.Viewport>
+                  <Select.Item
+                    value=""
+                    label="All types"
+                    class="flex h-9 cursor-default items-center gap-2 rounded-md px-2 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
                   >
-                    <Icon class="size-4" />
-                    {label}
-                  </DropdownMenu.Item>
-                {/each}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+                    {#snippet children({ selected })}
+                      <span class="w-4"
+                        >{#if selected}<Check class="size-4" />{/if}</span
+                      >
+                      All types
+                    {/snippet}
+                  </Select.Item>
+                  {#each ENTRY_TYPE_NAMES as typeName (typeName)}
+                    {@const { Icon, label } = formatEntryType(typeName)}
+                    <Select.Item
+                      value={typeName}
+                      {label}
+                      class="flex h-9 cursor-default items-center gap-2 rounded-md px-2 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                    >
+                      {#snippet children({ selected })}
+                        <span class="w-4"
+                          >{#if selected}<Check class="size-4" />{/if}</span
+                        >
+                        <Icon class="size-4 text-muted-foreground" />
+                        {label}
+                      {/snippet}
+                    </Select.Item>
+                  {/each}
+                </Select.Viewport>
+                <Select.ScrollDownButton
+                  class="flex h-6 items-center justify-center text-muted-foreground"
+                >
+                  <ChevronDown class="size-4" />
+                </Select.ScrollDownButton>
+              </Select.Content>
+            </Select.Portal>
+          </Select.Root>
         </div>
 
-        <label class="label">
+        <div class="label">
           <span class="sr-only">Sort entries</span>
-          <select class="select" bind:value={sortKey}>
-            <option value="id">Sort by ID</option>
-            <option value="title">Sort by title</option>
-            <option value="type">Sort by type</option>
-            <option value="date">Sort by date</option>
-          </select>
-        </label>
+          <Select.Root type="single" bind:value={sortKey} items={sortOptions}>
+            <Select.Trigger
+              class="select flex items-center justify-between gap-2"
+              aria-label="Sort entries"
+            >
+              <span>Sort by <Select.Value /></span>
+              <ChevronsUpDown class="size-4 opacity-50" />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Content
+                class="z-50 min-w-[var(--bits-select-anchor-width)] rounded-lg border border-border bg-card p-1.5 shadow-xl"
+                sideOffset={6}
+              >
+                <Select.Viewport>
+                  {#each sortOptions as option (option.value)}
+                    <Select.Item
+                      value={option.value}
+                      label={option.label}
+                      class="flex h-9 cursor-default items-center gap-2 rounded-md px-2 text-sm outline-none data-highlighted:bg-accent"
+                    >
+                      {#snippet children({ selected })}
+                        <span class="w-4"
+                          >{#if selected}<Check class="size-4" />{/if}</span
+                        >
+                        {option.label}
+                      {/snippet}
+                    </Select.Item>
+                  {/each}
+                </Select.Viewport>
+              </Select.Content>
+            </Select.Portal>
+          </Select.Root>
+        </div>
       </div>
 
       {#if selected.size > 0}
@@ -331,14 +392,14 @@
             </div>
             <div class="flex flex-wrap items-center justify-end gap-1">
               <a
-                class="btn btn-sm btn-soft"
+                class="btn btn-sm btn-outline"
                 href={resolve(`/bibliography/${bibliographyId}/entry/${id}`)}
               >
                 <Eye class="size-4" />
                 <span class="hidden sm:inline">View</span>
               </a>
               <a
-                class="btn btn-sm btn-soft"
+                class="btn btn-sm btn-outline"
                 href={resolve(
                   `/bibliography/${bibliographyId}/entry/${id}/edit`,
                 )}
@@ -348,7 +409,7 @@
               </a>
               <button
                 type="button"
-                class="btn btn-sm btn-soft btn-error"
+                class="btn btn-sm btn-destructive"
                 onclick={() => requestDelete(id)}
               >
                 <Trash class="size-4" />
