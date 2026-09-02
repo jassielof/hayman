@@ -25,8 +25,11 @@ describe('available-fonts', () => {
 
   it('lists bundled app fonts explicitly', () => {
     expect(BUNDLED_FONT_OPTIONS.sans).toContain('IBM Plex Sans');
+    expect(BUNDLED_FONT_OPTIONS.sans).toContain('Source Sans 3');
     expect(BUNDLED_FONT_OPTIONS.serif).toContain('IBM Plex Serif');
+    expect(BUNDLED_FONT_OPTIONS.serif).toContain('Source Serif 4');
     expect(BUNDLED_FONT_OPTIONS.mono).toContain('IBM Plex Mono');
+    expect(BUNDLED_FONT_OPTIONS.mono).toContain('Source Code Pro');
   });
 
   it('always includes portable system stacks', () => {

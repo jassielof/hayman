@@ -22,9 +22,9 @@ export const SYSTEM_FONT_OPTIONS = {
 
 /** Webfonts bundled with the app (see layout.css imports). */
 export const BUNDLED_FONT_OPTIONS = {
-  sans: ['IBM Plex Sans'],
-  serif: ['IBM Plex Serif'],
-  mono: ['IBM Plex Mono']
+  sans: ['IBM Plex Sans', 'Source Sans 3'],
+  serif: ['IBM Plex Serif', 'Source Serif 4'],
+  mono: ['IBM Plex Mono', 'Source Code Pro']
 } as const;
 
 export type FontCategory = keyof AppFontSettings;
