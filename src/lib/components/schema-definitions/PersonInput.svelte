@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Person } from '$lib/types/hayagriva';
+  import type { Person } from '@hayman/hayagriva-schema';
 
   type PersonObject = Exclude<Person, string>;
 

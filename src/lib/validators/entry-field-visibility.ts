@@ -1,4 +1,4 @@
-import type { EntryTypeName } from '$lib/types/hayagriva';
+import type { EntryTypeName } from '@hayman/hayagriva-schema';
 
 export type EntryFieldKey =
   | 'author'

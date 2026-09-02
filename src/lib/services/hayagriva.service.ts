@@ -1,8 +1,8 @@
-import type { Hayagriva, TopLevelEntry } from '$lib/types/hayagriva';
+import type { Hayagriva, TopLevelEntry } from '@hayman/hayagriva-schema';
 import {
   assertHayagrivaStructure,
   HayagrivaStructureError
-} from '$lib/validators/structure';
+} from '@hayman/hayagriva-schema';
 import YAML from 'yaml';
 
 export { HayagrivaStructureError };

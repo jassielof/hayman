@@ -3,7 +3,7 @@
   import { SettingsService } from '$lib/services/settings.service';
   import { renderBibliographySvg } from '$lib/services/typst-preview.service';
   import type { AppSettings } from '$lib/types/app-settings';
-  import type { Hayagriva } from '$lib/types/hayagriva';
+  import type { Hayagriva } from '@hayman/hayagriva-schema';
 
   let {
     bibliographyData,
@@ -25,10 +25,7 @@
     try {
       const loaded = settings ?? (await SettingsService.get());
       settings = loaded;
-      svg = await renderBibliographySvg(
-        bibliographyData,
-        loaded.fonts
-      );
+      svg = await renderBibliographySvg(bibliographyData, loaded.fonts);
       rendered = true;
     } catch (err) {
       error =

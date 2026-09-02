@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FormattableString } from '$lib/types/hayagriva';
+  import type { FormattableString } from '@hayman/hayagriva-schema';
   let {
     value = $bindable(),
     label,

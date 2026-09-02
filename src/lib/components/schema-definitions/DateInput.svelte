@@ -1,6 +1,6 @@
 <script lang="ts">
   import { DATE_REGEX } from '$lib/formatters/date-formatter';
-  import { type BibliographyEntry } from '$lib/types/hayagriva';
+  import { type BibliographyEntry } from '@hayman/hayagriva-schema';
 
   let {
     value = $bindable(),

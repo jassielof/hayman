@@ -13,7 +13,7 @@
     hayagrivaService,
     HayagrivaStructureError
   } from '$lib/services/hayagriva.service';
-  import type { TopLevelEntry } from '$lib/types/hayagriva';
+  import type { TopLevelEntry } from '@hayman/hayagriva-schema';
   import { generateEntryId } from '$lib/utils/entry-id';
   import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
   import {

@@ -1,5 +1,5 @@
 import type { BibliographyMetadata } from './bibliography-metadata';
-import type { Hayagriva } from './hayagriva';
+import type { Hayagriva } from '@hayman/hayagriva-schema';
 
 /**
  * Represents a Hayagriva bibliography along with its metadata.

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Author } from '$lib/types/hayagriva';
+  import type { Author } from '@hayman/hayagriva-schema';
   import { Plus } from '@lucide/svelte';
   import PersonInput from './PersonInput.svelte';
 

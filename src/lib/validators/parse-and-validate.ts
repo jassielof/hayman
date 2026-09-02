@@ -3,8 +3,8 @@ import {
   topLevelEntrySchema,
   type Hayagriva,
   type TopLevelEntry
-} from '$lib/types/hayagriva';
-import { assertHayagrivaStructure } from '$lib/validators/structure';
+} from '@hayman/hayagriva-schema';
+import { assertHayagrivaStructure } from '@hayman/hayagriva-schema';
 import type {
   ValidationIssue,
   ValidationResult

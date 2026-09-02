@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertAcyclic,
   assertParentDepthWithin
-} from '$lib/validators/structure';
+} from '@hayman/hayagriva-schema';
 import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
 import { hayagrivaService } from '$lib/services/hayagriva.service';
 import { generateEntryId } from '$lib/utils/entry-id';

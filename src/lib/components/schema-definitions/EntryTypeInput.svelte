@@ -3,7 +3,7 @@
     ENTRY_TYPES,
     formatEntryType
   } from '$lib/formatters/entry-type-formatter';
-  import type { Type } from '$lib/types/hayagriva';
+  import type { Type } from '@hayman/hayagriva-schema';
 
   let {
     value = $bindable()

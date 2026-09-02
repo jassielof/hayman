@@ -4,7 +4,7 @@
   import { SettingsService } from '$lib/services/settings.service';
   import { renderEntryCitationSvg } from '$lib/services/typst-preview.service';
   import type { AppSettings } from '$lib/types/app-settings';
-  import type { Hayagriva } from '$lib/types/hayagriva';
+  import type { Hayagriva } from '@hayman/hayagriva-schema';
   import { resolvePreviewCitationStyle } from '$lib/utils/citation-style';
   import { isMobileViewport } from '$lib/utils/match-mobile';
   import { cn } from '$lib/utils/cn';

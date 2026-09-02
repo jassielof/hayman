@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LANGUAGE_REGEX } from '$lib/formatters/language';
-  import { type Language } from '$lib/types/hayagriva';
+  import { type Language } from '@hayman/hayagriva-schema';
 
   let {
     value = $bindable()

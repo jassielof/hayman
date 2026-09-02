@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AffiliatedPeople } from '$lib/types/hayagriva';
+  import type { AffiliatedPeople } from '@hayman/hayagriva-schema';
   import { AFFILIATED_ROLES } from '$lib/validators/affiliated-roles';
   import { Plus, X } from '@lucide/svelte';
   import PeopleInput from './PeopleInput.svelte';

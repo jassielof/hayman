@@ -1,8 +1,8 @@
 <script lang="ts">
   import { dateFormatter } from '$lib/formatters/date-formatter';
   import { getLanguageFlag } from '$lib/formatters/language';
-  import type { BibliographyEntry } from '$lib/types/hayagriva';
-  import { MAX_PARENT_DEPTH } from '$lib/validators/structure';
+  import type { BibliographyEntry } from '@hayman/hayagriva-schema';
+  import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
   import Self from './PreviewEntry.svelte';
 
   let {

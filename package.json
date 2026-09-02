@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -56,6 +59,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@hayman/hayagriva-schema": "workspace:*",
     "@lucide/svelte": "^1.23.0",
     "@myriaddreamin/typst-ts-renderer": "^0.7.0",
     "@myriaddreamin/typst-ts-web-compiler": "^0.7.0",

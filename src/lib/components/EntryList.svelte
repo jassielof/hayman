@@ -7,7 +7,7 @@
   import { formatFormattableString } from '$lib/formatters/formattable-string';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { hayagrivaService } from '$lib/services/hayagriva.service';
-  import { ENTRY_TYPE_NAMES, type Hayagriva } from '$lib/types/hayagriva';
+  import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import { cn } from '$lib/utils/cn';
   import { DropdownMenu } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';

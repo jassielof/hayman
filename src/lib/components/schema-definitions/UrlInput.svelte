@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibliographyEntry, URL } from '$lib/types/hayagriva';
+  import type { BibliographyEntry, URL } from '@hayman/hayagriva-schema';
   import { checkUrlReachable } from '$lib/utils/identifier-links';
   import { ExternalLink, Radar } from '@lucide/svelte';
   import DateInput from './DateInput.svelte';

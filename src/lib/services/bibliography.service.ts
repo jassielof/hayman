@@ -6,8 +6,8 @@ import {
   ReservedBibliographyIdError
 } from '$lib/errors/bibliography';
 import type { Bibliography } from '$lib/types/bibliography';
-import { type Hayagriva, type TopLevelEntry } from '$lib/types/hayagriva';
-import { assertHayagrivaStructure } from '$lib/validators/structure';
+import { type Hayagriva, type TopLevelEntry } from '@hayman/hayagriva-schema';
+import { assertHayagrivaStructure } from '@hayman/hayagriva-schema';
 import {
   parseAndValidateEntry,
   parseAndValidateHayagriva

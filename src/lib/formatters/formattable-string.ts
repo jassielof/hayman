@@ -1,4 +1,4 @@
-import type { FormattableString } from '$lib/types/hayagriva';
+import type { FormattableString } from '@hayman/hayagriva-schema';
 
 /**
  * Formats a formattable string as plain display text, preferring the short

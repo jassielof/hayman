@@ -1,4 +1,4 @@
-import { ENTRY_TYPE_NAMES, type EntryTypeName } from '$lib/types/hayagriva';
+import { ENTRY_TYPE_NAMES, type EntryTypeName } from '@hayman/hayagriva-schema';
 import {
   Book,
   BookOpen,
@@ -60,7 +60,7 @@ export const entryTypeIcons: Record<EntryTypeName, typeof BookOpen> = {
 
 /**
  * Re-exported for backwards compatibility - prefer importing
- * `ENTRY_TYPE_NAMES` from `$lib/types/hayagriva` directly in new code.
+ * `ENTRY_TYPE_NAMES` from `@hayman/hayagriva-schema` directly in new code.
  */
 export const ENTRY_TYPES = ENTRY_TYPE_NAMES;
 

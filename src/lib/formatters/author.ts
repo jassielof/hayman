@@ -1,4 +1,4 @@
-import type { Person, PersonOrList } from '$lib/types/hayagriva';
+import type { Person, PersonOrList } from '@hayman/hayagriva-schema';
 
 /**
  * Formats a single person as a compact display string (family name only,

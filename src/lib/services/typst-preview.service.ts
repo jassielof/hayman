@@ -1,5 +1,5 @@
 import type { AppFontSettings } from '$lib/types/app-settings';
-import type { Hayagriva } from '$lib/types/hayagriva';
+import type { Hayagriva } from '@hayman/hayagriva-schema';
 import { toYaml } from '$lib/services/hayagriva.service';
 import { getTypstFontProviders } from '$lib/typst/fonts';
 import {

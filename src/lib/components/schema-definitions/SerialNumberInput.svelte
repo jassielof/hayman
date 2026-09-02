@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibliographyEntry } from '$lib/types/hayagriva';
+  import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import {
     arxivResolverUrl,
     doiResolverUrl,

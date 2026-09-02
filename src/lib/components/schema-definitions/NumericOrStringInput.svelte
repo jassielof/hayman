@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { NumericOrString } from '$lib/types/hayagriva';
+  import type { NumericOrString } from '@hayman/hayagriva-schema';
 
   let {
     value = $bindable(),

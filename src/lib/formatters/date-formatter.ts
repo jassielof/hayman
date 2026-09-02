@@ -1,4 +1,4 @@
-import { DATE_REGEX, type HayagrivaDate } from '$lib/types/hayagriva';
+import { DATE_REGEX, type HayagrivaDate } from '@hayman/hayagriva-schema';
 
 export { DATE_REGEX };
 

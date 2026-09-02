@@ -1,0 +1,13 @@
+{
+  "name": "@hayman/hayagriva-schema",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Reusable Zod schemas and TypeScript types for Hayagriva bibliographies",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  }
+}

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Hayagriva } from '$lib/types/hayagriva';
+import type { Hayagriva } from '@hayman/hayagriva-schema';
 import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
 
 const { svgMock } = vi.hoisted(() => ({

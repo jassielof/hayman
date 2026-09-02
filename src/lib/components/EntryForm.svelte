@@ -3,12 +3,12 @@
   import EntryTypeInput from '$lib/components/schema-definitions/EntryTypeInput.svelte';
   import FormattableStringInput from '$lib/components/schema-definitions/FormattableStringInput.svelte';
   import { formatFormattableString } from '$lib/formatters/formattable-string';
-  import type { BibliographyEntry } from '$lib/types/hayagriva';
+  import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import {
     isFieldVisible,
     isSectionRelevant
   } from '$lib/validators/entry-field-visibility';
-  import { MAX_PARENT_DEPTH } from '$lib/validators/structure';
+  import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
   import { X } from '@lucide/svelte';
   import EntryForm from './EntryForm.svelte';
   import AffiliatedListInput from './schema-definitions/AffiliatedListInput.svelte';

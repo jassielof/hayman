@@ -1,4 +1,4 @@
-import { LANGUAGE_REGEX } from '$lib/types/hayagriva';
+import { LANGUAGE_REGEX } from '@hayman/hayagriva-schema';
 
 export { LANGUAGE_REGEX };
 
