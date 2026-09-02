@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import SettingsBootstrap from '$lib/components/SettingsBootstrap.svelte';
+  import MutationToastHost from '$lib/components/MutationToastHost.svelte';
   import { ModeWatcher, toggleMode } from 'mode-watcher';
   import { Moon, Settings, Sun } from '@lucide/svelte';
   import './layout.css';
@@ -18,6 +19,7 @@
 
 <ModeWatcher />
 <SettingsBootstrap />
+<MutationToastHost />
 
 <header class="navbar">
   <a href={resolve('/')} class="btn btn-ghost text-xl">Hayman</a>

@@ -13,6 +13,8 @@ import {
   parseAndValidateHayagriva
 } from '$lib/validators/parse-and-validate';
 import { error } from '@sveltejs/kit';
+import { formatFormattableString } from '$lib/formatters/formattable-string';
+import { notifyMutation } from '$lib/services/mutation-notifications';
 
 /**
  * A single validation issue, with a dotted path to the offending field
@@ -128,6 +130,9 @@ export class BibliographyService {
     }
 
     await db.bibliographies.add(cloneForStorage(bibliography));
+    notifyMutation(`Added bibliography “${bibliography.metadata.title}”.`, () =>
+      db.bibliographies.delete(bibliography.metadata.id)
+    );
   }
 
   /**
@@ -136,7 +141,11 @@ export class BibliographyService {
    * @returns A promise that resolves when the bibliography has been deleted.
    */
   static async delete(id: string) {
+    const previous = await this.get(id);
     await db.bibliographies.delete(id);
+    notifyMutation(`Deleted bibliography “${previous.metadata.title}”.`, () =>
+      db.bibliographies.put(previous).then(() => undefined)
+    );
   }
 
   static async exists(id: string) {
@@ -144,6 +153,7 @@ export class BibliographyService {
   }
 
   static async updateMetadata(id: string, updated: Bibliography) {
+    const previous = await this.get(id);
     const newId = updated.metadata.id;
 
     if (newId == 'new') {
@@ -162,6 +172,15 @@ export class BibliographyService {
         await db.bibliographies.delete(id);
       }
     });
+    notifyMutation(
+      `Updated bibliography “${updated.metadata.title}”.`,
+      async () => {
+        await db.transaction('rw', db.bibliographies, async () => {
+          await db.bibliographies.put(previous);
+          if (newId !== id) await db.bibliographies.delete(newId);
+        });
+      }
+    );
   }
 
   /**
@@ -182,7 +201,15 @@ export class BibliographyService {
       }
     }
 
+    const previous = await this.getOrNull(bibliography.metadata.id);
     await db.bibliographies.put(cloneForStorage(bibliography));
+    notifyMutation(
+      `${previous ? 'Updated' : 'Added'} bibliography “${bibliography.metadata.title}”.`,
+      () =>
+        previous
+          ? db.bibliographies.put(previous).then(() => undefined)
+          : db.bibliographies.delete(bibliography.metadata.id)
+    );
   }
 
   /**
@@ -219,6 +246,14 @@ export class BibliographyService {
       bibliography.data[newEntryId] = newEntryData;
       await db.bibliographies.put(cloneForStorage(bibliography));
     });
+    notifyMutation(
+      `Added entry “${formatFormattableString(newEntryData.title) || newEntryId}”.`,
+      async () => {
+        const bibliography = await this.get(bibliographyId);
+        delete bibliography.data[newEntryId];
+        await db.bibliographies.put(cloneForStorage(bibliography));
+      }
+    );
   }
 
   /**
@@ -229,14 +264,27 @@ export class BibliographyService {
    * @returns A promise that resolves when the entry has been deleted.
    */
   static async deleteEntry(bibliographyId: string, entryId: string) {
+    let deletedEntry: TopLevelEntry | undefined;
     await db.transaction('rw', db.bibliographies, async () => {
       const bibliography = await db.bibliographies.get(bibliographyId);
       if (!bibliography) {
         throw new BibliographyNotFoundError(bibliographyId);
       }
+      deletedEntry = bibliography.data[entryId];
       delete bibliography.data[entryId];
       await db.bibliographies.put(cloneForStorage(bibliography));
     });
+    if (deletedEntry) {
+      const entry = deletedEntry;
+      notifyMutation(
+        `Deleted entry “${formatFormattableString(entry.title) || entryId}”.`,
+        async () => {
+          const bibliography = await this.get(bibliographyId);
+          bibliography.data[entryId] = entry;
+          await db.bibliographies.put(cloneForStorage(bibliography));
+        }
+      );
+    }
   }
 
   /**
@@ -269,6 +317,7 @@ export class BibliographyService {
     oldEntryId: string,
     skipValidation = false
   ) {
+    let previousEntry: TopLevelEntry | undefined;
     if (!skipValidation) {
       const validation = await this.validateEntry(updatedEntryData);
       if (!validation.valid) {
@@ -282,6 +331,7 @@ export class BibliographyService {
       if (!bibliography) {
         throw new BibliographyNotFoundError(bibliographyId);
       }
+      previousEntry = bibliography.data[oldEntryId];
 
       const isRename = updatedEntryId !== oldEntryId;
       if (isRename && bibliography.data[updatedEntryId]) {
@@ -295,5 +345,17 @@ export class BibliographyService {
       bibliography.data[updatedEntryId] = updatedEntryData;
       await db.bibliographies.put(cloneForStorage(bibliography));
     });
+    if (previousEntry) {
+      const entry = previousEntry;
+      notifyMutation(
+        `Updated entry “${formatFormattableString(updatedEntryData.title) || updatedEntryId}”.`,
+        async () => {
+          const bibliography = await this.get(bibliographyId);
+          delete bibliography.data[updatedEntryId];
+          bibliography.data[oldEntryId] = entry;
+          await db.bibliographies.put(cloneForStorage(bibliography));
+        }
+      );
+    }
   }
 }
