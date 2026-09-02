@@ -14,6 +14,10 @@ vi.mock('$lib/typst/fonts', () => ({
   getTypstFontProviders: () => [{}, {}],
 }));
 
+vi.mock('$app/environment', () => ({
+  browser: true,
+}));
+
 vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
   $typst: {
     providers: [],
@@ -33,7 +37,6 @@ import {
   makeSvgResponsive,
   renderBibliographySvg,
   renderEntryCitationSvg,
-  reinitTypstPreview,
 } from '$lib/services/typst-preview.service';
 
 const sampleData: Hayagriva = {
@@ -43,9 +46,8 @@ const sampleData: Hayagriva = {
 const sampleFonts = DEFAULT_APP_SETTINGS.fonts;
 
 describe('typst-preview.service', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    await reinitTypstPreview();
   });
 
   it('makes SVG scale to container width', () => {
@@ -122,7 +124,7 @@ describe('typst-preview.service', () => {
   it('passes compact false on desktop citation preview', async () => {
     await renderEntryCitationSvg(
       sampleData,
-      'entry1',
+      'desktop-entry',
       'apa',
       'apa',
       sampleFonts,
@@ -156,5 +158,24 @@ describe('typst-preview.service', () => {
         }),
       }),
     );
+  });
+
+  it('reuses an identical render within the session', async () => {
+    await renderEntryCitationSvg(
+      sampleData,
+      'cached-entry',
+      'mla',
+      'mla',
+      sampleFonts,
+    );
+    await renderEntryCitationSvg(
+      sampleData,
+      'cached-entry',
+      'mla',
+      'mla',
+      sampleFonts,
+    );
+
+    expect(svgMock).toHaveBeenCalledTimes(1);
   });
 });

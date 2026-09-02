@@ -19,10 +19,10 @@
       role="status"
     >
       <span class="loading loading-md loading-spinner"></span>
-      <span>Compiling Typst preview…</span>
+      <span>Rendering Typst preview…</span>
       <span class="max-w-sm text-xs text-muted-foreground">
-        The first preview downloads WebAssembly (~8MB) and may take up to a
-        minute. The tab can look frozen while the compiler initializes.
+        The first preview in this browser session initializes the shared Typst
+        engine. Later previews reuse it and identical renders are cached.
       </span>
     </div>
   {:else if error}

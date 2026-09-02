@@ -2,7 +2,6 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import { reinitTypstPreview } from '$lib/services/typst-preview.service';
   import { SettingsService } from '$lib/services/settings.service';
   import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
   import {
@@ -114,7 +113,6 @@
         fonts: settings.fonts,
         citation,
       });
-      await reinitTypstPreview();
       savedMessage = 'Settings saved.';
     } catch (err) {
       errorMessage =

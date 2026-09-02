@@ -1,4 +1,5 @@
 import type { AppFontSettings } from '$lib/types/app-settings';
+import { browser } from '$app/environment';
 import type { Hayagriva } from '@hayman/hayagriva-schema';
 import { toYaml } from '$lib/services/hayagriva.service';
 import { getTypstFontProviders } from '$lib/typst/fonts';
@@ -15,32 +16,29 @@ type TypstSnippetState = {
   svg: (options: Record<string, unknown>) => Promise<string>;
 };
 
-const TYPST_COMPILER_WASM =
-  'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-web-compiler@0.7.0/pkg/typst_ts_web_compiler_bg.wasm';
-const TYPST_RENDERER_WASM =
-  'https://cdn.jsdelivr.net/npm/@myriaddreamin/typst-ts-renderer@0.7.0/pkg/typst_ts_renderer_bg.wasm';
-
 const RENDER_TIMEOUT_MS = 120_000;
+const MAX_SESSION_CACHE_ENTRIES = 12;
 
 let initPromise: Promise<void> | null = null;
 let renderChain: Promise<unknown> = Promise.resolve();
+let wasmUrlsPromise: ReturnType<typeof loadWasmUrls> | null = null;
+const renderCache = new Map<string, Promise<string>>();
 
-async function resolveWasmUrls() {
-  if (import.meta.env.DEV) {
-    const [compiler, renderer] = await Promise.all([
-      import('@myriaddreamin/typst-ts-web-compiler/wasm?url'),
-      import('@myriaddreamin/typst-ts-renderer/wasm?url'),
-    ]);
-    return {
-      compiler: compiler.default,
-      renderer: renderer.default,
-    };
-  }
-
+async function loadWasmUrls() {
+  if (!browser)
+    throw new Error('Typst previews are only available in the browser.');
+  const [compiler, renderer] = await Promise.all([
+    import('@myriaddreamin/typst-ts-web-compiler/wasm?url'),
+    import('@myriaddreamin/typst-ts-renderer/wasm?url'),
+  ]);
   return {
-    compiler: TYPST_COMPILER_WASM,
-    renderer: TYPST_RENDERER_WASM,
+    compiler: compiler.default,
+    renderer: renderer.default,
   };
+}
+
+function resolveWasmUrls() {
+  return (wasmUrlsPromise ??= loadWasmUrls());
 }
 
 function withTimeout<T>(
@@ -138,6 +136,15 @@ async function renderSvg(
   mainContent: string,
   inputs: Record<string, string>,
 ): Promise<string> {
+  const cacheKey = `${mainContent}\0${JSON.stringify(inputs)}`;
+  const cached = renderCache.get(cacheKey);
+  if (cached) {
+    // Refresh insertion order so frequently revisited previews stay cached.
+    renderCache.delete(cacheKey);
+    renderCache.set(cacheKey, cached);
+    return cached;
+  }
+
   const task = renderChain.then(async () => {
     await ensureTypst();
     const { $typst: typstImport } =
@@ -154,20 +161,16 @@ async function renderSvg(
   });
 
   renderChain = task.catch(() => {});
-  return task;
-}
-
-/** Clears cached init so WASM options are reapplied on next render. */
-export async function reinitTypstPreview() {
-  initPromise = null;
-  renderChain = Promise.resolve();
-
-  const { $typst: typstImport } =
-    await import('@myriaddreamin/typst.ts/contrib/snippet');
-  const $typst = typstImport as unknown as TypstSnippetState;
-  if ($typst.providers === undefined) {
-    $typst.providers = [];
+  const cachedTask = task.catch((error) => {
+    renderCache.delete(cacheKey);
+    throw error;
+  });
+  renderCache.set(cacheKey, cachedTask);
+  if (renderCache.size > MAX_SESSION_CACHE_ENTRIES) {
+    const oldestKey = renderCache.keys().next().value;
+    if (oldestKey !== undefined) renderCache.delete(oldestKey);
   }
+  return cachedTask;
 }
 
 export async function renderBibliographySvg(
