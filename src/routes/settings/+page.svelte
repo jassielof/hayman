@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { page } from '$app/state';
   import { SettingsService } from '$lib/services/settings.service';
   import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
   import {
@@ -28,16 +27,13 @@
   });
   let fontsLoading = $state(true);
 
-  const returnTo = $derived(page.url.searchParams.get('from'));
-  const backHref = $derived.by(() => {
-    if (returnTo && returnTo.startsWith('/')) {
-      return (resolve as (href: string) => string)(returnTo);
+  function goBack() {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      void goto(resolve('/'));
     }
-    return resolve('/');
-  });
-  const backLabel = $derived(
-    returnTo && returnTo.startsWith('/') ? 'Back' : 'Back to home',
-  );
+  }
 
   $effect(() => {
     let cancelled = false;
@@ -286,13 +282,9 @@
         <Save class="size-4" />
         Save settings
       </button>
-      <button
-        type="button"
-        class="btn btn-outline"
-        onclick={() => goto(backHref)}
-      >
+      <button type="button" class="btn btn-outline" onclick={goBack}>
         <ArrowLeft class="size-4" />
-        {backLabel}
+        Back
       </button>
     </div>
   </form>

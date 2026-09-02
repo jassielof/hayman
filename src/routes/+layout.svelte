@@ -10,7 +10,8 @@
 
   let { children } = $props();
 
-  const settingsFrom = $derived(encodeURIComponent(page.url.pathname));
+  const settingsPath = resolve('/settings');
+  const settingsActive = $derived(page.url.pathname === settingsPath);
 </script>
 
 <svelte:head>
@@ -24,13 +25,23 @@
 <header class="navbar">
   <a href={resolve('/')} class="brand-logo btn btn-ghost text-xl">Hayman</a>
   <div class="ml-auto flex items-center gap-1">
-    <a
-      href="{resolve('/settings')}?from={settingsFrom}"
-      class="btn btn-ghost btn-square"
-      aria-label="Settings"
-    >
-      <Settings class="size-5" />
-    </a>
+    {#if settingsActive}
+      <span
+        class="btn btn-ghost btn-square cursor-default bg-accent"
+        aria-label="Settings"
+        aria-current="page"
+      >
+        <Settings class="size-5" />
+      </span>
+    {:else}
+      <a
+        href={settingsPath}
+        class="btn btn-ghost btn-square"
+        aria-label="Settings"
+      >
+        <Settings class="size-5" />
+      </a>
+    {/if}
     <button
       type="button"
       class="btn btn-ghost btn-square"
