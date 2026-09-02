@@ -22,7 +22,6 @@
     Pencil,
     Search,
     Trash,
-    User,
   } from '@lucide/svelte';
 
   let {
@@ -360,34 +359,34 @@
                 onchange={() => toggleSelect(id)}
               />
             </div>
-            <div class="min-w-0">
+            <div class="min-w-0 space-y-1.5">
               <div
                 class="flex items-center gap-2 text-xs text-muted-foreground"
               >
                 <Icon aria-label={label} class="size-4" />
                 <span>{label}</span>
               </div>
-              <span class="font-mono text-sm">
-                <Hash class="inline size-[1.2em]" />
+              <div
+                class="flex items-center gap-1 font-mono text-sm font-semibold text-foreground/80"
+              >
+                <Hash class="size-4 shrink-0" aria-hidden="true" />
                 {id}
-              </span>
-              <br />
-              <span class="text-lg font-semibold">
+              </div>
+              <div
+                class="font-serif text-xl leading-snug font-semibold text-balance [font-variant-caps:small-caps]"
+              >
                 {formatFormattableString(entry.title)}
-              </span>
+              </div>
               {#if entry.author}
-                <br />
-                <span class="font-serif italic">
-                  <User class="inline size-[1.2em]" />
+                <div class="font-sans text-sm leading-relaxed italic">
                   {formatAuthor(entry.author)}
-                </span>
+                </div>
               {/if}
               {#if entry.date}
-                <br />
-                <span class="text-xs">
-                  <Calendar class="inline size-[1.2em]" />
+                <div class="flex items-center gap-1.5 text-xs">
+                  <Calendar class="size-4 shrink-0" aria-hidden="true" />
                   {formatEntryDateShort(entry.date)}
-                </span>
+                </div>
               {/if}
             </div>
             <div class="flex flex-wrap items-center justify-end gap-1">
