@@ -22,7 +22,7 @@
 <MutationToastHost />
 
 <header class="navbar">
-  <a href={resolve('/')} class="btn btn-ghost text-xl">Hayman</a>
+  <a href={resolve('/')} class="brand-logo btn btn-ghost text-xl">Hayman</a>
   <div class="ml-auto flex items-center gap-1">
     <a
       href="{resolve('/settings')}?from={settingsFrom}"

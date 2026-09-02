@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BUNDLED_FONT_OPTIONS,
   SYSTEM_FONT_OPTIONS,
+  formatFontFamilyLabel,
   isCssGenericFamily,
   toFontStack,
 } from '$lib/utils/available-fonts';
@@ -24,12 +25,17 @@ describe('available-fonts', () => {
   });
 
   it('lists bundled app fonts explicitly', () => {
-    expect(BUNDLED_FONT_OPTIONS.sans).toContain('IBM Plex Sans');
-    expect(BUNDLED_FONT_OPTIONS.sans).toContain('Source Sans 3');
-    expect(BUNDLED_FONT_OPTIONS.serif).toContain('IBM Plex Serif');
-    expect(BUNDLED_FONT_OPTIONS.serif).toContain('Source Serif 4');
-    expect(BUNDLED_FONT_OPTIONS.mono).toContain('IBM Plex Mono');
-    expect(BUNDLED_FONT_OPTIONS.mono).toContain('Source Code Pro');
+    expect(BUNDLED_FONT_OPTIONS.sans).toContain('inter-variable');
+    expect(BUNDLED_FONT_OPTIONS.sans).toContain('alegreya-sans-sc');
+    expect(BUNDLED_FONT_OPTIONS.serif).toContain('adobe-garamond-pro');
+    expect(BUNDLED_FONT_OPTIONS.serif).toContain('alegreya-sc');
+    expect(BUNDLED_FONT_OPTIONS.mono).toContain('courier-std');
+    expect(BUNDLED_FONT_OPTIONS.mono).toContain('source-code-variable');
+  });
+
+  it('shows readable labels for Adobe family identifiers', () => {
+    expect(formatFontFamilyLabel('inter-variable')).toBe('Inter Variable');
+    expect(formatFontFamilyLabel('courier-std')).toBe('Courier');
   });
 
   it('always includes portable system stacks', () => {

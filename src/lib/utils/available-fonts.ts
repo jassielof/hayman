@@ -20,12 +20,43 @@ export const SYSTEM_FONT_OPTIONS = {
   mono: ['ui-monospace', 'monospace'],
 } as const;
 
-/** Webfonts bundled with the app (see layout.css imports). */
+/** Webfonts provided by the app's IBM packages and Adobe Fonts kit. */
 export const BUNDLED_FONT_OPTIONS = {
-  sans: ['IBM Plex Sans', 'Source Sans 3'],
-  serif: ['IBM Plex Serif', 'Source Serif 4'],
-  mono: ['IBM Plex Mono', 'Source Code Pro'],
+  sans: [
+    'inter-variable',
+    'philosopher',
+    'rosario',
+    'alegreya-sans',
+    'alegreya-sans-sc',
+    'IBM Plex Sans',
+  ],
+  serif: [
+    'adobe-garamond-pro',
+    'merriweather',
+    'alegreya',
+    'alegreya-sc',
+    'IBM Plex Serif',
+  ],
+  mono: ['courier-std', 'source-code-variable', 'IBM Plex Mono'],
 } as const;
+
+const FONT_FAMILY_LABELS: Record<string, string> = {
+  'adobe-garamond-pro': 'Adobe Garamond Pro',
+  merriweather: 'Merriweather',
+  philosopher: 'Philosopher',
+  rosario: 'Rosario',
+  alegreya: 'Alegreya',
+  'alegreya-sc': 'Alegreya SC',
+  'alegreya-sans': 'Alegreya Sans',
+  'alegreya-sans-sc': 'Alegreya Sans SC',
+  'inter-variable': 'Inter Variable',
+  'courier-std': 'Courier',
+  'source-code-variable': 'Source Code Variable',
+};
+
+export function formatFontFamilyLabel(family: string): string {
+  return FONT_FAMILY_LABELS[family] ?? family;
+}
 
 export type FontCategory = keyof AppFontSettings;
 

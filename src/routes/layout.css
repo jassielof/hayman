@@ -1,12 +1,8 @@
+@import url('https://use.typekit.net/nai0eio.css');
+
 @import '@ibm/plex-sans/css/ibm-plex-sans-all';
 @import '@ibm/plex-mono/css/ibm-plex-mono-all';
 @import '@ibm/plex-serif/css/ibm-plex-serif-all';
-@import '@fontsource/source-sans-3/400.css';
-@import '@fontsource/source-sans-3/600.css';
-@import '@fontsource/source-serif-4/400.css';
-@import '@fontsource/source-serif-4/600.css';
-@import '@fontsource/source-code-pro/400.css';
-@import '@fontsource/source-code-pro/600.css';
 
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
@@ -15,9 +11,9 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: system-ui, sans-serif;
-  --font-mono: ui-monospace, monospace;
-  --font-serif: ui-serif, serif;
+  --font-sans: 'inter-variable', system-ui, sans-serif;
+  --font-mono: 'courier-std', ui-monospace, monospace;
+  --font-serif: 'adobe-garamond-pro', ui-serif, serif;
 
   --color-background: oklch(0.985 0.002 155);
   --color-foreground: oklch(0.21 0.02 155);
@@ -192,6 +188,11 @@
 
   .navbar {
     @apply flex h-14 items-center border-b border-border bg-card px-4 shadow-sm;
+  }
+
+  .brand-logo {
+    font-family: 'philosopher', sans-serif;
+    font-weight: 700;
   }
 
   .list {

@@ -18,13 +18,13 @@ export interface AppSettings {
   citation: AppCitationSettings;
 }
 
-/** Portable defaults — never assume a proprietary or app-bundled face is present. */
+/** Adobe Fonts defaults with portable fallbacks applied by `applyFontSettings`. */
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   id: SETTINGS_ROW_ID,
   fonts: {
-    sans: 'system-ui',
-    serif: 'serif',
-    mono: 'monospace',
+    sans: 'inter-variable',
+    serif: 'adobe-garamond-pro',
+    mono: 'courier-std',
   },
   citation: {
     defaultStyle: 'ieee',

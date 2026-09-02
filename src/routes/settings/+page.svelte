@@ -5,7 +5,10 @@
   import { reinitTypstPreview } from '$lib/services/typst-preview.service';
   import { SettingsService } from '$lib/services/settings.service';
   import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
-  import { listAvailableFonts } from '$lib/utils/available-fonts';
+  import {
+    formatFontFamilyLabel,
+    listAvailableFonts,
+  } from '$lib/utils/available-fonts';
   import {
     DEFAULT_APP_SETTINGS,
     type AppSettings,
@@ -155,7 +158,7 @@
         disabled={fontsLoading}
       >
         {#each availableFonts.sans as font (font)}
-          <option value={font}>{font}</option>
+          <option value={font}>{formatFontFamilyLabel(font)}</option>
         {/each}
       </select>
 
@@ -167,7 +170,7 @@
         disabled={fontsLoading}
       >
         {#each availableFonts.serif as font (font)}
-          <option value={font}>{font}</option>
+          <option value={font}>{formatFontFamilyLabel(font)}</option>
         {/each}
       </select>
 
@@ -179,7 +182,7 @@
         disabled={fontsLoading}
       >
         {#each availableFonts.mono as font (font)}
-          <option value={font}>{font}</option>
+          <option value={font}>{formatFontFamilyLabel(font)}</option>
         {/each}
       </select>
     </fieldset>
