@@ -2,8 +2,8 @@
 
 export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") == "true"
 #set page(
-  margin: if compact { 1cm } else { 1.5cm },
-  width: if compact { 9cm } else { 17cm },
+  margin: if compact { 0.5cm } else { 1cm },
+  width: if compact { 10cm } else { 20cm },
   height: auto,
   header: text(
     size: if compact { 10pt } else { 12pt },
@@ -20,7 +20,7 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
     "Noto Serif CJK TC",
     "Noto Serif CJK KR",
   ),
-  size: if compact { 11pt } else { 12pt },
+  size: if compact { 13pt } else { 12pt },
 )
 
 #let key = label(sys.inputs.at("entry-key"))
@@ -30,24 +30,19 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
   sys.inputs.at("style")
 }
 
-According to~#cite(key), #lorem(5)~#cite(key, form: "prose").
+- According to~#cite(key, form: "prose"), Typst is awesome~#cite(key).
+- #cite(key, form: "author") described in the year #cite(key, form: "year").
+- Multiple citations~#cite(key)#cite(key).
+- With supplements~#cite(key, supplement: [pp. 1--5]).
 
-#cite(key, form: "author") described it in the year #cite(key, form: "year").
-
-#if not compact [
-  #cite(key)#cite(key).
-
-  #cite(key, supplement: [pp. 1--5]).
-]
-
-#hide[#bibliography(
+#bibliography(
   bytes(sys.inputs.at("yaml")),
   style: bib-style,
-)]
+)
 `;
 
-export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1.5cm, height: auto)
-#set par(justify: true)
+export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1cm, height: auto)
+
 #set text(
   font: (
     sys.inputs.at("font-sans"),
@@ -61,7 +56,6 @@ export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1.5cm, height: auto
 
 #bibliography(
   bytes(sys.inputs.at("yaml")),
-  title: [Bibliography preview],
   full: true,
 )
 `;
