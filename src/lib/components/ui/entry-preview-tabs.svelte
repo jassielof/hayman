@@ -12,7 +12,7 @@
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
-  import { BookOpen, Check, Clipboard, Code } from '@lucide/svelte';
+  import { BookOpen, Code } from '@lucide/svelte';
 
   hljs.registerLanguage('yaml', yaml);
 
@@ -27,7 +27,6 @@
   } = $props();
 
   let tab = $state('code');
-  let copied = $state(false);
   let settings = $state<AppSettings | null>(null);
   let styleInput = $state('ieee');
   let useDefaultStyle = $state(true);
@@ -61,12 +60,6 @@
         })
       : null,
   );
-
-  async function copyYaml() {
-    await navigator.clipboard.writeText(yamlSource);
-    copied = true;
-    setTimeout(() => (copied = false), 2000);
-  }
 
   async function renderCitation() {
     citationLoading = true;
@@ -177,29 +170,9 @@
     value="code"
     class="mt-4 rounded-lg border border-border bg-card p-4 sm:p-6"
   >
-    <div class="space-y-2">
-      <div class="flex items-center justify-end">
-        <button
-          type="button"
-          class={cn('btn btn-sm', copied ? 'btn-success' : 'btn-outline')}
-          aria-label={copied
-            ? 'YAML copied to clipboard'
-            : 'Copy YAML to clipboard'}
-          onclick={copyYaml}
-        >
-          {#if copied}
-            <Check class="size-4" />
-            Copied
-          {:else}
-            <Clipboard class="size-4" />
-            Copy YAML
-          {/if}
-        </button>
-      </div>
-      <pre class="code-block w-full overflow-x-auto"><code
-          class="hljs language-yaml">{@html highlightedYaml}</code
-        ></pre>
-    </div>
+    <pre class="code-block w-full overflow-x-auto"><code
+        class="hljs language-yaml">{@html highlightedYaml}</code
+      ></pre>
   </Tabs.Content>
 
   <Tabs.Content value="citation" class="mt-4 space-y-4">
