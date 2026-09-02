@@ -70,7 +70,7 @@ export function toFontStack(family: string, fallback: string): string {
   if (isCssGenericFamily(trimmed)) {
     return trimmed === fallback ? trimmed : `${trimmed}, ${fallback}`;
   }
-  const escaped = trimmed.replace(/'/g, "\\'");
+  const escaped = trimmed.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   return `'${escaped}', ${fallback}`;
 }
 
