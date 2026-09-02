@@ -40,10 +40,10 @@ According to~#cite(key), #lorem(5)~#cite(key, form: "prose").
   #cite(key, supplement: [pp. 1--5]).
 ]
 
-#bibliography(
+#hide[#bibliography(
   bytes(sys.inputs.at("yaml")),
   style: bib-style,
-)
+)]
 `;
 
 export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1.5cm, height: auto)
@@ -59,16 +59,9 @@ export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1.5cm, height: auto
   ),
 )
 
-#let bib-style = if sys.inputs.at("csl") != "" {
-  bytes(sys.inputs.at("csl"))
-} else {
-  sys.inputs.at("style")
-}
-
 #bibliography(
   bytes(sys.inputs.at("yaml")),
-  style: bib-style,
-  title: [Bibliography preview — #sys.inputs.at("style-label")],
+  title: [Bibliography preview],
   full: true,
 )
 `;

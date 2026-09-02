@@ -59,12 +59,7 @@ describe('typst-preview.service', () => {
   });
 
   it('renders bibliography SVG via $typst.svg', async () => {
-    const svg = await renderBibliographySvg(
-      sampleData,
-      'ieee',
-      'ieee',
-      sampleFonts
-    );
+    const svg = await renderBibliographySvg(sampleData, sampleFonts);
 
     expect(svg).toContain('<svg');
     expect(svg).toContain('width="100%"');
@@ -80,6 +75,7 @@ describe('typst-preview.service', () => {
         })
       })
     );
+    expect(svgMock.mock.calls[0][0].mainContent).not.toContain('style:');
   });
 
   it('passes entry key for citation preview', async () => {
@@ -144,8 +140,9 @@ describe('typst-preview.service', () => {
   });
 
   it('passes custom CSL through inputs', async () => {
-    await renderBibliographySvg(
+    await renderEntryCitationSvg(
       sampleData,
+      'entry1',
       'custom',
       'Custom',
       sampleFonts,

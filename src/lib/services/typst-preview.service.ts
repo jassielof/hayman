@@ -172,14 +172,11 @@ export async function reinitTypstPreview() {
 
 export async function renderBibliographySvg(
   data: Hayagriva,
-  typstStyle: string,
-  styleLabel: string,
-  fonts: AppFontSettings,
-  customCsl?: string
+  fonts: AppFontSettings
 ): Promise<string> {
   return renderSvg(
     BIBLIOGRAPHY_FULL_TEMPLATE,
-    buildInputs(data, typstStyle, styleLabel, fonts, customCsl)
+    buildInputs(data, 'ieee', 'Automatically generated', fonts)
   );
 }
 
