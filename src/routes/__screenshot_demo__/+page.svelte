@@ -1,6 +1,6 @@
 <script lang="ts">
   import { BibliographyService } from '$lib/services/bibliography.service';
-  import { screenshotDemoBibliography } from '$lib/fixtures/screenshot-demo';
+  import { screenshotDemoBibliographies } from '$lib/fixtures/screenshot-demo';
 
   let ready = $state(false);
   let error = $state<string | undefined>();
@@ -8,7 +8,9 @@
   $effect(() => {
     (async () => {
       try {
-        await BibliographyService.put(screenshotDemoBibliography, true);
+        for (const bibliography of screenshotDemoBibliographies) {
+          await BibliographyService.put(bibliography, true);
+        }
         ready = true;
       } catch (err) {
         error =

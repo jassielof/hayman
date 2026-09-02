@@ -5,6 +5,67 @@ CleanCode:
   language: en-US
   title: Clean Code
 
+DesigningDataIntensiveApplications:
+  type: book
+  title: Designing Data-Intensive Applications
+  author: Kleppmann, Martin
+  date: 2017-01-01
+
+StructureScientificRevolutions:
+  type: book
+  title: The Structure of Scientific Revolutions
+  author: Kuhn, Thomas S.
+  date: 1962-01-01
+
+AttentionIsAllYouNeed:
+  type: article
+  title: Attention Is All You Need
+  author:
+    - Vaswani, Ashish
+    - Shazeer, Noam
+  date: 2017-01-01
+
+FAIRGuidingPrinciples:
+  type: article
+  title: The FAIR Guiding Principles for Scientific Data Management and Stewardship
+  author: Wilkinson, Mark D.
+  date: 2016-01-01
+
+ResearchDesign:
+  type: book
+  title: Research Design
+  author: Creswell, John W.
+  date: 2018-01-01
+
+OpenScienceByDesign:
+  type: report
+  title: Open Science by Design
+  date: 2018-01-01
+
+ReproducibleResearch:
+  type: article
+  title: Reproducible Research for Scientific Computing
+  author: Stodden, Victoria
+  date: 2014-01-01
+
+ProgrammingPearls:
+  type: book
+  title: Programming Pearls
+  author: Bentley, Jon
+  date: 1986-01-01
+
+TheCraftOfResearch:
+  type: book
+  title: The Craft of Research
+  author: Booth, Wayne C.
+  date: 2016-01-01
+
+DataVisualization:
+  type: book
+  title: Fundamentals of Data Visualization
+  author: Wilke, Claus O.
+  date: 2019-01-01
+
 NestedParentEntry:
   type: book
   title: 'Rick Astley: How An Internet Joke Revived My Career'
