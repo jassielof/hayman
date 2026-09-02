@@ -1,30 +1,24 @@
 import { loadFonts } from '@myriaddreamin/typst.ts';
 import { TypstSnippet } from '@myriaddreamin/typst.ts/contrib/snippet';
 
-const TYST_DEV_ASSETS =
-  'https://cdn.jsdelivr.net/gh/typst/typst-dev-assets@v0.13.1/files/fonts/';
-
 /**
- * Additional fonts not included in the default `cjk` asset bundle.
- * Keep this list small — each OTF can be 10MB+ and blocks the first preview.
+ * Typst WASM cannot inherit CSS or system fonts from the browser: it needs the
+ * font bytes in its own font database. The maintained `text` bundle covers the
+ * normal document families, while `cjk` contributes a single Noto CJK face for
+ * missing glyphs. Typst only selects it when the requested family cannot render
+ * a character, so it remains a fallback rather than overriding the user's font.
+ *
+ * Do not add every localized Noto variant here. Those multi-megabyte fonts are
+ * downloaded before the compiler's first build and previously made every user
+ * pay for Japanese, Traditional Chinese, and Korean fonts simultaneously.
  */
-const EXTRA_TYST_FONT_URLS = [
-  `${TYST_DEV_ASSETS}NotoSerifCJKjp-Regular.otf`,
-  `${TYST_DEV_ASSETS}NotoSerifCJKtc-Regular.otf`,
-  `${TYST_DEV_ASSETS}NotoSerifCJKkr-Regular.otf`,
-  `${TYST_DEV_ASSETS}IBMPlexSans-Regular.ttf`,
-  `${TYST_DEV_ASSETS}IBMPlexSerif-Regular.ttf`,
-] as const;
-
 export function getTypstFontProviders() {
   return [
     TypstSnippet.fetchPackageRegistry(),
     {
       key: 'access-model',
       forRoles: ['compiler'] as const,
-      provides: [
-        loadFonts([...EXTRA_TYST_FONT_URLS], { assets: ['text', 'cjk'] }),
-      ],
+      provides: [loadFonts([], { assets: ['text', 'cjk'] })],
     },
   ];
 }
