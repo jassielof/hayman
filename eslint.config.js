@@ -11,7 +11,7 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 export default defineConfig(
   includeIgnoreFile(gitignorePath),
-  globalIgnores(['json-schemas/', '.svelte-kit/', 'build/', 'coverage/']),
+  globalIgnores(['.svelte-kit/', 'build/', 'coverage/']),
   js.configs.recommended,
   ...ts.configs.recommended,
   ...svelte.configs.recommended,
