@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import EntryForm from '$lib/components/EntryForm.svelte';
+  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
   import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
   import {
     BibliographyService,
@@ -13,10 +14,15 @@
     HayagrivaStructureError,
   } from '$lib/services/hayagriva.service';
   import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
+  import { diffEntry, formatEntryChanges } from '$lib/utils/entry-diff';
   import { CircleAlert, ClipboardPaste, Save, X } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
   let { data, params }: PageProps = $props();
+  // svelte-ignore state_referenced_locally
+  const originalEntryId = params.entryId;
+  // svelte-ignore state_referenced_locally
+  const originalEntry = structuredClone(data.oldEntry);
 
   // svelte-ignore state_referenced_locally
   let newEntryId = $state(params.entryId);
@@ -27,6 +33,8 @@
   let errorMessage = $state<string | undefined>();
   let pasteMessage = $state<string | undefined>();
   let isSubmitting = $state(false);
+  let confirmOpen = $state(false);
+  let changeSummary = $state('');
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -43,6 +51,25 @@
       return;
     }
 
+    const changes = diffEntry(
+      originalEntryId,
+      originalEntry,
+      newEntryId,
+      newEntryData,
+    );
+    if (changes.length === 0) {
+      errorMessage = 'No changes to save.';
+      isSubmitting = false;
+      return;
+    }
+
+    changeSummary = formatEntryChanges(changes);
+    confirmOpen = true;
+    isSubmitting = false;
+  }
+
+  async function confirmSave() {
+    isSubmitting = true;
     try {
       await BibliographyService.updateEntry(
         params.bibliographyId,
@@ -82,6 +109,14 @@
     }
   }
 </script>
+
+<ConfirmDialog
+  bind:open={confirmOpen}
+  title="Review entry changes"
+  description={`Confirm these changes before saving:\n\n${changeSummary}`}
+  confirmLabel="Save changes"
+  onConfirm={confirmSave}
+/>
 
 <form onsubmit={handleSubmit} class="mx-auto w-full max-w-5xl p-6">
   <fieldset class="fieldset">

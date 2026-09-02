@@ -62,7 +62,9 @@
         >{title}</AlertDialog.Title
       >
       {#if description}
-        <AlertDialog.Description class="mt-2 text-sm text-muted-foreground">
+        <AlertDialog.Description
+          class="mt-2 max-h-[50vh] overflow-y-auto text-sm whitespace-pre-wrap text-muted-foreground"
+        >
           {description}
         </AlertDialog.Description>
       {/if}
