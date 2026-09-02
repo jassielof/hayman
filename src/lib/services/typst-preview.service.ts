@@ -5,7 +5,8 @@ import { toYaml } from '$lib/services/hayagriva.service';
 import { getTypstFontProviders } from '$lib/typst/fonts';
 import {
   BIBLIOGRAPHY_FULL_TEMPLATE,
-  ENTRY_CITATION_TEMPLATE,
+  DEFAULT_ENTRY_CITATION_BODY,
+  buildEntryCitationTemplate,
 } from '$lib/typst/templates';
 
 type TypstSnippetState = {
@@ -175,11 +176,14 @@ async function renderSvg(
 
 export async function renderBibliographySvg(
   data: Hayagriva,
+  typstStyle: string,
+  styleLabel: string,
   fonts: AppFontSettings,
+  customCsl?: string,
 ): Promise<string> {
   return renderSvg(
     BIBLIOGRAPHY_FULL_TEMPLATE,
-    buildInputs(data, 'ieee', 'Automatically generated', fonts),
+    buildInputs(data, typstStyle, styleLabel, fonts, customCsl),
   );
 }
 
@@ -191,9 +195,10 @@ export async function renderEntryCitationSvg(
   fonts: AppFontSettings,
   customCsl?: string,
   compact = false,
+  previewBody = DEFAULT_ENTRY_CITATION_BODY,
 ): Promise<string> {
   return renderSvg(
-    ENTRY_CITATION_TEMPLATE,
+    buildEntryCitationTemplate(previewBody),
     buildInputs(
       data,
       typstStyle,

@@ -40,7 +40,10 @@ export class SettingsService {
     const next: AppSettings = {
       ...current,
       id: SETTINGS_ROW_ID,
-      citation: { defaultStyle: nextDefaultStyle },
+      citation: {
+        defaultStyle: nextDefaultStyle,
+        entryPreviewBody: current.citation.entryPreviewBody,
+      },
     };
     await db.settings.put(next);
     applyFontSettings(next.fonts);

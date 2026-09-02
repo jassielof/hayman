@@ -10,6 +10,7 @@ export interface AppCitationSettings {
   defaultStyle: string;
   customCslName?: string;
   customCsl?: string;
+  entryPreviewBody?: string;
 }
 
 export interface AppSettings {

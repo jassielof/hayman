@@ -9,18 +9,25 @@
     usesCustomCslDefault,
   } from '$lib/utils/citation-style';
   import { RefreshCw } from '@lucide/svelte';
+  import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
 
   let {
     settings = $bindable(null as AppSettings | null),
     styleInput = $bindable('ieee'),
     useDefaultStyle = $bindable(true),
     overrideKind = $bindable('bundled' as 'bundled' | 'custom-csl'),
+    showEntryBodyControls = false,
+    useEntryBodyOverride = $bindable(false),
+    entryPreviewBody = $bindable(DEFAULT_ENTRY_CITATION_BODY),
     onRender,
   }: {
     settings?: AppSettings | null;
     styleInput?: string;
     useDefaultStyle?: boolean;
     overrideKind?: 'bundled' | 'custom-csl';
+    showEntryBodyControls?: boolean;
+    useEntryBodyOverride?: boolean;
+    entryPreviewBody?: string;
     onRender?: () => void;
   } = $props();
 
@@ -154,6 +161,36 @@
         <span class="text-xs text-muted-foreground">(Typst built-in)</span>
       {/if}
     </p>
+  {/if}
+
+  {#if showEntryBodyControls}
+    <details class="rounded-md border border-border bg-card/60 p-3">
+      <summary class="cursor-pointer text-sm font-medium">
+        Entry example source
+      </summary>
+      <div class="mt-3 space-y-2">
+        <label class="label flex cursor-pointer items-start gap-2 font-normal">
+          <input
+            type="checkbox"
+            class="checkbox mt-0.5"
+            bind:checked={useEntryBodyOverride}
+          />
+          <span>
+            Override for this preview
+            <span class="block text-xs text-muted-foreground">
+              Otherwise the source saved in Settings, or Hayman’s default, is
+              used.
+            </span>
+          </span>
+        </label>
+        {#if useEntryBodyOverride}
+          <textarea
+            class="textarea min-h-44 font-mono text-xs"
+            aria-label="Entry preview Typst source"
+            bind:value={entryPreviewBody}></textarea>
+        {/if}
+      </div>
+    </details>
   {/if}
 
   <button

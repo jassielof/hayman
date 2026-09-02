@@ -32,6 +32,7 @@ describe('SettingsService', () => {
         defaultStyle: 'custom',
         customCslName: 'ieee.csl',
         customCsl: '<style></style>',
+        entryPreviewBody: '#cite(key)',
       },
     });
 
@@ -40,5 +41,6 @@ describe('SettingsService', () => {
     expect(settings.citation.customCslName).toBeUndefined();
     expect(settings.citation.customCsl).toBeUndefined();
     expect(settings.citation.defaultStyle).toBe('ieee');
+    expect(settings.citation.entryPreviewBody).toBe('#cite(key)');
   });
 });

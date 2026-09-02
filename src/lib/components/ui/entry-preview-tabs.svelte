@@ -8,6 +8,7 @@
   import { resolvePreviewCitationStyle } from '$lib/utils/citation-style';
   import { isMobileViewport } from '$lib/utils/match-mobile';
   import { cn } from '$lib/utils/cn';
+  import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
@@ -36,6 +37,9 @@
   let citationLoading = $state(false);
   let citationError = $state<string | undefined>();
   let lastRenderedStyleKey = $state<string | null>(null);
+  let useEntryBodyOverride = $state(false);
+  let entryPreviewBody = $state(DEFAULT_ENTRY_CITATION_BODY);
+  let entryPreviewBodyDebounced = $state(DEFAULT_ENTRY_CITATION_BODY);
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
@@ -50,6 +54,10 @@
           style: styleInputDebounced.trim(),
           defaultStyle: settings.citation.defaultStyle,
           cslName: settings.citation.customCslName ?? '',
+          entryBody: useEntryBodyOverride
+            ? entryPreviewBodyDebounced
+            : (settings.citation.entryPreviewBody ??
+              DEFAULT_ENTRY_CITATION_BODY),
         })
       : null,
   );
@@ -79,6 +87,10 @@
         loaded.fonts,
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
         isMobileViewport(),
+        useEntryBodyOverride
+          ? entryPreviewBodyDebounced
+          : loaded.citation.entryPreviewBody?.trim() ||
+              DEFAULT_ENTRY_CITATION_BODY,
       );
       lastRenderedStyleKey = previewStyleKey;
     } catch (err) {
@@ -103,6 +115,20 @@
 
     const timer = setTimeout(() => {
       styleInputDebounced = value;
+    }, 400);
+
+    return () => clearTimeout(timer);
+  });
+
+  $effect(() => {
+    const value = entryPreviewBody;
+    if (!useEntryBodyOverride) {
+      entryPreviewBodyDebounced = value;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      entryPreviewBodyDebounced = value;
     }, 400);
 
     return () => clearTimeout(timer);
@@ -182,6 +208,9 @@
       bind:styleInput
       bind:useDefaultStyle
       bind:overrideKind
+      bind:useEntryBodyOverride
+      bind:entryPreviewBody
+      showEntryBodyControls={true}
       onRender={renderCitation}
     />
     <TypstPreview

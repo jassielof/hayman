@@ -61,7 +61,12 @@ describe('typst-preview.service', () => {
   });
 
   it('renders bibliography SVG via $typst.svg', async () => {
-    const svg = await renderBibliographySvg(sampleData, sampleFonts);
+    const svg = await renderBibliographySvg(
+      sampleData,
+      'apa',
+      'APA',
+      sampleFonts,
+    );
 
     expect(svg).toContain('<svg');
     expect(svg).toContain('width="100%"');
@@ -69,7 +74,7 @@ describe('typst-preview.service', () => {
       expect.objectContaining({
         mainContent: expect.stringContaining('#bibliography('),
         inputs: expect.objectContaining({
-          style: 'ieee',
+          style: 'apa',
           yaml: expect.stringContaining('entry1'),
           csl: '',
           'font-sans': sampleFonts.sans,
@@ -77,7 +82,7 @@ describe('typst-preview.service', () => {
         }),
       }),
     );
-    expect(svgMock.mock.calls[0][0].mainContent).not.toContain('style:');
+    expect(svgMock.mock.calls[0][0].mainContent).toContain('style: bib-style');
   });
 
   it('passes entry key for citation preview', async () => {
@@ -156,6 +161,25 @@ describe('typst-preview.service', () => {
         inputs: expect.objectContaining({
           csl: '<style></style>',
         }),
+      }),
+    );
+  });
+
+  it('injects an entry preview body override into the Typst source', async () => {
+    await renderEntryCitationSvg(
+      sampleData,
+      'custom-body-entry',
+      'apa',
+      'apa',
+      sampleFonts,
+      undefined,
+      false,
+      '#cite(key, form: "author")',
+    );
+
+    expect(svgMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mainContent: expect.stringContaining('#cite(key, form: "author")'),
       }),
     );
   });
