@@ -45,6 +45,27 @@ function startDevServer() {
   });
 }
 
+function stopDevServer(child) {
+  if (!child?.pid) return Promise.resolve();
+  if (process.platform !== 'win32') {
+    child.kill('SIGTERM');
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const killer = spawn(
+      'taskkill.exe',
+      ['/pid', String(child.pid), '/T', '/F'],
+      {
+        stdio: 'ignore',
+        windowsHide: true,
+      },
+    );
+    killer.on('error', () => resolve());
+    killer.on('exit', () => resolve());
+  });
+}
+
 async function seedDemoData(page) {
   await page.goto(`${previewUrl}/__screenshot_demo__`, {
     waitUntil: 'domcontentloaded',
@@ -111,13 +132,14 @@ async function run() {
     await waitForBibliographyDetail(page);
     await capture(page, path.join(screenshotsDir, 'desktop.png'));
 
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(previewUrl, { waitUntil: 'domcontentloaded' });
-    await waitForHomeWithBibliography(page);
-    await capture(page, path.join(screenshotsDir, 'mobile.png'));
+    const mobilePage = await context.newPage();
+    await mobilePage.setViewportSize({ width: 390, height: 844 });
+    await mobilePage.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+    await waitForHomeWithBibliography(mobilePage);
+    await capture(mobilePage, path.join(screenshotsDir, 'mobile.png'));
   } finally {
     await browser?.close();
-    devServer.kill('SIGTERM');
+    await stopDevServer(devServer);
   }
 }
 

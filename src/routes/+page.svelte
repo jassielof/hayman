@@ -119,25 +119,25 @@
       <ul class="list shadow-md">
         {#each bibliographies as bib (bib.metadata.id)}
           <li
-            class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4"
+            class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
           >
             <div class="flex items-center justify-center">
               <Library class="size-6 shrink-0" aria-hidden="true" />
             </div>
             <div class="min-w-0">
               <h6 class="truncate font-bold">{bib.metadata.title}</h6>
-              <time class="text-xs text-muted-foreground">
-                Created: {formatDate(bib.metadata.createdAt)}
-              </time>
-              <time class="text-xs text-muted-foreground">
-                · Updated: {formatDate(bib.metadata.updatedAt)}
-              </time>
+              <p class="text-xs text-muted-foreground">
+                Created {formatDate(bib.metadata.createdAt)} · Updated
+                {formatDate(bib.metadata.updatedAt)}
+              </p>
               <p class="mt-1 line-clamp-2 text-sm text-muted-foreground">
                 {bib.metadata.description || 'No description provided.'}
               </p>
             </div>
 
-            <div class="flex shrink-0 flex-row items-center gap-1">
+            <div
+              class="col-span-2 flex shrink-0 flex-row items-center justify-end gap-1 sm:col-span-1"
+            >
               <a
                 href={resolve(`/bibliography/${bib.metadata.id}`)}
                 class="btn btn-sm btn-soft"
