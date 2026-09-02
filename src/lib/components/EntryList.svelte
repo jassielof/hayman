@@ -7,10 +7,8 @@
   import { formatFormattableString } from '$lib/formatters/formattable-string';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { hayagrivaService } from '$lib/services/hayagriva.service';
-  import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import { cn } from '$lib/utils/cn';
-  import { Select } from 'bits-ui';
-  import { SvelteSet } from 'svelte/reactivity';
+  import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import {
     Calendar,
     Check,
@@ -23,6 +21,8 @@
     Search,
     Trash,
   } from '@lucide/svelte';
+  import { Select } from 'bits-ui';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let {
     entries,
@@ -174,20 +174,20 @@
     </div>
   {:else}
     <div class="card-body space-y-4 border-b border-border">
-      <div class="grid gap-3 md:grid-cols-3">
-        <label class="label md:col-span-1">
-          <span class="sr-only">Search entries</span>
-          <span class="input flex items-center gap-2">
-            <Search class="size-4 text-muted-foreground" />
-            <input
-              class="w-full border-0 bg-transparent p-0 shadow-none focus:ring-0"
-              placeholder="Search by ID, title, author…"
-              bind:value={search}
-            />
-          </span>
-        </label>
+      <label class="label mb-0 w-full">
+        <span class="sr-only">Search entries</span>
+        <span class="input flex items-center gap-2">
+          <Search class="size-4 text-muted-foreground" />
+          <input
+            class="w-full border-0 bg-transparent p-0 shadow-none focus:ring-0"
+            placeholder="Search by ID, title, author…"
+            bind:value={search}
+          />
+        </span>
+      </label>
 
-        <div class="label">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="label mb-0 w-full sm:w-56">
           <span class="sr-only">Filter by type</span>
           <Select.Root type="single" bind:value={typeFilter}>
             <Select.Trigger
@@ -258,7 +258,7 @@
           </Select.Root>
         </div>
 
-        <div class="label">
+        <div class="label mb-0 w-full sm:w-56">
           <span class="sr-only">Sort entries</span>
           <Select.Root type="single" bind:value={sortKey} items={sortOptions}>
             <Select.Trigger
@@ -293,34 +293,34 @@
             </Select.Portal>
           </Select.Root>
         </div>
-      </div>
 
-      {#if selected.size > 0}
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-sm text-muted-foreground"
-            >{selected.size} selected</span
-          >
-          <button
-            type="button"
-            class="btn btn-sm btn-outline"
-            onclick={copySelected}
-          >
-            <Copy class="size-4" />
-            Copy YAML
-          </button>
-          {#if copyFeedback}
-            <span class="text-xs text-primary" role="status">Copied!</span>
-          {/if}
-          <button
-            type="button"
-            class="btn btn-sm btn-destructive"
-            onclick={() => (bulkDeleteOpen = true)}
-          >
-            <Trash class="size-4" />
-            Delete selected
-          </button>
-        </div>
-      {/if}
+        {#if selected.size > 0}
+          <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+            <span class="text-sm text-muted-foreground"
+              >{selected.size} selected</span
+            >
+            <button
+              type="button"
+              class="btn btn-sm btn-outline"
+              onclick={copySelected}
+            >
+              <Copy class="size-4" />
+              Copy YAML
+            </button>
+            {#if copyFeedback}
+              <span class="text-xs text-primary" role="status">Copied!</span>
+            {/if}
+            <button
+              type="button"
+              class="btn btn-sm btn-destructive"
+              onclick={() => (bulkDeleteOpen = true)}
+            >
+              <Trash class="size-4" />
+              Delete selected
+            </button>
+          </div>
+        {/if}
+      </div>
     </div>
 
     <ul class="divide-y divide-border">
@@ -373,12 +373,12 @@
                 {id}
               </div>
               <div
-                class="font-serif text-xl leading-snug font-semibold text-balance [font-variant-caps:small-caps]"
+                class="font-balanced font-sans text-xl leading-snug font-semibold font-stretch-expanded [font-variant-caps:small-caps]"
               >
                 {formatFormattableString(entry.title)}
               </div>
               {#if entry.author}
-                <div class="font-sans text-sm leading-relaxed italic">
+                <div class="text-md font-serif leading-relaxed">
                   {formatAuthor(entry.author)}
                 </div>
               {/if}
