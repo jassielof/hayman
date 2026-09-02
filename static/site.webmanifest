@@ -1,9 +1,9 @@
 {
-  "name": "Hayagriva Bibliography Manager",
+  "name": "Hayman",
   "id": "/",
   "orientation": "any",
   "start_url": "/",
-  "short_name": "Hayagriva Manager",
+  "short_name": "Hayman",
   "description": "A PWA for managing bibliographic data with Typst's Hayagriva format.",
   "icons": [
     {

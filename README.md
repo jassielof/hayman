@@ -1,4 +1,4 @@
-# Hayagriva Manager
+# Hayman
 
 A Zotero-like manager for Hayagriva. It allows you to manage multiple Hayagriva bibliographies locally (in your browser).
 
