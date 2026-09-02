@@ -53,8 +53,12 @@
   }
 </script>
 
-{#snippet actions()}
-  <div class="flex flex-wrap justify-end gap-2">
+{#snippet actions(centered = false)}
+  <div
+    class="flex flex-wrap gap-2"
+    class:justify-center={centered}
+    class:justify-end={!centered}
+  >
     {#if (bibliographies ?? []).length > 0}
       <button
         type="button"
@@ -108,7 +112,7 @@
     <section class="grid min-h-[60vh] place-content-center text-center">
       <h2 class="text-2xl font-bold">No bibliographies found</h2>
       <p class="mt-2 mb-4">Create a new one or import it from a YAML file.</p>
-      {@render actions()}
+      {@render actions(true)}
     </section>
   {:else}
     <div class="mb-4 flex justify-end">
