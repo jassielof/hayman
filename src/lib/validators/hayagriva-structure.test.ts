@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   assertAcyclic,
-  assertParentDepthWithin
+  assertParentDepthWithin,
 } from '@hayman/hayagriva-schema';
 import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
 import { hayagrivaService } from '$lib/services/hayagriva.service';
@@ -59,7 +59,7 @@ describe('generateEntryId', () => {
       type: 'article',
       title: 'Patterns',
       author: 'Gamma',
-      date: '1995'
+      date: '1995',
     });
 
     expect(id).toMatch(/^Article/);

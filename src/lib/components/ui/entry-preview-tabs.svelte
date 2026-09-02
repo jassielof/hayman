@@ -18,7 +18,7 @@
   let {
     entryId,
     bibliographyData,
-    entryYamlData
+    entryYamlData,
   }: {
     entryId: string;
     bibliographyData: Hayagriva;
@@ -39,7 +39,7 @@
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
-    hljs.highlight(yamlSource, { language: 'yaml' }).value
+    hljs.highlight(yamlSource, { language: 'yaml' }).value,
   );
 
   const previewStyleKey = $derived(
@@ -49,9 +49,9 @@
           overrideKind,
           style: styleInputDebounced.trim(),
           defaultStyle: settings.citation.defaultStyle,
-          cslName: settings.citation.customCslName ?? ''
+          cslName: settings.citation.customCslName ?? '',
         })
-      : null
+      : null,
   );
 
   async function copyYaml() {
@@ -69,7 +69,7 @@
       const resolved = resolvePreviewCitationStyle(loaded, {
         useSettingsDefault: useDefaultStyle,
         overrideKind,
-        bundledStyle: styleInputDebounced
+        bundledStyle: styleInputDebounced,
       });
       citationSvg = await renderEntryCitationSvg(
         bibliographyData,
@@ -78,7 +78,7 @@
         resolved.label,
         loaded.fonts,
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
-        isMobileViewport()
+        isMobileViewport(),
       );
       lastRenderedStyleKey = previewStyleKey;
     } catch (err) {
@@ -129,7 +129,7 @@
       value="code"
       class={cn(
         'inline-flex flex-1 items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none',
-        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
       )}
     >
       <Code class="size-4" />
@@ -139,7 +139,7 @@
       value="citation"
       class={cn(
         'inline-flex flex-1 items-center justify-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none',
-        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+        'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
       )}
     >
       <BookOpen class="size-4" />

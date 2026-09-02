@@ -6,7 +6,7 @@
     title,
     open = true,
     class: className,
-    children
+    children,
   }: {
     title: string;
     open?: boolean;

@@ -2,7 +2,7 @@
   import type { BibliographyMetadata } from '$lib/types/bibliography-metadata';
 
   let {
-    bibliographyMetadata = $bindable()
+    bibliographyMetadata = $bindable(),
   }: {
     bibliographyMetadata: BibliographyMetadata;
   } = $props();

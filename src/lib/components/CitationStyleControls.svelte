@@ -6,7 +6,7 @@
     describeSettingsDefaultCitation,
     hasCustomCsl,
     resolvePreviewCitationStyle,
-    usesCustomCslDefault
+    usesCustomCslDefault,
   } from '$lib/utils/citation-style';
   import { RefreshCw } from '@lucide/svelte';
 
@@ -15,7 +15,7 @@
     styleInput = $bindable('ieee'),
     useDefaultStyle = $bindable(true),
     overrideKind = $bindable('bundled' as 'bundled' | 'custom-csl'),
-    onRender
+    onRender,
   }: {
     settings?: AppSettings | null;
     styleInput?: string;
@@ -38,11 +38,11 @@
   });
 
   const settingsDefaultLabel = $derived(
-    settings ? describeSettingsDefaultCitation(settings) : null
+    settings ? describeSettingsDefaultCitation(settings) : null,
   );
 
   const settingsUsesCustomCsl = $derived(
-    settings ? usesCustomCslDefault(settings) : false
+    settings ? usesCustomCslDefault(settings) : false,
   );
 
   const resolved = $derived(
@@ -50,13 +50,13 @@
       ? resolvePreviewCitationStyle(settings, {
           useSettingsDefault: useDefaultStyle,
           overrideKind,
-          bundledStyle: styleInput
+          bundledStyle: styleInput,
         })
-      : null
+      : null,
   );
 
   const customCslAvailable = $derived(
-    settings ? hasCustomCsl(settings) : false
+    settings ? hasCustomCsl(settings) : false,
   );
 </script>
 

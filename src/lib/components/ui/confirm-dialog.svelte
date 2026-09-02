@@ -11,7 +11,7 @@
     cancelLabel = 'Cancel',
     destructive = false,
     onConfirm,
-    children
+    children,
   }: {
     open?: boolean;
     title: string;
@@ -55,7 +55,7 @@
     <AlertDialog.Content
       class={cn(
         'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2',
-        'rounded-lg border border-border bg-card p-6 shadow-lg'
+        'rounded-lg border border-border bg-card p-6 shadow-lg',
       )}
     >
       <AlertDialog.Title class="text-lg font-semibold"

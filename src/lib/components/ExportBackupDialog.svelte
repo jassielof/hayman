@@ -2,7 +2,7 @@
   import type { Bibliography } from '$lib/types/bibliography';
   import {
     exportBibliographiesArchive,
-    type BackupArchiveFormat
+    type BackupArchiveFormat,
   } from '$lib/utils/export-backup';
   import { Archive } from '@lucide/svelte';
   import { Dialog } from 'bits-ui';
@@ -10,7 +10,7 @@
 
   let {
     open = $bindable(false),
-    bibliographies = []
+    bibliographies = [],
   }: {
     open?: boolean;
     bibliographies?: Bibliography[];
@@ -45,7 +45,7 @@
 
   function exportSelected() {
     const picked = bibliographies.filter((bib) =>
-      selected.has(bib.metadata.id)
+      selected.has(bib.metadata.id),
     );
     exportBibliographiesArchive(picked, format);
     open = false;

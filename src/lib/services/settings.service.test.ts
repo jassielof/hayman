@@ -17,7 +17,7 @@ describe('SettingsService', () => {
   it('persists and merges updates', async () => {
     await SettingsService.update({
       fonts: { sans: 'Inter', serif: 'Georgia', mono: 'Consolas' },
-      citation: { defaultStyle: 'apa' }
+      citation: { defaultStyle: 'apa' },
     });
 
     const stored = await db.settings.get(SETTINGS_ROW_ID);
@@ -31,8 +31,8 @@ describe('SettingsService', () => {
       citation: {
         defaultStyle: 'custom',
         customCslName: 'ieee.csl',
-        customCsl: '<style></style>'
-      }
+        customCsl: '<style></style>',
+      },
     });
 
     await SettingsService.clearCustomCsl();

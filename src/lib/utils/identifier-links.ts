@@ -35,7 +35,7 @@ export async function checkUrlReachable(url: string): Promise<string> {
 
     const response = await fetch(parsed.href, {
       method: 'HEAD',
-      mode: 'no-cors'
+      mode: 'no-cors',
     });
 
     if (response.type === 'opaque') {

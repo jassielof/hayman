@@ -8,7 +8,7 @@
   let {
     entry,
     baseHeadingLevel = 1,
-    parentDepth = 0
+    parentDepth = 0,
   }: {
     entry: BibliographyEntry;
     baseHeadingLevel?: number;

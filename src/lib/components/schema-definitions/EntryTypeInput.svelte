@@ -1,12 +1,12 @@
 <script lang="ts">
   import {
     ENTRY_TYPES,
-    formatEntryType
+    formatEntryType,
   } from '$lib/formatters/entry-type-formatter';
   import type { Type } from '@hayman/hayagriva-schema';
 
   let {
-    value = $bindable()
+    value = $bindable(),
   }: {
     value: Type;
   } = $props();

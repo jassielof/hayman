@@ -5,7 +5,7 @@ import type { FormattableString } from '@hayman/hayagriva-schema';
  * form when one is provided.
  */
 export function formatFormattableString(
-  input: FormattableString | undefined | null
+  input: FormattableString | undefined | null,
 ): string {
   if (!input) return '';
   if (typeof input === 'string') return input;

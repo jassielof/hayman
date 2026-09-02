@@ -25,7 +25,7 @@ export function assertAcyclic(value: unknown): void {
 
     if (seen.has(node)) {
       throw new HayagrivaStructureError(
-        'Data contains circular references. YAML anchors/aliases that loop back are not supported — use plain nested parent objects instead.'
+        'Data contains circular references. YAML anchors/aliases that loop back are not supported — use plain nested parent objects instead.',
       );
     }
 
@@ -48,7 +48,7 @@ export function assertAcyclic(value: unknown): void {
  */
 export function assertParentDepthWithin(
   value: unknown,
-  maxDepth: number = MAX_PARENT_DEPTH
+  maxDepth: number = MAX_PARENT_DEPTH,
 ): void {
   if (value === null || typeof value !== 'object') return;
 
@@ -63,7 +63,7 @@ export function assertParentDepthWithin(
   const looksLikeBibliography =
     values.length > 0 &&
     values.every(
-      (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+      (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
     ) &&
     values.some((v) => 'type' in (v as object));
 
@@ -78,7 +78,7 @@ export function assertParentDepthWithin(
 function checkEntryParentDepth(
   entry: unknown,
   maxDepth: number,
-  depth = 0
+  depth = 0,
 ): void {
   if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
     return;
@@ -93,7 +93,7 @@ function checkEntryParentDepth(
     const nextDepth = depth + 1;
     if (nextDepth > maxDepth) {
       throw new HayagrivaStructureError(
-        `Parent nesting exceeds ${maxDepth} levels. Flatten the entry hierarchy or remove some parent entries.`
+        `Parent nesting exceeds ${maxDepth} levels. Flatten the entry hierarchy or remove some parent entries.`,
       );
     }
     checkEntryParentDepth(p, maxDepth, nextDepth);

@@ -1,7 +1,7 @@
 <script lang="ts">
   let {
     value = $bindable(),
-    label
+    label,
   }: {
     value?: string;
     label?: string;

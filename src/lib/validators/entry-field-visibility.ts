@@ -42,7 +42,7 @@ const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
     'serial-number',
     'abstract',
     'url',
-    'language'
+    'language',
   ],
   chapter: [
     'author',
@@ -50,7 +50,7 @@ const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
     'chapter',
     'page-range',
     'publisher',
-    'serial-number'
+    'serial-number',
   ],
   entry: ['author', 'chapter', 'page-range', 'publisher'],
   book: [
@@ -61,7 +61,7 @@ const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
     'volume',
     'page-total',
     'serial-number',
-    'genre'
+    'genre',
   ],
   web: ['author', 'url', 'organization'],
   blog: ['author', 'url', 'organization'],
@@ -75,7 +75,7 @@ const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
     'publisher',
     'volume',
     'page-range',
-    'serial-number'
+    'serial-number',
   ],
   proceedings: ['author', 'editor', 'publisher', 'volume', 'page-range'],
   newspaper: ['author', 'publisher', 'page-range', 'serial-number'],
@@ -91,24 +91,24 @@ const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
     'location',
     'archive',
     'archive-location',
-    'call-number'
+    'call-number',
   ],
   patent: ['author', 'serial-number', 'organization'],
   case: ['author', 'serial-number', 'organization'],
   legislation: ['author', 'serial-number', 'organization'],
   repository: ['author', 'url', 'organization'],
-  misc: ['author', 'note']
+  misc: ['author', 'note'],
 };
 
 const DEFAULT_FIELDS: EntryFieldKey[] = [
   'author',
   'publisher',
   'serial-number',
-  'note'
+  'note',
 ];
 
 export function getSuggestedFields(
-  type: string | undefined
+  type: string | undefined,
 ): Set<EntryFieldKey> {
   const normalized = normalizeType(type);
   const fields = TYPE_FIELD_MAP[normalized] ?? DEFAULT_FIELDS;
@@ -118,7 +118,7 @@ export function getSuggestedFields(
 export function isFieldVisible(
   field: EntryFieldKey,
   type: string | undefined,
-  showAllFields: boolean
+  showAllFields: boolean,
 ): boolean {
   if (showAllFields) return true;
   return getSuggestedFields(type).has(field);
@@ -138,7 +138,7 @@ export type FormSectionId =
 export function isSectionRelevant(
   section: FormSectionId,
   type: string | undefined,
-  showAllFields: boolean
+  showAllFields: boolean,
 ): boolean {
   if (showAllFields || section === 'core' || section === 'parent') return true;
 
@@ -158,13 +158,13 @@ export function isSectionRelevant(
       'page-total',
       'genre',
       'organization',
-      'location'
+      'location',
     ],
     media: ['runtime', 'time-range', 'url'],
     identifiers: ['serial-number', 'language'],
     archive: ['call-number', 'archive', 'archive-location'],
     notes: ['abstract', 'note'],
-    additional: []
+    additional: [],
   };
 
   return sectionFields[section].some((field) => fields.has(field));

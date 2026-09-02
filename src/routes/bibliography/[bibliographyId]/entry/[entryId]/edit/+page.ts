@@ -7,7 +7,7 @@ export const load: PageLoad = async ({ params }) => {
   try {
     const oldEntry = await BibliographyService.getEntry(
       params.bibliographyId,
-      params.entryId
+      params.entryId,
     );
 
     if (!oldEntry) {
@@ -15,7 +15,7 @@ export const load: PageLoad = async ({ params }) => {
     }
 
     return {
-      oldEntry
+      oldEntry,
     };
   } catch (err) {
     console.log('Error loading entry:', err);

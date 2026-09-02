@@ -3,14 +3,14 @@ import {
   BibliographyDuplicateIdError,
   BibliographyNotFoundError,
   EntryAlreadyExistsError,
-  ReservedBibliographyIdError
+  ReservedBibliographyIdError,
 } from '$lib/errors/bibliography';
 import type { Bibliography } from '$lib/types/bibliography';
 import { type Hayagriva, type TopLevelEntry } from '@hayman/hayagriva-schema';
 import { assertHayagrivaStructure } from '@hayman/hayagriva-schema';
 import {
   parseAndValidateEntry,
-  parseAndValidateHayagriva
+  parseAndValidateHayagriva,
 } from '$lib/validators/parse-and-validate';
 import { error } from '@sveltejs/kit';
 import { formatFormattableString } from '$lib/formatters/formattable-string';
@@ -124,14 +124,14 @@ export class BibliographyService {
       if (!validation.valid) {
         console.error('Invalid bibliography data:', validation.errors);
         throw new Error(
-          `Invalid bibliography: ${formatIssues(validation.errors)}`
+          `Invalid bibliography: ${formatIssues(validation.errors)}`,
         );
       }
     }
 
     await db.bibliographies.add(cloneForStorage(bibliography));
     notifyMutation(`Added bibliography “${bibliography.metadata.title}”.`, () =>
-      db.bibliographies.delete(bibliography.metadata.id)
+      db.bibliographies.delete(bibliography.metadata.id),
     );
   }
 
@@ -144,7 +144,7 @@ export class BibliographyService {
     const previous = await this.get(id);
     await db.bibliographies.delete(id);
     notifyMutation(`Deleted bibliography “${previous.metadata.title}”.`, () =>
-      db.bibliographies.put(previous).then(() => undefined)
+      db.bibliographies.put(previous).then(() => undefined),
     );
   }
 
@@ -156,7 +156,7 @@ export class BibliographyService {
     const previous = await this.get(id);
     const newId = updated.metadata.id;
 
-    if (newId == 'new') {
+    if (newId === 'new') {
       throw new ReservedBibliographyIdError();
     }
 
@@ -179,7 +179,7 @@ export class BibliographyService {
           await db.bibliographies.put(previous);
           if (newId !== id) await db.bibliographies.delete(newId);
         });
-      }
+      },
     );
   }
 
@@ -196,7 +196,7 @@ export class BibliographyService {
       if (!validation.valid) {
         console.error('Invalid bibliography data:', validation.errors);
         throw new Error(
-          `Invalid bibliography: ${formatIssues(validation.errors)}`
+          `Invalid bibliography: ${formatIssues(validation.errors)}`,
         );
       }
     }
@@ -208,7 +208,7 @@ export class BibliographyService {
       () =>
         previous
           ? db.bibliographies.put(previous).then(() => undefined)
-          : db.bibliographies.delete(bibliography.metadata.id)
+          : db.bibliographies.delete(bibliography.metadata.id),
     );
   }
 
@@ -225,7 +225,7 @@ export class BibliographyService {
     bibliographyId: string,
     newEntryId: string,
     newEntryData: TopLevelEntry,
-    skipValidation = false
+    skipValidation = false,
   ) {
     if (!skipValidation) {
       const validation = await this.validateEntry(newEntryData);
@@ -252,7 +252,7 @@ export class BibliographyService {
         const bibliography = await this.get(bibliographyId);
         delete bibliography.data[newEntryId];
         await db.bibliographies.put(cloneForStorage(bibliography));
-      }
+      },
     );
   }
 
@@ -282,7 +282,7 @@ export class BibliographyService {
           const bibliography = await this.get(bibliographyId);
           bibliography.data[entryId] = entry;
           await db.bibliographies.put(cloneForStorage(bibliography));
-        }
+        },
       );
     }
   }
@@ -315,7 +315,7 @@ export class BibliographyService {
     updatedEntryId: string,
     updatedEntryData: TopLevelEntry,
     oldEntryId: string,
-    skipValidation = false
+    skipValidation = false,
   ) {
     let previousEntry: TopLevelEntry | undefined;
     if (!skipValidation) {
@@ -354,7 +354,7 @@ export class BibliographyService {
           delete bibliography.data[updatedEntryId];
           bibliography.data[oldEntryId] = entry;
           await db.bibliographies.put(cloneForStorage(bibliography));
-        }
+        },
       );
     }
   }

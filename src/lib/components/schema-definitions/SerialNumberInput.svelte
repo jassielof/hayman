@@ -6,7 +6,7 @@
     isbnResolverUrl,
     issnResolverUrl,
     pmcidResolverUrl,
-    pmidResolverUrl
+    pmidResolverUrl,
   } from '$lib/utils/identifier-links';
   import { ExternalLink, Plus, X } from '@lucide/svelte';
 
@@ -16,7 +16,7 @@
   >;
 
   let {
-    value = $bindable()
+    value = $bindable(),
   }: {
     value: BibliographyEntry['serial-number'];
   } = $props();
@@ -30,7 +30,7 @@
     'issn',
     'pmid',
     'pmcid',
-    'arxiv'
+    'arxiv',
   ] as const;
 
   const isKnownKey = (key: string): key is (typeof KNOWN_KEYS)[number] =>
@@ -46,7 +46,11 @@
   let customSerials: { key: string; value: string }[] = $state([]);
 
   function toNonEmptyString(v: unknown): string {
-    return typeof v === 'string' ? v : v == null ? '' : String(v);
+    return typeof v === 'string'
+      ? v
+      : v === null || v === undefined
+        ? ''
+        : String(v);
   }
 
   function openResolver(url: string) {
@@ -103,7 +107,7 @@
     const hasStandard =
       !!doi || !!isbn || !!issn || !!pmid || !!pmcid || !!arxiv;
     const validCustoms = customSerials.filter(
-      ({ key, value }) => key.trim() && value.trim()
+      ({ key, value }) => key.trim() && value.trim(),
     );
 
     if (!serial && !hasStandard && validCustoms.length === 0) {

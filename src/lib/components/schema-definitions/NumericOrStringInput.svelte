@@ -4,7 +4,7 @@
   let {
     value = $bindable(),
     label,
-    placeholder
+    placeholder,
   }: {
     value?: NumericOrString;
     label: string;

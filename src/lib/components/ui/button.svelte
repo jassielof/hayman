@@ -41,13 +41,13 @@
     soft: 'btn-soft',
     destructive: 'btn-destructive',
     success: 'btn-success',
-    dash: 'btn-dash'
+    dash: 'btn-dash',
   };
 
   const sizeClass: Record<Size, string> = {
     default: '',
     sm: 'btn-sm',
-    icon: 'btn-square btn-sm'
+    icon: 'btn-square btn-sm',
   };
 </script>
 

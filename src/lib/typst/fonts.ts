@@ -13,7 +13,7 @@ const EXTRA_TYST_FONT_URLS = [
   `${TYST_DEV_ASSETS}NotoSerifCJKtc-Regular.otf`,
   `${TYST_DEV_ASSETS}NotoSerifCJKkr-Regular.otf`,
   `${TYST_DEV_ASSETS}IBMPlexSans-Regular.ttf`,
-  `${TYST_DEV_ASSETS}IBMPlexSerif-Regular.ttf`
+  `${TYST_DEV_ASSETS}IBMPlexSerif-Regular.ttf`,
 ] as const;
 
 export function getTypstFontProviders() {
@@ -23,8 +23,8 @@ export function getTypstFontProviders() {
       key: 'access-model',
       forRoles: ['compiler'] as const,
       provides: [
-        loadFonts([...EXTRA_TYST_FONT_URLS], { assets: ['text', 'cjk'] })
-      ]
-    }
+        loadFonts([...EXTRA_TYST_FONT_URLS], { assets: ['text', 'cjk'] }),
+      ],
+    },
   ];
 }

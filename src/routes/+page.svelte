@@ -14,7 +14,7 @@
     Download,
     Library,
     Pencil,
-    Trash
+    Trash,
   } from '@lucide/svelte';
   import { stateQuery } from 'dexie-svelte-query';
 
@@ -31,7 +31,7 @@
     return new Intl.DateTimeFormat(undefined, {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     }).format(new Date(date));
   }
 
@@ -158,7 +158,7 @@
                 onclick={() =>
                   hayagrivaService.export(bib.data, {
                     asFile: true,
-                    filename: `${bib.metadata.id}.yaml`
+                    filename: `${bib.metadata.id}.yaml`,
                   })}
               >
                 <Download class="size-4" />

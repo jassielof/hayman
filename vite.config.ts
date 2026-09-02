@@ -9,19 +9,19 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       '@myriaddreamin/typst-ts-web-compiler',
-      '@myriaddreamin/typst-ts-renderer'
-    ]
+      '@myriaddreamin/typst-ts-renderer',
+    ],
   },
   server: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
   },
   preview: {
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp'
-    }
-  }
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
+  },
 });

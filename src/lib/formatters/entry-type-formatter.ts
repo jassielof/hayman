@@ -22,7 +22,7 @@ import {
   PenLine,
   Star,
   Users,
-  Video
+  Video,
 } from '@lucide/svelte';
 
 export const entryTypeIcons: Record<EntryTypeName, typeof BookOpen> = {
@@ -55,7 +55,7 @@ export const entryTypeIcons: Record<EntryTypeName, typeof BookOpen> = {
   thread: MessageCircle,
   video: Video,
   audio: FileAudio,
-  exhibition: Eye
+  exhibition: Eye,
 };
 
 /**

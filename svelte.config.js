@@ -10,15 +10,15 @@ const config = {
       platformProxy: {
         configPath: undefined,
         environment: undefined,
-        persist: undefined
+        persist: undefined,
       },
       fallback: 'plaintext',
       routes: {
         include: ['/*'],
-        exclude: ['<all>']
-      }
-    })
-  }
+        exclude: ['<all>'],
+      },
+    }),
+  },
 };
 
 export default config;

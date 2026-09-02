@@ -14,9 +14,9 @@
       { label: 'Home', href: '/' },
       {
         label: 'Bibliography',
-        href: `/bibliography/${params.bibliographyId}/`
+        href: `/bibliography/${params.bibliographyId}/`,
       },
-      { label: params.entryId }
+      { label: params.entryId },
     ]}
   />
 
@@ -24,7 +24,7 @@
     <a
       class="btn btn-primary"
       href={resolve(
-        `/bibliography/${params.bibliographyId}/entry/${params.entryId}/edit`
+        `/bibliography/${params.bibliographyId}/entry/${params.entryId}/edit`,
       )}
     >
       <Pencil class="size-4" />

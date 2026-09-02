@@ -4,7 +4,7 @@ import { toYaml } from '$lib/services/hayagriva.service';
 import { getTypstFontProviders } from '$lib/typst/fonts';
 import {
   BIBLIOGRAPHY_FULL_TEMPLATE,
-  ENTRY_CITATION_TEMPLATE
+  ENTRY_CITATION_TEMPLATE,
 } from '$lib/typst/templates';
 
 type TypstSnippetState = {
@@ -29,24 +29,24 @@ async function resolveWasmUrls() {
   if (import.meta.env.DEV) {
     const [compiler, renderer] = await Promise.all([
       import('@myriaddreamin/typst-ts-web-compiler/wasm?url'),
-      import('@myriaddreamin/typst-ts-renderer/wasm?url')
+      import('@myriaddreamin/typst-ts-renderer/wasm?url'),
     ]);
     return {
       compiler: compiler.default,
-      renderer: renderer.default
+      renderer: renderer.default,
     };
   }
 
   return {
     compiler: TYPST_COMPILER_WASM,
-    renderer: TYPST_RENDERER_WASM
+    renderer: TYPST_RENDERER_WASM,
   };
 }
 
 function withTimeout<T>(
   promise: Promise<T>,
   ms: number,
-  message: string
+  message: string,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(message)), ms);
@@ -58,7 +58,7 @@ function withTimeout<T>(
       (error) => {
         clearTimeout(timer);
         reject(error);
-      }
+      },
     );
   });
 }
@@ -72,7 +72,7 @@ async function ensureTypst() {
   initPromise = (async () => {
     const [{ $typst: typstImport }, wasmUrls] = await Promise.all([
       import('@myriaddreamin/typst.ts/contrib/snippet'),
-      resolveWasmUrls()
+      resolveWasmUrls(),
     ]);
     const $typst = typstImport as unknown as TypstSnippetState;
 
@@ -82,10 +82,10 @@ async function ensureTypst() {
     }
 
     $typst.setCompilerInitOptions({
-      getModule: () => wasmUrls.compiler
+      getModule: () => wasmUrls.compiler,
     });
     $typst.setRendererInitOptions({
-      getModule: () => wasmUrls.renderer
+      getModule: () => wasmUrls.renderer,
     });
   })().catch((error) => {
     initPromise = null;
@@ -102,7 +102,7 @@ function buildInputs(
   fonts: AppFontSettings,
   customCsl?: string,
   entryKey?: string,
-  compact?: boolean
+  compact?: boolean,
 ): Record<string, string> {
   const inputs: Record<string, string> = {
     yaml: toYaml(data),
@@ -110,7 +110,7 @@ function buildInputs(
     'style-label': styleLabel,
     csl: customCsl ?? '',
     'font-sans': fonts.sans,
-    'font-serif': fonts.serif
+    'font-serif': fonts.serif,
   };
 
   if (entryKey) {
@@ -136,7 +136,7 @@ export function makeSvgResponsive(svg: string): string {
 
 async function renderSvg(
   mainContent: string,
-  inputs: Record<string, string>
+  inputs: Record<string, string>,
 ): Promise<string> {
   const task = renderChain.then(async () => {
     await ensureTypst();
@@ -147,7 +147,7 @@ async function renderSvg(
     const svg = await withTimeout(
       $typst.svg({ mainContent, inputs }),
       RENDER_TIMEOUT_MS,
-      'Typst preview timed out. The first compile downloads WebAssembly (~8MB) — try again on a stable connection.'
+      'Typst preview timed out. The first compile downloads WebAssembly (~8MB) — try again on a stable connection.',
     );
 
     return makeSvgResponsive(svg);
@@ -172,11 +172,11 @@ export async function reinitTypstPreview() {
 
 export async function renderBibliographySvg(
   data: Hayagriva,
-  fonts: AppFontSettings
+  fonts: AppFontSettings,
 ): Promise<string> {
   return renderSvg(
     BIBLIOGRAPHY_FULL_TEMPLATE,
-    buildInputs(data, 'ieee', 'Automatically generated', fonts)
+    buildInputs(data, 'ieee', 'Automatically generated', fonts),
   );
 }
 
@@ -187,7 +187,7 @@ export async function renderEntryCitationSvg(
   styleLabel: string,
   fonts: AppFontSettings,
   customCsl?: string,
-  compact = false
+  compact = false,
 ): Promise<string> {
   return renderSvg(
     ENTRY_CITATION_TEMPLATE,
@@ -198,7 +198,7 @@ export async function renderEntryCitationSvg(
       fonts,
       customCsl,
       entryId,
-      compact
-    )
+      compact,
+    ),
   );
 }

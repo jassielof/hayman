@@ -9,11 +9,11 @@ const sampleBibliography = (): Bibliography => ({
     id: 'test-bib',
     title: 'Test Bibliography',
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   },
   data: {
-    entry1: { type: 'misc', title: 'First' }
-  }
+    entry1: { type: 'misc', title: 'First' },
+  },
 });
 
 describe('BibliographyService', () => {
@@ -31,7 +31,7 @@ describe('BibliographyService', () => {
     await BibliographyService.add(sampleBibliography());
     await BibliographyService.saveEntry('test-bib', 'entry2', {
       type: 'article',
-      title: 'Second'
+      title: 'Second',
     });
 
     const bib = await BibliographyService.get('test-bib');

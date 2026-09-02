@@ -5,7 +5,7 @@
     value = $bindable(),
     label = 'Publisher',
     placeholder = 'Pearson',
-    locationPlaceholder = 'USA'
+    locationPlaceholder = 'USA',
   }: {
     value: BibliographyEntry['publisher'];
     label?: string;
@@ -39,7 +39,7 @@
     } else {
       value = {
         name: publisherName,
-        location: publisherLocation
+        location: publisherLocation,
       };
     }
   });

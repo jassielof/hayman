@@ -1,7 +1,7 @@
 import type { Hayagriva, TopLevelEntry } from '@hayman/hayagriva-schema';
 import {
   assertHayagrivaStructure,
-  HayagrivaStructureError
+  HayagrivaStructureError,
 } from '@hayman/hayagriva-schema';
 import YAML from 'yaml';
 
@@ -9,7 +9,7 @@ export { HayagrivaStructureError };
 
 export function toYaml(content: Hayagriva | TopLevelEntry): string {
   return YAML.stringify(content, {
-    schema: 'core'
+    schema: 'core',
   });
 }
 
@@ -32,7 +32,7 @@ export class HayagrivaService {
 
     if (typeof data !== 'object' || Array.isArray(data)) {
       throw new HayagrivaStructureError(
-        'Expected a YAML mapping of citation keys to entries.'
+        'Expected a YAML mapping of citation keys to entries.',
       );
     }
 
@@ -47,7 +47,7 @@ export class HayagrivaService {
       toClipboard?: boolean;
       asFile?: boolean;
       filename?: string;
-    } = {}
+    } = {},
   ) {
     const data = toYaml(content);
 

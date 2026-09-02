@@ -6,7 +6,7 @@
   import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import {
     isFieldVisible,
-    isSectionRelevant
+    isSectionRelevant,
   } from '$lib/validators/entry-field-visibility';
   import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
   import { X } from '@lucide/svelte';
@@ -25,7 +25,7 @@
 
   let {
     entryData = $bindable(),
-    parentDepth = 0
+    parentDepth = 0,
   }: {
     entryData: BibliographyEntry;
     parentDepth?: number;
@@ -37,14 +37,14 @@
   let showAllFields = $state(false);
 
   const entryTitle = $derived(
-    formatFormattableString(entryData.title) || 'Untitled'
+    formatFormattableString(entryData.title) || 'Untitled',
   );
   const visible = $derived((field: Parameters<typeof isFieldVisible>[0]) =>
-    isFieldVisible(field, entryData.type, showAllFields)
+    isFieldVisible(field, entryData.type, showAllFields),
   );
   const sectionOpen = $derived(
     (section: Parameters<typeof isSectionRelevant>[0]) =>
-      isSectionRelevant(section, entryData.type, showAllFields)
+      isSectionRelevant(section, entryData.type, showAllFields),
   );
 
   $effect(() => {

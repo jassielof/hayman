@@ -8,7 +8,7 @@
   import { listAvailableFonts } from '$lib/utils/available-fonts';
   import {
     DEFAULT_APP_SETTINGS,
-    type AppSettings
+    type AppSettings,
   } from '$lib/types/app-settings';
   import { ArrowLeft, CircleAlert, Save } from '@lucide/svelte';
 
@@ -22,7 +22,7 @@
   let availableFonts = $state<Record<'sans' | 'serif' | 'mono', string[]>>({
     sans: [DEFAULT_APP_SETTINGS.fonts.sans],
     serif: [DEFAULT_APP_SETTINGS.fonts.serif],
-    mono: [DEFAULT_APP_SETTINGS.fonts.mono]
+    mono: [DEFAULT_APP_SETTINGS.fonts.mono],
   });
   let fontsLoading = $state(true);
 
@@ -34,7 +34,7 @@
     return resolve('/');
   });
   const backLabel = $derived(
-    returnTo && returnTo.startsWith('/') ? 'Back' : 'Back to home'
+    returnTo && returnTo.startsWith('/') ? 'Back' : 'Back to home',
   );
 
   $effect(() => {
@@ -97,7 +97,7 @@
       defaultStyle:
         defaultKind === 'custom-csl'
           ? CUSTOM_CSL_STYLE
-          : bundledDefaultStyle.trim() || 'ieee'
+          : bundledDefaultStyle.trim() || 'ieee',
     };
 
     if (defaultKind === 'custom-csl' && !citation.customCsl?.trim()) {
@@ -109,7 +109,7 @@
     try {
       await SettingsService.update({
         fonts: settings.fonts,
-        citation
+        citation,
       });
       await reinitTypstPreview();
       savedMessage = 'Settings saved.';

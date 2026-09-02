@@ -24,9 +24,9 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   fonts: {
     sans: 'system-ui',
     serif: 'serif',
-    mono: 'monospace'
+    mono: 'monospace',
   },
   citation: {
-    defaultStyle: 'ieee'
-  }
+    defaultStyle: 'ieee',
+  },
 };

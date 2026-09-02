@@ -15,7 +15,7 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export function exportBibliographiesArchive(
   bibliographies: Bibliography[],
-  format: BackupArchiveFormat
+  format: BackupArchiveFormat,
 ) {
   if (bibliographies.length === 0) return;
 
@@ -35,8 +35,8 @@ export function exportBibliographiesArchive(
       JSON.stringify(
         bibliographies.map((bib) => bib.metadata),
         null,
-        2
-      )
+        2,
+      ),
     );
   }
 

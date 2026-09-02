@@ -7,11 +7,11 @@
   import {
     BibliographyService,
     formatValidationErrorMessage,
-    type ValidationIssue
+    type ValidationIssue,
   } from '$lib/services/bibliography.service';
   import {
     hayagrivaService,
-    HayagrivaStructureError
+    HayagrivaStructureError,
   } from '$lib/services/hayagriva.service';
   import type { TopLevelEntry } from '@hayman/hayagriva-schema';
   import { generateEntryId } from '$lib/utils/entry-id';
@@ -22,7 +22,7 @@
     FileUp,
     Save,
     Sparkles,
-    X
+    X,
   } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
@@ -30,7 +30,7 @@
 
   let newEntryId: string = $state('');
   let newEntryData: TopLevelEntry = $state({
-    type: 'misc'
+    type: 'misc',
   });
   let validationIssues = $state<ValidationIssue[]>([]);
   let errorMessage = $state<string | undefined>();
@@ -58,7 +58,7 @@
           hayagrivaService.import(reader.result as string) as Record<
             string,
             TopLevelEntry
-          >
+          >,
         );
       } catch (err) {
         pasteMessage =
@@ -91,7 +91,7 @@
       await BibliographyService.saveEntry(
         params.bibliographyId,
         newEntryId,
-        newEntryData
+        newEntryData,
       );
 
       goto(resolve(`/bibliography/${params.bibliographyId}/`));
@@ -124,9 +124,9 @@
       { label: 'Home', href: '/' },
       {
         label: 'Bibliography',
-        href: `/bibliography/${params.bibliographyId}/`
+        href: `/bibliography/${params.bibliographyId}/`,
       },
-      { label: 'New entry' }
+      { label: 'New entry' },
     ]}
   />
 

@@ -5,7 +5,7 @@
   let {
     value = $bindable(),
     label = 'Date',
-    placeholder = '2025, 2020-12, or 2010-12-30'
+    placeholder = '2025, 2020-12, or 2010-12-30',
   }: {
     value?: BibliographyEntry['date'];
     label?: string;

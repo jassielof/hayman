@@ -33,8 +33,8 @@ function startDevServer() {
       ['run', 'dev', '--host', '127.0.0.1', '--port', '4174'],
       {
         cwd: root,
-        stdio: ['ignore', 'pipe', 'pipe']
-      }
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
     );
 
     child.on('error', reject);
@@ -47,7 +47,7 @@ function startDevServer() {
 
 async function seedDemoData(page) {
   await page.goto(`${previewUrl}/__screenshot_demo__`, {
-    waitUntil: 'domcontentloaded'
+    waitUntil: 'domcontentloaded',
   });
 
   const error = page.locator('[data-screenshot-error="true"]');
@@ -57,7 +57,7 @@ async function seedDemoData(page) {
 
   await page.waitForSelector('[data-screenshot-ready="true"]', {
     state: 'attached',
-    timeout: 60_000
+    timeout: 60_000,
   });
 }
 
@@ -106,7 +106,7 @@ async function run() {
 
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(`${previewUrl}/bibliography/${demoBibId}`, {
-      waitUntil: 'domcontentloaded'
+      waitUntil: 'domcontentloaded',
     });
     await waitForBibliographyDetail(page);
     await capture(page, path.join(screenshotsDir, 'desktop.png'));

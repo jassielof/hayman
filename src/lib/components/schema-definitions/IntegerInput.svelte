@@ -3,7 +3,7 @@
     value = $bindable(),
     label,
     naturalSet = false,
-    placeholder
+    placeholder,
   }: {
     value?: number;
     label: string;

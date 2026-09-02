@@ -20,7 +20,7 @@ export function dateFormatter(date: HayagrivaDate) {
       : new Intl.DateTimeFormat(undefined, {
           year: 'numeric',
           month: 'long',
-          timeZone: 'UTC'
+          timeZone: 'UTC',
         }).format(d);
   }
 
@@ -33,7 +33,7 @@ export function dateFormatter(date: HayagrivaDate) {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
-          timeZone: 'UTC'
+          timeZone: 'UTC',
         }).format(d);
   }
 
@@ -46,7 +46,7 @@ export function dateFormatter(date: HayagrivaDate) {
  * e.g. "2020-12-25" or "2020". Unlike `dateFormatter`, this does not localize.
  */
 export function formatEntryDateShort(
-  date: HayagrivaDate | undefined | null
+  date: HayagrivaDate | undefined | null,
 ): string {
   if (!date) return '';
   if (typeof date === 'number') return date.toString();

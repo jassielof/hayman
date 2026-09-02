@@ -1,14 +1,15 @@
 <script lang="ts">
   import {
     subscribeToMutations,
-    type MutationNotification
+    type MutationNotification,
   } from '$lib/services/mutation-notifications';
   import { RotateCcw, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
+  import { SvelteMap } from 'svelte/reactivity';
 
   const DISPLAY_MS = 8000;
   let notifications = $state<MutationNotification[]>([]);
-  const timers = new Map<string, ReturnType<typeof setTimeout>>();
+  const timers = new SvelteMap<string, ReturnType<typeof setTimeout>>();
 
   function dismiss(id: string) {
     const timer = timers.get(id);
@@ -27,9 +28,9 @@
       notifications = [...notifications.slice(-3), notification];
       timers.set(
         notification.id,
-        setTimeout(() => dismiss(notification.id), DISPLAY_MS)
+        setTimeout(() => dismiss(notification.id), DISPLAY_MS),
       );
-    })
+    }),
   );
 </script>
 

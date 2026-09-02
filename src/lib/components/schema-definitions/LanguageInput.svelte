@@ -3,7 +3,7 @@
   import { type Language } from '@hayman/hayagriva-schema';
 
   let {
-    value = $bindable()
+    value = $bindable(),
   }: {
     value: Language | undefined;
   } = $props();

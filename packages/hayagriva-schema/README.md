@@ -7,7 +7,7 @@ storage layer.
 ```ts
 import {
   hayagrivaBibliographySchema,
-  type Hayagriva
+  type Hayagriva,
 } from '@hayman/hayagriva-schema';
 
 const result = hayagrivaBibliographySchema.safeParse(value);

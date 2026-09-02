@@ -3,7 +3,7 @@
     svg,
     loading = false,
     error = undefined as string | undefined,
-    variant = 'default' as 'default' | 'citation'
+    variant = 'default' as 'default' | 'citation',
   }: {
     svg?: string;
     loading?: boolean;

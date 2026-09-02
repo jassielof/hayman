@@ -2,7 +2,7 @@ import { db } from '$lib/db';
 import {
   DEFAULT_APP_SETTINGS,
   SETTINGS_ROW_ID,
-  type AppSettings
+  type AppSettings,
 } from '$lib/types/app-settings';
 import { applyFontSettings } from '$lib/utils/apply-font-settings';
 
@@ -19,7 +19,7 @@ export class SettingsService {
       ...changes,
       id: SETTINGS_ROW_ID,
       fonts: { ...current.fonts, ...changes.fonts },
-      citation: { ...current.citation, ...changes.citation }
+      citation: { ...current.citation, ...changes.citation },
     };
     await db.settings.put(next);
     applyFontSettings(next.fonts);
@@ -40,7 +40,7 @@ export class SettingsService {
     const next: AppSettings = {
       ...current,
       id: SETTINGS_ROW_ID,
-      citation: { defaultStyle: nextDefaultStyle }
+      citation: { defaultStyle: nextDefaultStyle },
     };
     await db.settings.put(next);
     applyFontSettings(next.fonts);

@@ -6,12 +6,12 @@ const { svgMock } = vi.hoisted(() => ({
   svgMock: vi
     .fn()
     .mockResolvedValue(
-      '<svg width="400" height="200" viewBox="0 0 400 200"></svg>'
-    )
+      '<svg width="400" height="200" viewBox="0 0 400 200"></svg>',
+    ),
 }));
 
 vi.mock('$lib/typst/fonts', () => ({
-  getTypstFontProviders: () => [{}, {}]
+  getTypstFontProviders: () => [{}, {}],
 }));
 
 vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
@@ -20,24 +20,24 @@ vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
     use: vi.fn(),
     setCompilerInitOptions: vi.fn(),
     setRendererInitOptions: vi.fn(),
-    svg: svgMock
+    svg: svgMock,
   },
   TypstSnippet: {
     fetchPackageRegistry: () => ({}),
     preloadFontAssets: () => ({}),
-    preloadFonts: () => ({})
-  }
+    preloadFonts: () => ({}),
+  },
 }));
 
 import {
   makeSvgResponsive,
   renderBibliographySvg,
   renderEntryCitationSvg,
-  reinitTypstPreview
+  reinitTypstPreview,
 } from '$lib/services/typst-preview.service';
 
 const sampleData: Hayagriva = {
-  entry1: { type: 'article', title: 'Sample' }
+  entry1: { type: 'article', title: 'Sample' },
 };
 
 const sampleFonts = DEFAULT_APP_SETTINGS.fonts;
@@ -50,7 +50,7 @@ describe('typst-preview.service', () => {
 
   it('makes SVG scale to container width', () => {
     const responsive = makeSvgResponsive(
-      '<svg width="400" height="200" viewBox="0 0 400 200"></svg>'
+      '<svg width="400" height="200" viewBox="0 0 400 200"></svg>',
     );
 
     expect(responsive).toContain('width="100%"');
@@ -71,9 +71,9 @@ describe('typst-preview.service', () => {
           yaml: expect.stringContaining('entry1'),
           csl: '',
           'font-sans': sampleFonts.sans,
-          'font-serif': sampleFonts.serif
-        })
-      })
+          'font-serif': sampleFonts.serif,
+        }),
+      }),
     );
     expect(svgMock.mock.calls[0][0].mainContent).not.toContain('style:');
   });
@@ -84,7 +84,7 @@ describe('typst-preview.service', () => {
       'entry1',
       'apa',
       'apa',
-      sampleFonts
+      sampleFonts,
     );
 
     expect(svgMock).toHaveBeenCalledWith(
@@ -92,9 +92,9 @@ describe('typst-preview.service', () => {
         mainContent: expect.stringContaining('#cite('),
         inputs: expect.objectContaining({
           'entry-key': 'entry1',
-          style: 'apa'
-        })
-      })
+          style: 'apa',
+        }),
+      }),
     );
   });
 
@@ -106,16 +106,16 @@ describe('typst-preview.service', () => {
       'apa',
       sampleFonts,
       undefined,
-      true
+      true,
     );
 
     expect(svgMock).toHaveBeenCalledWith(
       expect.objectContaining({
         mainContent: expect.stringContaining('compact'),
         inputs: expect.objectContaining({
-          compact: 'true'
-        })
-      })
+          compact: 'true',
+        }),
+      }),
     );
   });
 
@@ -127,15 +127,15 @@ describe('typst-preview.service', () => {
       'apa',
       sampleFonts,
       undefined,
-      false
+      false,
     );
 
     expect(svgMock).toHaveBeenCalledWith(
       expect.objectContaining({
         inputs: expect.objectContaining({
-          compact: 'false'
-        })
-      })
+          compact: 'false',
+        }),
+      }),
     );
   });
 
@@ -146,15 +146,15 @@ describe('typst-preview.service', () => {
       'custom',
       'Custom',
       sampleFonts,
-      '<style></style>'
+      '<style></style>',
     );
 
     expect(svgMock).toHaveBeenCalledWith(
       expect.objectContaining({
         inputs: expect.objectContaining({
-          csl: '<style></style>'
-        })
-      })
+          csl: '<style></style>',
+        }),
+      }),
     );
   });
 });

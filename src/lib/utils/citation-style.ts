@@ -39,13 +39,13 @@ export function describeSettingsDefaultCitation(settings: AppSettings): string {
 
 /** Resolve the citation style saved in app settings. */
 export function resolveSettingsDefaultCitationStyle(
-  settings: AppSettings
+  settings: AppSettings,
 ): ResolvedCitationStyle {
   if (usesCustomCslDefault(settings)) {
     return {
       typstStyle: CUSTOM_CSL_STYLE,
       label: settings.citation.customCslName ?? 'Custom CSL',
-      useCustomCsl: true
+      useCustomCsl: true,
     };
   }
 
@@ -53,13 +53,13 @@ export function resolveSettingsDefaultCitationStyle(
   return {
     typstStyle: style,
     label: style,
-    useCustomCsl: false
+    useCustomCsl: false,
   };
 }
 
 export function resolveCitationStyle(
   styleInput: string,
-  settings: AppSettings
+  settings: AppSettings,
 ): ResolvedCitationStyle {
   const trimmed = styleInput.trim();
 
@@ -67,7 +67,7 @@ export function resolveCitationStyle(
     return {
       typstStyle: CUSTOM_CSL_STYLE,
       label: settings.citation.customCslName ?? 'Custom CSL',
-      useCustomCsl: true
+      useCustomCsl: true,
     };
   }
 
@@ -75,7 +75,7 @@ export function resolveCitationStyle(
   return {
     typstStyle: style,
     label: style,
-    useCustomCsl: false
+    useCustomCsl: false,
   };
 }
 
@@ -85,7 +85,7 @@ export function resolvePreviewCitationStyle(
     useSettingsDefault: boolean;
     overrideKind?: 'bundled' | 'custom-csl';
     bundledStyle?: string;
-  }
+  },
 ): ResolvedCitationStyle {
   if (options.useSettingsDefault) {
     return resolveSettingsDefaultCitationStyle(settings);

@@ -2,19 +2,19 @@ import {
   hayagrivaBibliographySchema,
   topLevelEntrySchema,
   type Hayagriva,
-  type TopLevelEntry
+  type TopLevelEntry,
 } from '@hayman/hayagriva-schema';
 import { assertHayagrivaStructure } from '@hayman/hayagriva-schema';
 import type {
   ValidationIssue,
-  ValidationResult
+  ValidationResult,
 } from '$lib/services/bibliography.service';
 import type { z } from 'zod';
 
 function toValidationIssues(error: z.ZodError): ValidationIssue[] {
   return error.issues.map((issue) => ({
     path: issue.path.join('.') || '(root)',
-    message: issue.message
+    message: issue.message,
   }));
 }
 
@@ -33,7 +33,7 @@ export function parseAndValidateHayagriva(data: Hayagriva): ValidationResult {
   const result = hayagrivaBibliographySchema.safeParse(data);
   return {
     valid: result.success,
-    errors: result.success ? null : toValidationIssues(result.error)
+    errors: result.success ? null : toValidationIssues(result.error),
   };
 }
 
@@ -41,6 +41,6 @@ export function parseAndValidateEntry(entry: TopLevelEntry): ValidationResult {
   const result = topLevelEntrySchema.safeParse(entry);
   return {
     valid: result.success,
-    errors: result.success ? null : toValidationIssues(result.error)
+    errors: result.success ? null : toValidationIssues(result.error),
   };
 }

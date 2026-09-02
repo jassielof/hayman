@@ -5,7 +5,7 @@
     label,
     placeholder,
     shortPlaceholder = 'Optional short form',
-    multiline = false
+    multiline = false,
   }: {
     value?: FormattableString;
     label: string;
@@ -36,7 +36,7 @@
       value = {
         value: mainValue!,
         short: shortValue,
-        verbatim: verbatimValue
+        verbatim: verbatimValue,
       };
     } else {
       value = mainValue!;

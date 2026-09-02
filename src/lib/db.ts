@@ -13,11 +13,11 @@ export class HayagrivaManagerDB extends Dexie {
   constructor(dbName: string = 'hayagriva-manager') {
     super(dbName);
     this.version(1).stores({
-      bibliographies: 'metadata.id'
+      bibliographies: 'metadata.id',
     });
     this.version(2).stores({
       bibliographies: 'metadata.id',
-      settings: 'id'
+      settings: 'id',
     });
   }
 }

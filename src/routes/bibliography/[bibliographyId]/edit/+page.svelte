@@ -4,7 +4,7 @@
   import BibliographyMetadataForm from '$lib/components/BibliographyMetadataForm.svelte';
   import {
     BibliographyService,
-    formatValidationErrorMessage
+    formatValidationErrorMessage,
   } from '$lib/services/bibliography.service';
   import { CircleAlert } from '@lucide/svelte';
   import type { PageProps } from './$types';
@@ -27,7 +27,7 @@
     try {
       await BibliographyService.updateMetadata(
         params.bibliographyId,
-        bibliography
+        bibliography,
       );
 
       goto(resolve(`/bibliography/${bibliography.metadata.id}/`));

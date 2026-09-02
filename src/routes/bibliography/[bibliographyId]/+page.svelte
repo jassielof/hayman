@@ -12,7 +12,7 @@
 
   const bibliographyId = page.params.bibliographyId;
   const bibliographyQuery = stateQuery(() =>
-    BibliographyService.getOrNull(bibliographyId!)
+    BibliographyService.getOrNull(bibliographyId!),
   );
 
   const bibliographyQueryLoading = $derived(bibliographyQuery.isLoading);
@@ -40,7 +40,7 @@
     <Breadcrumbs
       items={[
         { label: 'Home', href: '/' },
-        { label: bibliography.metadata.title }
+        { label: bibliography.metadata.title },
       ]}
     />
 
@@ -74,7 +74,7 @@
           value="entries"
           class={cn(
             'rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
-            'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+            'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
           )}
         >
           Entries
@@ -83,7 +83,7 @@
           value="preview"
           class={cn(
             'rounded-sm px-3 py-1.5 text-sm font-medium transition-colors',
-            'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm'
+            'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
           )}
         >
           Rendered bibliography

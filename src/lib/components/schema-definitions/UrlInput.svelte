@@ -7,7 +7,7 @@
   let {
     value = $bindable(),
     label = 'URL',
-    placeholder = 'https://example.com'
+    placeholder = 'https://example.com',
   }: {
     value?: URL;
     label?: string;

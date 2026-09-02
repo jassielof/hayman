@@ -8,7 +8,7 @@ export const ssr = false;
 export const load: PageLoad = async ({ params }) => {
   try {
     const bibliography = await BibliographyService.getForLoad(
-      params.bibliographyId
+      params.bibliographyId,
     );
     const entry = bibliography?.data[params.entryId];
 
@@ -27,7 +27,7 @@ export const load: PageLoad = async ({ params }) => {
     return {
       entry,
       entryYamlData,
-      bibliographyData: bibliography.data
+      bibliographyData: bibliography.data,
     };
   } catch (err) {
     console.error('Error loading entry:', error);

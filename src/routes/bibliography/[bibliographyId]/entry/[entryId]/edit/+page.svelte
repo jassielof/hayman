@@ -6,11 +6,11 @@
   import {
     BibliographyService,
     formatValidationErrorMessage,
-    type ValidationIssue
+    type ValidationIssue,
   } from '$lib/services/bibliography.service';
   import {
     hayagrivaService,
-    HayagrivaStructureError
+    HayagrivaStructureError,
   } from '$lib/services/hayagriva.service';
   import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
   import { CircleAlert, ClipboardPaste, Save, X } from '@lucide/svelte';
@@ -48,7 +48,7 @@
         params.bibliographyId,
         newEntryId,
         newEntryData,
-        params.entryId
+        params.entryId,
       );
 
       goto(resolve(`/bibliography/${params.bibliographyId}/`));

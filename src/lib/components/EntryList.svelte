@@ -20,12 +20,12 @@
     Pencil,
     Search,
     Trash,
-    User
+    User,
   } from '@lucide/svelte';
 
   let {
     entries,
-    bibliographyId
+    bibliographyId,
   }: {
     entries: Hayagriva;
     bibliographyId: string;
@@ -52,7 +52,7 @@
             id,
             formatFormattableString(entry.title),
             entry.author ? formatAuthor(entry.author) : '',
-            entry.type ?? ''
+            entry.type ?? '',
           ]
             .join(' ')
             .toLowerCase();
@@ -67,23 +67,23 @@
         switch (sortKey) {
           case 'title':
             return formatFormattableString(a.title).localeCompare(
-              formatFormattableString(b.title)
+              formatFormattableString(b.title),
             );
           case 'type':
             return (a.type ?? '').localeCompare(b.type ?? '');
           case 'date':
             return formatEntryDateShort(a.date).localeCompare(
-              formatEntryDateShort(b.date)
+              formatEntryDateShort(b.date),
             );
           default:
             return idA.localeCompare(idB);
         }
-      })
+      }),
   );
 
   const allVisibleSelected = $derived(
     filteredEntries.length > 0 &&
-      filteredEntries.every(([id]) => selected.has(id))
+      filteredEntries.every(([id]) => selected.has(id)),
   );
 
   function toggleSelect(id: string) {
@@ -133,7 +133,7 @@
   }
 
   const bulkDeleteDescription = $derived(
-    [...selected].map((id) => `• ${id}`).join('\n')
+    [...selected].map((id) => `• ${id}`).join('\n'),
   );
 </script>
 
@@ -199,7 +199,7 @@
             <DropdownMenu.Portal>
               <DropdownMenu.Content
                 class={cn(
-                  'z-50 max-h-64 min-w-[12rem] overflow-y-auto rounded-md border border-border bg-card p-1 shadow-md'
+                  'z-50 max-h-64 min-w-[12rem] overflow-y-auto rounded-md border border-border bg-card p-1 shadow-md',
                 )}
               >
                 <DropdownMenu.Item
@@ -340,7 +340,7 @@
               <a
                 class="btn btn-sm btn-soft"
                 href={resolve(
-                  `/bibliography/${bibliographyId}/entry/${id}/edit`
+                  `/bibliography/${bibliographyId}/entry/${id}/edit`,
                 )}
               >
                 <Pencil class="size-4" />

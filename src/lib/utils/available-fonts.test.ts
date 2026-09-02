@@ -3,7 +3,7 @@ import {
   BUNDLED_FONT_OPTIONS,
   SYSTEM_FONT_OPTIONS,
   isCssGenericFamily,
-  toFontStack
+  toFontStack,
 } from '$lib/utils/available-fonts';
 
 describe('available-fonts', () => {
@@ -15,10 +15,10 @@ describe('available-fonts', () => {
 
   it('builds stacks without quoting generics', () => {
     expect(toFontStack('system-ui', 'sans-serif')).toBe(
-      'system-ui, sans-serif'
+      'system-ui, sans-serif',
     );
     expect(toFontStack('IBM Plex Sans', 'sans-serif')).toBe(
-      "'IBM Plex Sans', sans-serif"
+      "'IBM Plex Sans', sans-serif",
     );
     expect(toFontStack('monospace', 'monospace')).toBe('monospace');
   });

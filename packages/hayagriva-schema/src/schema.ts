@@ -56,8 +56,8 @@ export const formattableStringSchema = z.union([
     /** If true, disables text case transformations. Preserves casing as it appears in source. */
     verbatim: z.boolean().optional(),
     /** A short form that a citation style can choose to render over the longer form. */
-    short: z.string().min(1).optional()
-  })
+    short: z.string().min(1).optional(),
+  }),
 ]);
 export type FormattableString = z.infer<typeof formattableStringSchema>;
 
@@ -73,7 +73,7 @@ export type NumericOrString = z.infer<typeof numericOrStringSchema>;
  */
 export const hayagrivaDateSchema = z.union([
   z.number().int(),
-  z.string().regex(DATE_REGEX)
+  z.string().regex(DATE_REGEX),
 ]);
 export type HayagrivaDate = z.infer<typeof hayagrivaDateSchema>;
 
@@ -93,8 +93,8 @@ export const personSchema = z.union([
     /** The suffix of the person's name (e.g., "Jr.", "III"). */
     suffix: z.string().min(1).optional(),
     /** An alternative name or pseudonym for the person. */
-    alias: z.string().min(1).optional()
-  })
+    alias: z.string().min(1).optional(),
+  }),
 ]);
 export type Person = z.infer<typeof personSchema>;
 
@@ -104,7 +104,7 @@ export type Person = z.infer<typeof personSchema>;
  */
 export const personOrListSchema = z.union([
   personSchema,
-  z.array(personSchema).min(1)
+  z.array(personSchema).min(1),
 ]);
 export type PersonOrList = z.infer<typeof personOrListSchema>;
 
@@ -117,8 +117,8 @@ export const publisherSchema = z.union([
     /** The name of the publisher. */
     name: z.string().min(1),
     /** The location of the publisher. */
-    location: z.string().min(1).optional()
-  })
+    location: z.string().min(1).optional(),
+  }),
 ]);
 export type Publisher = z.infer<typeof publisherSchema>;
 
@@ -162,7 +162,7 @@ export const ENTRY_TYPE_NAMES = [
   'thread',
   'video',
   'audio',
-  'exhibition'
+  'exhibition',
 ] as const;
 export type EntryTypeName = (typeof ENTRY_TYPE_NAMES)[number];
 
@@ -177,11 +177,11 @@ export type EntryType = EntryTypeName | Capitalize<EntryTypeName>;
 
 const ENTRY_TYPE_VALUES = [
   ...ENTRY_TYPE_NAMES,
-  ...ENTRY_TYPE_NAMES.map(capitalizeFirst)
+  ...ENTRY_TYPE_NAMES.map(capitalizeFirst),
 ] as [EntryType, ...EntryType[]];
 
 export const entryTypeSchema = z.enum(ENTRY_TYPE_VALUES, {
-  error: 'Must be a valid Hayagriva entry type (e.g. "book", "article", "web")'
+  error: 'Must be a valid Hayagriva entry type (e.g. "book", "article", "web")',
 });
 
 /**
@@ -208,12 +208,12 @@ export const ROLE_TYPES = [
   'cinematography',
   'director',
   'illustrator',
-  'narrator'
+  'narrator',
 ] as const;
 export type RoleType = (typeof ROLE_TYPES)[number];
 
 export const roleTypeSchema = z.enum(ROLE_TYPES, {
-  error: 'Must be a valid affiliated role (case-sensitive)'
+  error: 'Must be a valid affiliated role (case-sensitive)',
 });
 
 /**
@@ -222,7 +222,7 @@ export const roleTypeSchema = z.enum(ROLE_TYPES, {
 export const affiliatedRoleSchema = z.strictObject({
   role: roleTypeSchema,
   /** The name(s) of the person or people involved in the role. */
-  names: personOrListSchema
+  names: personOrListSchema,
 });
 export type AffiliatedRole = z.infer<typeof affiliatedRoleSchema>;
 
@@ -242,12 +242,12 @@ export const serialNumberSchema = z.union([
       pmcid: z.string().min(1).optional(),
       arxiv: z.string().min(1).optional(),
       /** Generic serial number. */
-      serial: z.string().min(1).optional()
+      serial: z.string().min(1).optional(),
     })
     .catchall(z.string().min(1))
     .refine((value) => Object.keys(value).length > 0, {
-      error: 'At least one serial number field is required'
-    })
+      error: 'At least one serial number field is required',
+    }),
 ]);
 export type SerialNumber = z.infer<typeof serialNumberSchema>;
 
@@ -258,8 +258,8 @@ export const urlValueSchema = z.union([
   z.string().min(1),
   z.strictObject({
     value: z.string().min(1),
-    date: hayagrivaDateSchema.optional()
-  })
+    date: hayagrivaDateSchema.optional(),
+  }),
 ]);
 export type UrlValue = z.infer<typeof urlValueSchema>;
 
@@ -354,7 +354,7 @@ export const bibliographyEntrySchema = z.strictObject({
   /** The location of the institution/collection where the entry is kept. */
   'archive-location': formattableStringSchema.optional(),
   /** A short markup, decoration, or annotation to the entry. */
-  note: formattableStringSchema.optional()
+  note: formattableStringSchema.optional(),
 });
 export type BibliographyEntry = z.infer<typeof bibliographyEntrySchema>;
 
@@ -363,7 +363,7 @@ export type BibliographyEntry = z.infer<typeof bibliographyEntrySchema>;
  * entries found at the top level of a bibliography.
  */
 export const topLevelEntrySchema = bibliographyEntrySchema.extend({
-  type: entryTypeSchema
+  type: entryTypeSchema,
 });
 export type TopLevelEntry = z.infer<typeof topLevelEntrySchema>;
 
@@ -373,7 +373,7 @@ export type TopLevelEntry = z.infer<typeof topLevelEntrySchema>;
  */
 export const hayagrivaBibliographySchema = z.record(
   z.string().min(1),
-  topLevelEntrySchema
+  topLevelEntrySchema,
 );
 export type HayagrivaBibliography = z.infer<typeof hayagrivaBibliographySchema>;
 

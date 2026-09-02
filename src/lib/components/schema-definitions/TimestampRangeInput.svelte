@@ -4,7 +4,7 @@
 
   let {
     value = $bindable(),
-    label
+    label,
   }: {
     value?: string;
     label?: string;
@@ -45,7 +45,7 @@
   // Format start and end back into a range string
   function formatRange(
     nextStart: string | undefined,
-    nextEnd: string | undefined
+    nextEnd: string | undefined,
   ) {
     if (isSyncing) return;
     isSyncing = true;

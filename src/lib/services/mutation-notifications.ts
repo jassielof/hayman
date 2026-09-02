@@ -14,12 +14,12 @@ export function subscribeToMutations(listener: Listener) {
 
 export function notifyMutation(
   message: string,
-  undo: () => Promise<void>
+  undo: () => Promise<void>,
 ): void {
   const notification = {
     id: crypto.randomUUID(),
     message,
-    undo
+    undo,
   };
   for (const listener of listeners) listener(notification);
 }

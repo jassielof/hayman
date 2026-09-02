@@ -7,7 +7,7 @@
 
   let {
     bibliographyData,
-    active = false
+    active = false,
   }: {
     bibliographyData: Hayagriva;
     active?: boolean;

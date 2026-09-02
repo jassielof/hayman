@@ -5,7 +5,7 @@ import {
   resolveCitationStyle,
   resolvePreviewCitationStyle,
   resolveSettingsDefaultCitationStyle,
-  usesCustomCslDefault
+  usesCustomCslDefault,
 } from '$lib/utils/citation-style';
 import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
 
@@ -28,8 +28,8 @@ describe('resolveCitationStyle', () => {
         ...DEFAULT_APP_SETTINGS.citation,
         defaultStyle: CUSTOM_CSL_STYLE,
         customCslName: 'my-style.csl',
-        customCsl: '<style></style>'
-      }
+        customCsl: '<style></style>',
+      },
     };
 
     const resolved = resolveCitationStyle(CUSTOM_CSL_STYLE, settings);
@@ -41,7 +41,7 @@ describe('resolveCitationStyle', () => {
   it('uses built-in when custom selected but no CSL uploaded', () => {
     const resolved = resolveCitationStyle(
       CUSTOM_CSL_STYLE,
-      DEFAULT_APP_SETTINGS
+      DEFAULT_APP_SETTINGS,
     );
     expect(resolved.typstStyle).toBe(CUSTOM_CSL_STYLE);
     expect(resolved.useCustomCsl).toBe(false);
@@ -55,13 +55,13 @@ describe('settings default citation style', () => {
       citation: {
         defaultStyle: 'ieee',
         customCslName: 'apa.csl',
-        customCsl: '<style></style>'
-      }
+        customCsl: '<style></style>',
+      },
     };
 
     expect(usesCustomCslDefault(settings)).toBe(false);
     expect(resolveSettingsDefaultCitationStyle(settings).typstStyle).toBe(
-      'ieee'
+      'ieee',
     );
     expect(describeSettingsDefaultCitation(settings)).toBe('ieee');
   });
@@ -72,15 +72,15 @@ describe('settings default citation style', () => {
       citation: {
         defaultStyle: CUSTOM_CSL_STYLE,
         customCslName: 'apa.csl',
-        customCsl: '<style></style>'
-      }
+        customCsl: '<style></style>',
+      },
     };
 
     expect(usesCustomCslDefault(settings)).toBe(true);
     expect(resolveSettingsDefaultCitationStyle(settings)).toEqual({
       typstStyle: 'custom',
       label: 'apa.csl',
-      useCustomCsl: true
+      useCustomCsl: true,
     });
   });
 });
@@ -91,13 +91,13 @@ describe('resolvePreviewCitationStyle', () => {
     citation: {
       defaultStyle: CUSTOM_CSL_STYLE,
       customCslName: 'apa.csl',
-      customCsl: '<style></style>'
-    }
+      customCsl: '<style></style>',
+    },
   };
 
   it('uses settings default when requested', () => {
     const resolved = resolvePreviewCitationStyle(settings, {
-      useSettingsDefault: true
+      useSettingsDefault: true,
     });
     expect(resolved.useCustomCsl).toBe(true);
     expect(resolved.label).toBe('apa.csl');
@@ -107,7 +107,7 @@ describe('resolvePreviewCitationStyle', () => {
     const resolved = resolvePreviewCitationStyle(settings, {
       useSettingsDefault: false,
       overrideKind: 'bundled',
-      bundledStyle: 'ieee'
+      bundledStyle: 'ieee',
     });
     expect(resolved.typstStyle).toBe('ieee');
     expect(resolved.useCustomCsl).toBe(false);
@@ -116,7 +116,7 @@ describe('resolvePreviewCitationStyle', () => {
   it('allows custom CSL override', () => {
     const resolved = resolvePreviewCitationStyle(settings, {
       useSettingsDefault: false,
-      overrideKind: 'custom-csl'
+      overrideKind: 'custom-csl',
     });
     expect(resolved.useCustomCsl).toBe(true);
   });

@@ -10,21 +10,21 @@ const CSS_GENERICS = new Set([
   'ui-sans-serif',
   'ui-serif',
   'ui-monospace',
-  'ui-rounded'
+  'ui-rounded',
 ]);
 
 /** CSS generic / system stacks — always safe on every OS. */
 export const SYSTEM_FONT_OPTIONS = {
   sans: ['system-ui', 'ui-sans-serif', 'sans-serif'],
   serif: ['ui-serif', 'serif'],
-  mono: ['ui-monospace', 'monospace']
+  mono: ['ui-monospace', 'monospace'],
 } as const;
 
 /** Webfonts bundled with the app (see layout.css imports). */
 export const BUNDLED_FONT_OPTIONS = {
   sans: ['IBM Plex Sans', 'Source Sans 3'],
   serif: ['IBM Plex Serif', 'Source Serif 4'],
-  mono: ['IBM Plex Mono', 'Source Code Pro']
+  mono: ['IBM Plex Mono', 'Source Code Pro'],
 } as const;
 
 export type FontCategory = keyof AppFontSettings;
@@ -49,7 +49,7 @@ function normalizeFamilyName(name: string): string {
 
 function uniqueSorted(names: Iterable<string>): string[] {
   return [...new Set([...names].map(normalizeFamilyName).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b)
+    (a, b) => a.localeCompare(b),
   );
 }
 
@@ -63,7 +63,7 @@ function loadedFamilies(documentRef: Document): Set<string> {
 
 function bundledForCategory(
   category: FontCategory,
-  loaded: Set<string>
+  loaded: Set<string>,
 ): string[] {
   return BUNDLED_FONT_OPTIONS[category].filter((font) => loaded.has(font));
 }
@@ -81,14 +81,14 @@ export interface ListAvailableFontsOptions {
  * 3. The user's current saved choice (if any)
  */
 export async function listAvailableFonts(
-  options: ListAvailableFontsOptions = {}
+  options: ListAvailableFontsOptions = {},
 ): Promise<Record<FontCategory, string[]>> {
   const documentRef = options.documentRef ?? document;
   if (typeof documentRef === 'undefined') {
     return {
       sans: [...SYSTEM_FONT_OPTIONS.sans],
       serif: [...SYSTEM_FONT_OPTIONS.serif],
-      mono: [...SYSTEM_FONT_OPTIONS.mono]
+      mono: [...SYSTEM_FONT_OPTIONS.mono],
     };
   }
 
@@ -98,7 +98,7 @@ export async function listAvailableFonts(
   const merge = (category: FontCategory) => {
     const names = new Set<string>([
       ...SYSTEM_FONT_OPTIONS[category],
-      ...bundledForCategory(category, loaded)
+      ...bundledForCategory(category, loaded),
     ]);
     const current = options.current?.[category];
     if (current?.trim()) names.add(normalizeFamilyName(current));
@@ -108,6 +108,6 @@ export async function listAvailableFonts(
   return {
     sans: merge('sans'),
     serif: merge('serif'),
-    mono: merge('mono')
+    mono: merge('mono'),
   };
 }

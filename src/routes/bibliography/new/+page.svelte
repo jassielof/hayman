@@ -6,11 +6,11 @@
   import {
     BibliographyService,
     formatValidationErrorMessage,
-    type ValidationIssue
+    type ValidationIssue,
   } from '$lib/services/bibliography.service';
   import {
     hayagrivaService,
-    HayagrivaStructureError
+    HayagrivaStructureError,
   } from '$lib/services/hayagriva.service';
   import type { Bibliography } from '$lib/types/bibliography';
   import { parseAndValidateHayagriva } from '$lib/validators/parse-and-validate';
@@ -22,8 +22,8 @@
       id: '',
       title: '',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+      updatedAt: new Date().toISOString(),
+    },
   });
 
   let files: FileList | undefined = $state(undefined);
@@ -191,7 +191,7 @@
 
         newBibliography.metadata.id = files[0].name.replace(
           /\.(yml|yaml)$/i,
-          ''
+          '',
         ) as string;
         newBibliography.metadata.title = newBibliography.metadata.id
           .replace(/[-_]/g, ' ')
