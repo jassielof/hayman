@@ -8,16 +8,23 @@
   import { cn } from '$lib/utils/cn';
   import { Tabs } from 'bits-ui';
   import { BookPlus } from '@lucide/svelte';
-  import { stateQuery } from 'dexie-svelte-query';
+  import { onMount } from 'svelte';
+  import type { Bibliography } from '$lib/types/bibliography';
+  import { tauriBackend } from '$lib/services/tauri-backend';
 
   const bibliographyId = page.params.bibliographyId;
-  const bibliographyQuery = stateQuery(() =>
-    BibliographyService.getOrNull(bibliographyId!),
-  );
-
-  const bibliographyQueryLoading = $derived(bibliographyQuery.isLoading);
-  const bibliography = $derived(bibliographyQuery.current);
+  let bibliography = $state<Bibliography | null | undefined>();
+  const bibliographyQueryLoading = $derived(bibliography === undefined);
   let tab = $state('entries');
+
+  async function refresh() {
+    bibliography = await BibliographyService.getOrNull(bibliographyId!);
+  }
+
+  onMount(() => {
+    void refresh();
+    return tauriBackend.subscribe(() => void refresh());
+  });
 </script>
 
 <main class="mx-auto flex w-full max-w-5xl flex-col p-4">

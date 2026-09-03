@@ -1,7 +1,7 @@
 export interface MutationNotification {
   id: string;
   message: string;
-  undo: () => Promise<void>;
+  undo?: () => Promise<void>;
 }
 
 type Listener = (notification: MutationNotification) => void;
@@ -14,7 +14,7 @@ export function subscribeToMutations(listener: Listener) {
 
 export function notifyMutation(
   message: string,
-  undo: () => Promise<void>,
+  undo?: () => Promise<void>,
 ): void {
   const notification = {
     id: crypto.randomUUID(),

@@ -1,46 +1,18 @@
 import type { AppFontSettings } from '$lib/types/app-settings';
-import { browser } from '$app/environment';
 import type { Hayagriva } from '@hayman/hayagriva-schema';
 import { toYaml } from '$lib/services/hayagriva.service';
-import { getTypstFontProviders } from '$lib/typst/fonts';
 import {
   BIBLIOGRAPHY_FULL_TEMPLATE,
   DEFAULT_ENTRY_CITATION_BODY,
   buildEntryCitationTemplate,
 } from '$lib/typst/templates';
-
-type TypstSnippetState = {
-  providers?: unknown[];
-  use: (...providers: unknown[]) => void;
-  setCompilerInitOptions: (options: Record<string, unknown>) => void;
-  setRendererInitOptions: (options: Record<string, unknown>) => void;
-  svg: (options: Record<string, unknown>) => Promise<string>;
-};
+import { tauriBackend } from '$lib/services/tauri-backend';
 
 const RENDER_TIMEOUT_MS = 120_000;
 const MAX_SESSION_CACHE_ENTRIES = 12;
 
-let initPromise: Promise<void> | null = null;
 let renderChain: Promise<unknown> = Promise.resolve();
-let wasmUrlsPromise: ReturnType<typeof loadWasmUrls> | null = null;
 const renderCache = new Map<string, Promise<string>>();
-
-async function loadWasmUrls() {
-  if (!browser)
-    throw new Error('Typst previews are only available in the browser.');
-  const [compiler, renderer] = await Promise.all([
-    import('@myriaddreamin/typst-ts-web-compiler/wasm?url'),
-    import('@myriaddreamin/typst-ts-renderer/wasm?url'),
-  ]);
-  return {
-    compiler: compiler.default,
-    renderer: renderer.default,
-  };
-}
-
-function resolveWasmUrls() {
-  return (wasmUrlsPromise ??= loadWasmUrls());
-}
 
 function withTimeout<T>(
   promise: Promise<T>,
@@ -60,38 +32,6 @@ function withTimeout<T>(
       },
     );
   });
-}
-
-async function ensureTypst() {
-  if (initPromise) {
-    await initPromise;
-    return;
-  }
-
-  initPromise = (async () => {
-    const [{ $typst: typstImport }, wasmUrls] = await Promise.all([
-      import('@myriaddreamin/typst.ts/contrib/snippet'),
-      resolveWasmUrls(),
-    ]);
-    const $typst = typstImport as unknown as TypstSnippetState;
-
-    // Providers can only be registered once per $typst lifetime.
-    if (Array.isArray($typst.providers)) {
-      $typst.use(...getTypstFontProviders());
-    }
-
-    $typst.setCompilerInitOptions({
-      getModule: () => wasmUrls.compiler,
-    });
-    $typst.setRendererInitOptions({
-      getModule: () => wasmUrls.renderer,
-    });
-  })().catch((error) => {
-    initPromise = null;
-    throw error;
-  });
-
-  await initPromise;
 }
 
 function buildInputs(
@@ -147,17 +87,11 @@ async function renderSvg(
   }
 
   const task = renderChain.then(async () => {
-    await ensureTypst();
-    const { $typst: typstImport } =
-      await import('@myriaddreamin/typst.ts/contrib/snippet');
-    const $typst = typstImport as unknown as TypstSnippetState;
-
     const svg = await withTimeout(
-      $typst.svg({ mainContent, inputs }),
+      tauriBackend.renderTypst(mainContent, inputs),
       RENDER_TIMEOUT_MS,
-      'Typst preview timed out. The first compile downloads WebAssembly (~8MB) — try again on a stable connection.',
+      'Typst preview timed out.',
     );
-
     return makeSvgResponsive(svg);
   });
 

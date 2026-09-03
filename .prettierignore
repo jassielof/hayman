@@ -11,4 +11,6 @@ json-schemas/
 .svelte-kit/
 build/
 coverage/
+src-tauri/gen/
+src-tauri/target/
 TODO.md

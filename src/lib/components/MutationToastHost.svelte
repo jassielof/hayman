@@ -19,7 +19,7 @@
   }
 
   async function undo(notification: MutationNotification) {
-    await notification.undo();
+    await notification.undo?.();
     dismiss(notification.id);
   }
 
@@ -45,12 +45,14 @@
     >
       <p class="pr-8 text-sm">{notification.message}</p>
       <div class="mt-3 flex items-center gap-2">
-        <button
-          class="btn btn-sm btn-outline"
-          onclick={() => undo(notification)}
-        >
-          <RotateCcw class="size-4" /> Undo
-        </button>
+        {#if notification.undo}
+          <button
+            class="btn btn-sm btn-outline"
+            onclick={() => undo(notification)}
+          >
+            <RotateCcw class="size-4" /> Undo
+          </button>
+        {/if}
         <button
           class="btn btn-sm btn-ghost ml-auto"
           aria-label="Dismiss notification"

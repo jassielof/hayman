@@ -2,7 +2,6 @@
   import { resolve } from '$app/paths';
   import ExportBackupDialog from '$lib/components/ExportBackupDialog.svelte';
   import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-  import { db } from '$lib/db';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { hayagrivaService } from '$lib/services/hayagriva.service';
   import type { Bibliography } from '$lib/types/bibliography';
@@ -13,14 +12,32 @@
     Copy,
     Download,
     Library,
+    Link,
     Pencil,
     Trash,
   } from '@lucide/svelte';
-  import { stateQuery } from 'dexie-svelte-query';
+  import { onMount } from 'svelte';
+  import { open } from '@tauri-apps/plugin-dialog';
+  import { tauriBackend } from '$lib/services/tauri-backend';
 
-  const bibliographyQuery = stateQuery(() => db.bibliographies.toArray());
-  const bibliographyQueryLoading = $derived(bibliographyQuery.isLoading);
-  const bibliographies = $derived(bibliographyQuery.current);
+  let desktopBibliographies = $state<Bibliography[] | undefined>();
+  let desktopError = $state<string | undefined>();
+  const bibliographyQueryLoading = $derived(
+    desktopBibliographies === undefined,
+  );
+  const bibliographies = $derived(desktopBibliographies);
+
+  async function refreshDesktop() {
+    try {
+      desktopBibliographies = await BibliographyService.getAll();
+      desktopError = undefined;
+    } catch (error) {
+      desktopError = String(error);
+      desktopBibliographies = [];
+    }
+  }
+
+  onMount(refreshDesktop);
 
   let deleteOpen = $state(false);
   let exportOpen = $state(false);
@@ -44,6 +61,23 @@
     if (!pendingDelete) return;
     await BibliographyService.delete(pendingDelete.metadata.id);
     pendingDelete = null;
+    await refreshDesktop();
+  }
+
+  async function linkProjectBibliography() {
+    const selected = await open({
+      multiple: false,
+      filters: [
+        { name: 'Hayagriva bibliography', extensions: ['yml', 'yaml'] },
+      ],
+    });
+    if (!selected) return;
+    try {
+      await tauriBackend.link(selected);
+      await refreshDesktop();
+    } catch (error) {
+      desktopError = String(error);
+    }
   }
 
   async function copyYaml(bib: Bibliography) {
@@ -70,6 +104,14 @@
         Export backup
       </button>
     {/if}
+    <button
+      type="button"
+      class="btn btn-outline"
+      onclick={linkProjectBibliography}
+    >
+      <Link class="size-[1.2em]" />
+      Link project file
+    </button>
     <a
       href={resolve('/bibliography/new')}
       class="btn btn-primary"
@@ -98,6 +140,9 @@
 />
 
 <main class="container mx-auto mt-8 max-w-5xl p-4">
+  {#if desktopError}
+    <div class="alert alert-error mb-4" role="alert">{desktopError}</div>
+  {/if}
   {#if bibliographyQueryLoading}
     <div
       class="flex min-h-[60vh] items-center justify-center"
@@ -130,6 +175,17 @@
             </div>
             <div class="min-w-0">
               <h6 class="truncate font-bold">{bib.metadata.title}</h6>
+              {#if bib.metadata.storageKind}
+                <p
+                  class="truncate text-xs font-medium text-primary"
+                  title={bib.metadata.filePath}
+                >
+                  {bib.metadata.storageKind === 'linked'
+                    ? 'Linked project file'
+                    : 'Managed by Hayman'}
+                  · {bib.metadata.filePath}
+                </p>
+              {/if}
               <p class="text-xs text-muted-foreground">
                 Created {formatDate(bib.metadata.createdAt)} · Updated
                 {formatDate(bib.metadata.updatedAt)}

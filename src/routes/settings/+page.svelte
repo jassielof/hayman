@@ -13,6 +13,11 @@
     type AppSettings,
   } from '$lib/types/app-settings';
   import { ArrowLeft, CircleAlert, Save } from '@lucide/svelte';
+  import {
+    tauriBackend,
+    type RecoveryItem,
+    type StorageInfo,
+  } from '$lib/services/tauri-backend';
 
   let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
   let errorMessage = $state<string | undefined>();
@@ -29,6 +34,34 @@
   let fontsLoading = $state(true);
   let customizeEntryPreviewBody = $state(false);
   let entryPreviewBody = $state(DEFAULT_ENTRY_CITATION_BODY);
+  let storage = $state<StorageInfo | undefined>();
+  let typstVersion = $state<string | undefined>();
+  let typstError = $state<string | undefined>();
+  let recoveryItems = $state<RecoveryItem[]>([]);
+  let restoringId = $state<number | undefined>();
+
+  $effect(() => {
+    tauriBackend.storageInfo().then((value) => (storage = value));
+    tauriBackend.listRecovery().then((value) => (recoveryItems = value));
+    tauriBackend.typstVersion().then(
+      (value) => (typstVersion = value),
+      (error) => (typstError = String(error)),
+    );
+  });
+
+  async function restoreSnapshot(item: RecoveryItem) {
+    restoringId = item.id;
+    errorMessage = undefined;
+    try {
+      await tauriBackend.restoreRecovery(item.id);
+      savedMessage = `Restored ${item.bibliographyId} from ${new Date(item.createdAt).toLocaleString()}.`;
+      recoveryItems = await tauriBackend.listRecovery();
+    } catch (error) {
+      errorMessage = String(error);
+    } finally {
+      restoringId = undefined;
+    }
+  }
 
   function goBack() {
     if (window.history.length > 1) {
@@ -144,6 +177,78 @@
   <h1 class="mb-4 text-2xl font-bold">Settings</h1>
 
   <form class="space-y-6" onsubmit={handleSubmit}>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Local data and tools</legend>
+      <p class="text-sm text-muted-foreground">
+        Hayman keeps its catalog and managed bibliographies in the application
+        data directory. Linked project files remain in their original location.
+        Every overwrite receives a recovery snapshot.
+      </p>
+      {#if storage}
+        <dl class="grid gap-2 text-xs">
+          <div>
+            <dt class="font-semibold">Managed files</dt>
+            <dd class="font-mono break-all">
+              {storage.managedBibliographiesDirectory}
+            </dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Recovery snapshots</dt>
+            <dd class="font-mono break-all">{storage.recoveryDirectory}</dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Catalog database</dt>
+            <dd class="font-mono break-all">{storage.databasePath}</dd>
+          </div>
+        </dl>
+      {/if}
+      {#if typstVersion}
+        <p class="text-sm">
+          Typst prerequisite found: <code>{typstVersion}</code>
+        </p>
+      {:else if typstError}
+        <div class="alert alert-warning text-sm" role="status">
+          {typstError}
+        </div>
+      {/if}
+      <details class="rounded-md border border-border bg-card/60 p-3">
+        <summary class="cursor-pointer text-sm font-medium">
+          Recovery snapshots ({recoveryItems.length})
+        </summary>
+        {#if recoveryItems.length === 0}
+          <p class="mt-2 text-xs text-muted-foreground">No snapshots yet.</p>
+        {:else}
+          <ul class="mt-3 space-y-2">
+            {#each recoveryItems as item (item.id)}
+              <li
+                class="flex flex-wrap items-center gap-2 rounded border border-border p-2 text-xs"
+              >
+                <span class="min-w-0 flex-1">
+                  <strong>{item.bibliographyId}</strong>
+                  · {new Date(item.createdAt).toLocaleString()}
+                  · {item.reason.replaceAll('-', ' ')}
+                  <span
+                    class="block truncate font-mono text-muted-foreground"
+                    title={item.originalPath}>{item.originalPath}</span
+                  >
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline"
+                  disabled={restoringId !== undefined}
+                  onclick={() => restoreSnapshot(item)}
+                >
+                  {#if restoringId === item.id}<span
+                      class="loading loading-xs loading-spinner"
+                    ></span>{/if}
+                  Restore
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </details>
+    </fieldset>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
       <p class="text-sm text-muted-foreground">

@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build
+  frontend:
+    name: Frontend
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,11 +27,27 @@ jobs:
         run: bun check
       - name: Test
         run: bun run test
-      - name: Install Playwright Chromium
-        run: bunx playwright install chromium
-      - name: Build (preview)
+      - name: Build static frontend
         run: bun run build
-      - name: Capture PWA screenshots
-        run: bun run screenshots
-      - name: Build (with screenshots)
-        run: bun run build
+
+  rust:
+    name: Rust backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: '1.85'
+          components: rustfmt, clippy
+      - name: Check formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --check
+      - name: Check backend
+        run: cargo check --manifest-path src-tauri/Cargo.toml --locked
+      - name: Test backend
+        run: cargo test --manifest-path src-tauri/Cargo.toml --locked

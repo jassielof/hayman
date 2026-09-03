@@ -1,8 +1,36 @@
 # Hayman
 
-A Zotero-like manager for Hayagriva. It allows you to manage multiple Hayagriva bibliographies locally (in your browser).
+A local-first desktop bibliography manager for Hayagriva, built with Tauri,
+Rust, Svelte, and Bun.
 
-<!-- ## Functional Requirements
+Hayman can keep a bibliography in its private application-data directory or
+link directly to a `.yml`/`.yaml` file in a Typst project. The SQLite database
+is a catalog for metadata and settings; bibliography YAML files remain the
+source of truth. Before overwriting or deleting managed content, Hayman creates
+a timestamped recovery snapshot. Linked files are never deleted when removed
+from Hayman.
+
+BibTeX and BibLaTeX `.bib` files can be imported through the bundled Hayagriva
+Rust library. They are converted into a new managed Hayagriva YAML file, leaving
+the source file untouched.
+
+## Development
+
+Prerequisites are Bun, Rust/Cargo, the platform dependencies required by Tauri,
+and a `typst` executable available on `PATH`.
+
+```sh
+bun install
+bun tauri dev
+```
+
+The Svelte frontend is built as a static SPA. In the desktop application,
+citation previews invoke the installed Typst executable as a child process;
+the old WASM renderer remains only as a browser-test fallback.
+
+<!-- Historical browser prototype requirements (superseded by the Tauri architecture above).
+
+## Functional Requirements
 
 ### Client-side Only
 

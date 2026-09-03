@@ -14,10 +14,6 @@
   const settingsActive = $derived(page.url.pathname === settingsPath);
 </script>
 
-<svelte:head>
-  <link rel="manifest" href="/site.webmanifest" />
-</svelte:head>
-
 <ModeWatcher />
 <SettingsBootstrap />
 <MutationToastHost />

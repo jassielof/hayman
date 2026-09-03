@@ -15,6 +15,9 @@
   import type { Bibliography } from '$lib/types/bibliography';
   import { parseAndValidateHayagriva } from '$lib/validators/parse-and-validate';
   import { CircleAlert, ClipboardPaste, Link } from '@lucide/svelte';
+  import { FileInput } from '@lucide/svelte';
+  import { open } from '@tauri-apps/plugin-dialog';
+  import { tauriBackend } from '$lib/services/tauri-backend';
 
   let newBibliography: Bibliography = $state({
     data: {},
@@ -72,6 +75,40 @@
   let isSubmitting = $state(false);
   let importUrl = $state('');
   let isFetchingUrl = $state(false);
+
+  async function handleNativeImport() {
+    const selected = await open({
+      multiple: false,
+      filters: [
+        {
+          name: 'Bibliography',
+          extensions: ['yml', 'yaml', 'bib'],
+        },
+      ],
+    });
+    if (!selected) return;
+    isLoading = true;
+    errorMessage = undefined;
+    validationIssues = [];
+    try {
+      const imported = await tauriBackend.importFile(selected);
+      newBibliography.data = imported.data;
+      newBibliography.metadata.id = imported.suggestedId;
+      newBibliography.metadata.title = imported.suggestedTitle.replace(
+        /\b\w/g,
+        (letter) => letter.toUpperCase(),
+      );
+      const validation = parseAndValidateHayagriva(imported.data);
+      if (!validation.valid) {
+        validationIssues = validation.errors ?? [];
+        errorMessage = 'The converted bibliography has validation errors.';
+      }
+    } catch (error) {
+      errorMessage = String(error);
+    } finally {
+      isLoading = false;
+    }
+  }
 
   async function handlePasteImport() {
     errorMessage = undefined;
@@ -182,6 +219,20 @@
     <label for="hayagriva-file" class="label">
       Import from a Hayagriva YAML file
     </label>
+
+    <button
+      type="button"
+      class="btn btn-outline w-full"
+      onclick={handleNativeImport}
+      disabled={isLoading}
+    >
+      <FileInput class="size-4" />
+      Import YAML, BibTeX, or BibLaTeX
+    </button>
+    <p class="text-xs text-muted-foreground">
+      BibTeX and BibLaTeX files are converted by Hayagriva and saved as a new
+      managed YAML bibliography. The source file is never modified.
+    </p>
 
     <input
       type="file"

@@ -1,17 +1,27 @@
-import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { AppSettings } from '$lib/types/app-settings';
+
+const state = vi.hoisted(() => ({ value: null as AppSettings | null }));
+
+vi.mock('$lib/services/tauri-backend', () => ({
+  tauriBackend: {
+    getSettings: vi.fn(async () => structuredClone(state.value)),
+    setSettings: vi.fn(async (value: AppSettings) => {
+      state.value = structuredClone(value);
+    }),
+  },
+}));
+
 import { SettingsService } from '$lib/services/settings.service';
-import { db } from '$lib/db';
 import { DEFAULT_APP_SETTINGS, SETTINGS_ROW_ID } from '$lib/types/app-settings';
 
 describe('SettingsService', () => {
-  beforeEach(async () => {
-    await db.settings.clear();
+  beforeEach(() => {
+    state.value = null;
   });
 
   it('returns defaults when no row exists', async () => {
-    const settings = await SettingsService.get();
-    expect(settings).toEqual(DEFAULT_APP_SETTINGS);
+    expect(await SettingsService.get()).toEqual(DEFAULT_APP_SETTINGS);
   });
 
   it('persists and merges updates', async () => {
@@ -19,11 +29,9 @@ describe('SettingsService', () => {
       fonts: { sans: 'Inter', serif: 'Georgia', mono: 'Consolas' },
       citation: { defaultStyle: 'apa' },
     });
-
-    const stored = await db.settings.get(SETTINGS_ROW_ID);
-    expect(stored?.fonts.sans).toBe('Inter');
-    expect(stored?.citation.defaultStyle).toBe('apa');
-    expect(stored?.id).toBe(SETTINGS_ROW_ID);
+    expect(state.value?.fonts.sans).toBe('Inter');
+    expect(state.value?.citation.defaultStyle).toBe('apa');
+    expect(state.value?.id).toBe(SETTINGS_ROW_ID);
   });
 
   it('clears custom CSL', async () => {
@@ -35,7 +43,6 @@ describe('SettingsService', () => {
         entryPreviewBody: '#cite(key)',
       },
     });
-
     await SettingsService.clearCustomCsl();
     const settings = await SettingsService.get();
     expect(settings.citation.customCslName).toBeUndefined();

@@ -1,14 +1,14 @@
-import { db } from '$lib/db';
 import {
   DEFAULT_APP_SETTINGS,
   SETTINGS_ROW_ID,
   type AppSettings,
 } from '$lib/types/app-settings';
 import { applyFontSettings } from '$lib/utils/apply-font-settings';
+import { tauriBackend } from '$lib/services/tauri-backend';
 
 export class SettingsService {
   static async get(): Promise<AppSettings> {
-    const stored = await db.settings.get(SETTINGS_ROW_ID);
+    const stored = await tauriBackend.getSettings();
     return stored ?? { ...DEFAULT_APP_SETTINGS };
   }
 
@@ -21,7 +21,7 @@ export class SettingsService {
       fonts: { ...current.fonts, ...changes.fonts },
       citation: { ...current.citation, ...changes.citation },
     };
-    await db.settings.put(next);
+    await tauriBackend.setSettings(next);
     applyFontSettings(next.fonts);
     return next;
   }
@@ -45,7 +45,7 @@ export class SettingsService {
         entryPreviewBody: current.citation.entryPreviewBody,
       },
     };
-    await db.settings.put(next);
+    await tauriBackend.setSettings(next);
     applyFontSettings(next.fonts);
     return next;
   }

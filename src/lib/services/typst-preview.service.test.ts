@@ -2,34 +2,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Hayagriva } from '@hayman/hayagriva-schema';
 import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
 
-const { svgMock } = vi.hoisted(() => ({
-  svgMock: vi
+const { renderTypstMock } = vi.hoisted(() => ({
+  renderTypstMock: vi
     .fn()
     .mockResolvedValue(
       '<svg width="400" height="200" viewBox="0 0 400 200"></svg>',
     ),
 }));
 
-vi.mock('$lib/typst/fonts', () => ({
-  getTypstFontProviders: () => [{}, {}],
-}));
-
-vi.mock('$app/environment', () => ({
-  browser: true,
-}));
-
-vi.mock('@myriaddreamin/typst.ts/contrib/snippet', () => ({
-  $typst: {
-    providers: [],
-    use: vi.fn(),
-    setCompilerInitOptions: vi.fn(),
-    setRendererInitOptions: vi.fn(),
-    svg: svgMock,
-  },
-  TypstSnippet: {
-    fetchPackageRegistry: () => ({}),
-    preloadFontAssets: () => ({}),
-    preloadFonts: () => ({}),
+vi.mock('$lib/services/tauri-backend', () => ({
+  tauriBackend: {
+    renderTypst: renderTypstMock,
   },
 }));
 
@@ -60,7 +43,7 @@ describe('typst-preview.service', () => {
     expect(responsive).not.toContain('height="200"');
   });
 
-  it('renders bibliography SVG via $typst.svg', async () => {
+  it('renders bibliography SVG through the native Typst command', async () => {
     const svg = await renderBibliographySvg(
       sampleData,
       'apa',
@@ -70,19 +53,17 @@ describe('typst-preview.service', () => {
 
     expect(svg).toContain('<svg');
     expect(svg).toContain('width="100%"');
-    expect(svgMock).toHaveBeenCalledWith(
+    expect(renderTypstMock).toHaveBeenCalledWith(
+      expect.stringContaining('#bibliography('),
       expect.objectContaining({
-        mainContent: expect.stringContaining('#bibliography('),
-        inputs: expect.objectContaining({
-          style: 'apa',
-          yaml: expect.stringContaining('entry1'),
-          csl: '',
-          'font-sans': sampleFonts.sans,
-          'font-serif': sampleFonts.serif,
-        }),
+        style: 'apa',
+        yaml: expect.stringContaining('entry1'),
+        csl: '',
+        'font-sans': sampleFonts.sans,
+        'font-serif': sampleFonts.serif,
       }),
     );
-    expect(svgMock.mock.calls[0][0].mainContent).toContain('style: bib-style');
+    expect(renderTypstMock.mock.calls[0][0]).toContain('style: bib-style');
   });
 
   it('passes entry key for citation preview', async () => {
@@ -94,13 +75,11 @@ describe('typst-preview.service', () => {
       sampleFonts,
     );
 
-    expect(svgMock).toHaveBeenCalledWith(
+    expect(renderTypstMock).toHaveBeenCalledWith(
+      expect.stringContaining('#cite('),
       expect.objectContaining({
-        mainContent: expect.stringContaining('#cite('),
-        inputs: expect.objectContaining({
-          'entry-key': 'entry1',
-          style: 'apa',
-        }),
+        'entry-key': 'entry1',
+        style: 'apa',
       }),
     );
   });
@@ -116,12 +95,10 @@ describe('typst-preview.service', () => {
       true,
     );
 
-    expect(svgMock).toHaveBeenCalledWith(
+    expect(renderTypstMock).toHaveBeenCalledWith(
+      expect.stringContaining('compact'),
       expect.objectContaining({
-        mainContent: expect.stringContaining('compact'),
-        inputs: expect.objectContaining({
-          compact: 'true',
-        }),
+        compact: 'true',
       }),
     );
   });
@@ -137,11 +114,10 @@ describe('typst-preview.service', () => {
       false,
     );
 
-    expect(svgMock).toHaveBeenCalledWith(
+    expect(renderTypstMock).toHaveBeenCalledWith(
+      expect.any(String),
       expect.objectContaining({
-        inputs: expect.objectContaining({
-          compact: 'false',
-        }),
+        compact: 'false',
       }),
     );
   });
@@ -156,11 +132,10 @@ describe('typst-preview.service', () => {
       '<style></style>',
     );
 
-    expect(svgMock).toHaveBeenCalledWith(
+    expect(renderTypstMock).toHaveBeenCalledWith(
+      expect.any(String),
       expect.objectContaining({
-        inputs: expect.objectContaining({
-          csl: '<style></style>',
-        }),
+        csl: '<style></style>',
       }),
     );
   });
@@ -177,10 +152,9 @@ describe('typst-preview.service', () => {
       '#cite(key, form: "author")',
     );
 
-    expect(svgMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        mainContent: expect.stringContaining('#cite(key, form: "author")'),
-      }),
+    expect(renderTypstMock).toHaveBeenCalledWith(
+      expect.stringContaining('#cite(key, form: "author")'),
+      expect.any(Object),
     );
   });
 
@@ -200,6 +174,6 @@ describe('typst-preview.service', () => {
       sampleFonts,
     );
 
-    expect(svgMock).toHaveBeenCalledTimes(1);
+    expect(renderTypstMock).toHaveBeenCalledTimes(1);
   });
 });
