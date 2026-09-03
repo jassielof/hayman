@@ -64,11 +64,6 @@
       {/if}
       Save
     </button>
-    <a
-      class="btn btn-error"
-      href={resolve(`/bibliography/${params.bibliographyId}/`)}
-    >
-      Cancel
-    </a>
+    <a class="btn btn-error" href={resolve('/')}> Cancel </a>
   </fieldset>
 </form>
