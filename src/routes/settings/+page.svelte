@@ -241,7 +241,10 @@
                   {#if restoringId === item.id}<span
                       class="loading loading-xs loading-spinner"
                     ></span>{/if}
-                  Restore
+                  {item.storageKind === 'linked' &&
+                  item.reason === 'before-delete'
+                    ? 'Relink'
+                    : 'Restore'}
                 </button>
               </li>
             {/each}

@@ -62,6 +62,7 @@ pub struct RecoveryItem {
     snapshot_path: String,
     created_at: String,
     reason: String,
+    storage_kind: String,
 }
 
 #[derive(Serialize)]
@@ -84,10 +85,9 @@ pub fn initialize(app: &AppHandle) -> Result<()> {
     let (_, managed, recovery, database) = directories(app)?;
     fs::create_dir_all(managed).map_err(|e| e.to_string())?;
     fs::create_dir_all(recovery).map_err(|e| e.to_string())?;
-    Connection::open(database)
-        .and_then(|db| {
-            db.execute_batch(
-                "PRAGMA journal_mode=WAL;
+    let db = Connection::open(database).map_err(|e| e.to_string())?;
+    db.execute_batch(
+        "PRAGMA journal_mode=WAL;
        CREATE TABLE IF NOT EXISTS bibliographies(
          id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
          storage_kind TEXT NOT NULL CHECK(storage_kind IN ('managed','linked')),
@@ -96,12 +96,25 @@ pub fn initialize(app: &AppHandle) -> Result<()> {
        CREATE TABLE IF NOT EXISTS recovery(
          id INTEGER PRIMARY KEY, bibliography_id TEXT NOT NULL,
          original_path TEXT NOT NULL, snapshot_path TEXT NOT NULL,
-         content_hash TEXT NOT NULL, created_at TEXT NOT NULL, reason TEXT NOT NULL);
+         content_hash TEXT NOT NULL, created_at TEXT NOT NULL, reason TEXT NOT NULL,
+         storage_kind TEXT NOT NULL DEFAULT '', title TEXT, description TEXT);
        CREATE TABLE IF NOT EXISTS settings(
          id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL);",
-            )
-        })
-        .map_err(|e| e.to_string())?;
+    )
+    .map_err(|e| e.to_string())?;
+    // Existing desktop profiles predate the recovery metadata required to
+    // distinguish relinking from restoring file contents.
+    for migration in [
+        "ALTER TABLE recovery ADD COLUMN storage_kind TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE recovery ADD COLUMN title TEXT",
+        "ALTER TABLE recovery ADD COLUMN description TEXT",
+    ] {
+        if let Err(error) = db.execute(migration, []) {
+            if !error.to_string().contains("duplicate column name") {
+                return Err(error.to_string());
+            }
+        }
+    }
     Ok(())
 }
 
@@ -278,8 +291,8 @@ fn snapshot(
     fs::copy(&m.file_path, &target)
         .map_err(|e| format!("Could not create recovery snapshot: {e}"))?;
     db.execute(
-    "INSERT INTO recovery(bibliography_id,original_path,snapshot_path,content_hash,created_at,reason) VALUES(?1,?2,?3,?4,?5,?6)",
-    params![m.id,m.file_path,target.to_string_lossy(),m.content_hash,Utc::now().to_rfc3339(),reason]
+    "INSERT INTO recovery(bibliography_id,original_path,snapshot_path,content_hash,created_at,reason,storage_kind,title,description) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+    params![m.id,m.file_path,target.to_string_lossy(),m.content_hash,Utc::now().to_rfc3339(),reason,m.storage_kind,m.title,m.description]
   ).map_err(|e| e.to_string())?;
     Ok(Some((target, db.last_insert_rowid())))
 }
@@ -539,7 +552,7 @@ pub fn delete_bibliography(app: AppHandle, id: String) -> Result<DeleteResult> {
 pub fn list_recovery_snapshots(app: AppHandle) -> Result<Vec<RecoveryItem>> {
     let db = db(&app)?;
     let mut statement = db.prepare(
-        "SELECT id,bibliography_id,original_path,snapshot_path,created_at,reason FROM recovery ORDER BY created_at DESC"
+        "SELECT id,bibliography_id,original_path,snapshot_path,created_at,reason,storage_kind FROM recovery ORDER BY created_at DESC"
     ).map_err(|e| e.to_string())?;
     statement
         .query_map([], |row| {
@@ -550,6 +563,7 @@ pub fn list_recovery_snapshots(app: AppHandle) -> Result<Vec<RecoveryItem>> {
                 snapshot_path: row.get(3)?,
                 created_at: row.get(4)?,
                 reason: row.get(5)?,
+                storage_kind: row.get(6)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -562,29 +576,58 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
     let db = db(&app)?;
     let item = db
         .query_row(
-            "SELECT bibliography_id,original_path,snapshot_path FROM recovery WHERE id=?1",
+            "SELECT bibliography_id,original_path,snapshot_path,reason,storage_kind,title,description FROM recovery WHERE id=?1",
             [recovery_id],
             |row| {
                 Ok((
                     row.get::<_, String>(0)?,
                     row.get::<_, String>(1)?,
                     row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, String>(4)?,
+                    row.get::<_, Option<String>>(5)?,
+                    row.get::<_, Option<String>>(6)?,
                 ))
             },
         )
         .optional()
         .map_err(|e| e.to_string())?
         .ok_or("Recovery snapshot was not found.")?;
-    let restored_content =
-        fs::read(&item.2).map_err(|e| format!("Could not read recovery snapshot: {e}"))?;
-    parse_yaml(&String::from_utf8_lossy(&restored_content))?;
     let original = PathBuf::from(&item.1);
     let existing = metadata(&db, &item.0).ok();
-    if let Some(current) = &existing {
-        let (_, _, recovery, _) = directories(&app)?;
-        snapshot(&db, &recovery, current, "before-restore")?;
+    let (_, managed, _, _) = directories(&app)?;
+    let storage_kind = if item.4.is_empty() {
+        if original.starts_with(&managed) {
+            "managed"
+        } else {
+            "linked"
+        }
+    } else {
+        item.4.as_str()
+    };
+
+    // Restoring a deleted link means restoring only Hayman's catalog pointer.
+    // The external project file is authoritative and must never be overwritten
+    // as a side effect of relinking it.
+    let relink_only = item.3 == "before-delete" && storage_kind == "linked";
+    if relink_only && existing.is_some() {
+        return get_bibliography(app, item.0);
     }
-    atomic_write(&original, &restored_content)?;
+    let restored_content = if relink_only {
+        fs::read(&original).map_err(|e| {
+            format!(
+                "Could not relink the project bibliography because {} cannot be read: {e}",
+                original.display()
+            )
+        })?
+    } else {
+        let content =
+            fs::read(&item.2).map_err(|e| format!("Could not read recovery snapshot: {e}"))?;
+        parse_yaml(&String::from_utf8_lossy(&content))?;
+        atomic_write(&original, &content)?;
+        content
+    };
+    parse_yaml(&String::from_utf8_lossy(&restored_content))?;
     let new_hash = digest(&restored_content);
     if let Some(current) = existing {
         db.execute(
@@ -595,17 +638,11 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
         return get_bibliography(app, current.id);
     }
 
-    let (_, managed, _, _) = directories(&app)?;
-    let storage_kind = if original.starts_with(managed) {
-        "managed"
-    } else {
-        "linked"
-    };
     let now = Utc::now().to_rfc3339();
     let m = Metadata {
         id: unique_id(&db, &safe_id(&item.0))?,
-        title: item.0.replace(['-', '_'], " "),
-        description: None,
+        title: item.5.unwrap_or_else(|| item.0.replace(['-', '_'], " ")),
+        description: item.6,
         created_at: now.clone(),
         updated_at: now,
         storage_kind: storage_kind.into(),

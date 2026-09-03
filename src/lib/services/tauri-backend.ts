@@ -24,6 +24,7 @@ export type RecoveryItem = {
   snapshotPath: string;
   createdAt: string;
   reason: string;
+  storageKind: 'managed' | 'linked' | '';
 };
 
 export type DeleteResult = { recoveryId?: number };
