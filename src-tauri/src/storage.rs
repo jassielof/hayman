@@ -125,9 +125,15 @@ fn parse_import(content: &str, extension: &str) -> Result<Value> {
         "bib" => {
             let library = hayagriva::io::from_biblatex_str(content)
                 .map_err(|e| format!("Could not import BibTeX/BibLaTeX: {e:?}"))?;
-            let entries: BTreeMap<_, _> =
-                library.iter().map(|entry| (entry.key(), entry)).collect();
-            parse_yaml(&serde_yaml::to_string(&entries).map_err(|e| e.to_string())?)
+            let entries: serde_json::Map<String, Value> = library
+                .iter()
+                .map(|entry| {
+                    serde_json::to_value(entry)
+                        .map(|value| (entry.key().to_owned(), value))
+                        .map_err(|e| e.to_string())
+                })
+                .collect::<Result<_>>()?;
+            parse_yaml(&serde_yaml::to_string(&Value::Object(entries)).map_err(|e| e.to_string())?)
         }
         _ => Err("Choose a .bib, .yml, or .yaml bibliography file.".into()),
     }
@@ -699,5 +705,15 @@ mod tests {
         .unwrap();
         assert!(data.get("example").is_some());
         serialize_yaml(&data).unwrap();
+    }
+    #[test]
+    fn yaml_serialization_preserves_entry_order_after_deletion() {
+        let mut data: serde_json::Value = serde_yaml::from_str(
+            "zeta:\n  type: Book\n  title: Zeta\nalpha:\n  type: Book\n  title: Alpha\nmiddle:\n  type: Book\n  title: Middle\n",
+        )
+        .unwrap();
+        data.as_object_mut().unwrap().shift_remove("alpha");
+        let yaml = serialize_yaml(&data).unwrap();
+        assert!(yaml.find("zeta:").unwrap() < yaml.find("middle:").unwrap());
     }
 }

@@ -171,8 +171,17 @@ export class BibliographyService {
     if (renamed && bibliography.data[updatedEntryId]) {
       throw new EntryAlreadyExistsError(updatedEntryId);
     }
-    if (renamed) delete bibliography.data[oldEntryId];
-    bibliography.data[updatedEntryId] = updatedEntryData;
+    if (renamed) {
+      bibliography.data = Object.fromEntries(
+        Object.entries(bibliography.data).map(([key, value]) =>
+          key === oldEntryId
+            ? [updatedEntryId, updatedEntryData]
+            : [key, value],
+        ),
+      ) as Hayagriva;
+    } else {
+      bibliography.data[updatedEntryId] = updatedEntryData;
+    }
     await tauriBackend.save(bibliography);
     notifyMutation(
       `Updated entry “${formatFormattableString(updatedEntryData.title) || updatedEntryId}”.`,
