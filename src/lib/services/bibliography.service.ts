@@ -85,17 +85,27 @@ export class BibliographyService {
 
   static async add(bibliography: Bibliography, skipValidation = false) {
     if (!skipValidation) await validateBibliography(bibliography.data);
-    await tauriBackend.createManaged(bibliography);
-    notifyMutation(`Added bibliography “${bibliography.metadata.title}”.`);
+    const created = await tauriBackend.createManaged(bibliography);
+    notifyMutation(
+      `Added bibliography “${bibliography.metadata.title}”.`,
+      async () => {
+        await tauriBackend.delete(created.metadata.id);
+      },
+    );
   }
 
   static async delete(id: string) {
     const previous = await this.get(id);
-    await tauriBackend.delete(id);
+    const deleted = await tauriBackend.delete(id);
     notifyMutation(
       previous.metadata.storageKind === 'linked'
         ? `Unlinked bibliography “${previous.metadata.title}”. The original file was not deleted.`
         : `Deleted bibliography “${previous.metadata.title}”. A recovery snapshot was retained.`,
+      deleted.recoveryId
+        ? async () => {
+            await tauriBackend.restoreRecovery(deleted.recoveryId!);
+          }
+        : undefined,
     );
   }
 
@@ -109,21 +119,45 @@ export class BibliographyService {
       if (await this.exists(updated.metadata.id)) {
         throw new BibliographyDuplicateIdError(updated.metadata.id);
       }
-      await tauriBackend.rename(id, updated);
-      notifyMutation(`Renamed bibliography to “${updated.metadata.title}”.`);
+      const previous = await this.get(id);
+      const saved = await tauriBackend.rename(id, updated);
+      notifyMutation(
+        `Renamed bibliography to “${updated.metadata.title}”.`,
+        async () => {
+          await tauriBackend.rename(
+            saved.metadata.id,
+            previous,
+            saved.metadata.contentHash,
+          );
+        },
+      );
       return;
     }
-    await tauriBackend.save(updated);
-    notifyMutation(`Updated bibliography “${updated.metadata.title}”.`);
+    const previous = await this.get(id);
+    const saved = await tauriBackend.save(updated);
+    notifyMutation(
+      `Updated bibliography “${updated.metadata.title}”.`,
+      async () => {
+        await tauriBackend.save(previous, saved.metadata.contentHash);
+      },
+    );
   }
 
   static async put(bibliography: Bibliography, skipValidation = false) {
     if (!skipValidation) await validateBibliography(bibliography.data);
     const previous = await this.getOrNull(bibliography.metadata.id);
-    if (previous) await tauriBackend.save(bibliography);
-    else await tauriBackend.createManaged(bibliography);
+    const saved = previous
+      ? await tauriBackend.save(bibliography)
+      : await tauriBackend.createManaged(bibliography);
     notifyMutation(
       `${previous ? 'Updated' : 'Added'} bibliography “${bibliography.metadata.title}”.`,
+      previous
+        ? async () => {
+            await tauriBackend.save(previous, saved.metadata.contentHash);
+          }
+        : async () => {
+            await tauriBackend.delete(saved.metadata.id);
+          },
     );
   }
 
@@ -135,22 +169,30 @@ export class BibliographyService {
   ) {
     if (!skipValidation) await validateTopLevelEntry(newEntryData);
     const bibliography = await this.get(bibliographyId);
+    const previous = structuredClone(bibliography);
     if (bibliography.data[newEntryId])
       throw new EntryAlreadyExistsError(newEntryId);
     bibliography.data[newEntryId] = newEntryData;
-    await tauriBackend.save(bibliography);
+    const saved = await tauriBackend.save(bibliography);
     notifyMutation(
       `Added entry “${formatFormattableString(newEntryData.title) || newEntryId}”.`,
+      async () => {
+        await tauriBackend.save(previous, saved.metadata.contentHash);
+      },
     );
   }
 
   static async deleteEntry(bibliographyId: string, entryId: string) {
     const bibliography = await this.get(bibliographyId);
+    const previous = structuredClone(bibliography);
     const deleted = bibliography.data[entryId];
     delete bibliography.data[entryId];
-    await tauriBackend.save(bibliography);
+    const saved = await tauriBackend.save(bibliography);
     notifyMutation(
       `Deleted entry “${formatFormattableString(deleted?.title) || entryId}”. A recovery snapshot was retained.`,
+      async () => {
+        await tauriBackend.save(previous, saved.metadata.contentHash);
+      },
     );
   }
 
@@ -167,6 +209,7 @@ export class BibliographyService {
   ) {
     if (!skipValidation) await validateTopLevelEntry(updatedEntryData);
     const bibliography = await this.get(bibliographyId);
+    const previous = structuredClone(bibliography);
     const renamed = updatedEntryId !== oldEntryId;
     if (renamed && bibliography.data[updatedEntryId]) {
       throw new EntryAlreadyExistsError(updatedEntryId);
@@ -182,9 +225,12 @@ export class BibliographyService {
     } else {
       bibliography.data[updatedEntryId] = updatedEntryData;
     }
-    await tauriBackend.save(bibliography);
+    const saved = await tauriBackend.save(bibliography);
     notifyMutation(
       `Updated entry “${formatFormattableString(updatedEntryData.title) || updatedEntryId}”.`,
+      async () => {
+        await tauriBackend.save(previous, saved.metadata.contentHash);
+      },
     );
   }
 }

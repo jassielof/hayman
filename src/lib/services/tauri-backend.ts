@@ -26,6 +26,8 @@ export type RecoveryItem = {
   reason: string;
 };
 
+export type DeleteResult = { recoveryId?: number };
+
 const changes = new EventTarget();
 
 async function changed<T>(operation: Promise<T>): Promise<T> {
@@ -41,22 +43,30 @@ export const tauriBackend = {
     changed(
       invoke<Bibliography>('create_managed_bibliography', { bibliography }),
     ),
-  save: (bibliography: Bibliography) =>
+  save: (
+    bibliography: Bibliography,
+    expectedHash = bibliography.metadata.contentHash,
+  ) =>
     changed(
       invoke<Bibliography>('save_bibliography', {
         bibliography,
-        expectedHash: bibliography.metadata.contentHash,
+        expectedHash,
       }),
     ),
-  rename: (oldId: string, bibliography: Bibliography) =>
+  rename: (
+    oldId: string,
+    bibliography: Bibliography,
+    expectedHash = bibliography.metadata.contentHash,
+  ) =>
     changed(
       invoke<Bibliography>('rename_bibliography', {
         oldId,
         bibliography,
-        expectedHash: bibliography.metadata.contentHash,
+        expectedHash,
       }),
     ),
-  delete: (id: string) => changed(invoke<void>('delete_bibliography', { id })),
+  delete: (id: string) =>
+    changed(invoke<DeleteResult>('delete_bibliography', { id })),
   link: (path: string) =>
     changed(invoke<Bibliography>('link_bibliography', { path })),
   importFile: (path: string) =>

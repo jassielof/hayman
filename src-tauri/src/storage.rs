@@ -64,6 +64,12 @@ pub struct RecoveryItem {
     reason: String,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeleteResult {
+    recovery_id: Option<i64>,
+}
+
 fn directories(app: &AppHandle) -> Result<(PathBuf, PathBuf, PathBuf, PathBuf)> {
     let root = app.path().app_data_dir().map_err(|e| e.to_string())?;
     Ok((
@@ -263,7 +269,7 @@ fn snapshot(
     recovery: &Path,
     m: &Metadata,
     reason: &str,
-) -> Result<Option<PathBuf>> {
+) -> Result<Option<(PathBuf, i64)>> {
     if !Path::new(&m.file_path).exists() {
         return Ok(None);
     }
@@ -275,7 +281,7 @@ fn snapshot(
     "INSERT INTO recovery(bibliography_id,original_path,snapshot_path,content_hash,created_at,reason) VALUES(?1,?2,?3,?4,?5,?6)",
     params![m.id,m.file_path,target.to_string_lossy(),m.content_hash,Utc::now().to_rfc3339(),reason]
   ).map_err(|e| e.to_string())?;
-    Ok(Some(target))
+    Ok(Some((target, db.last_insert_rowid())))
 }
 
 #[tauri::command]
@@ -433,7 +439,7 @@ pub fn save_bibliography(
     "UPDATE bibliographies SET title=?2,description=?3,content_hash=?4,updated_at=?5 WHERE id=?1",
     params![current.id,bibliography.metadata.title,bibliography.metadata.description,new_hash,Utc::now().to_rfc3339()]
   ) {
-        if let Some(saved) = saved { let _ = fs::copy(saved, &current.file_path); }
+        if let Some((saved, _)) = saved { let _ = fs::copy(saved, &current.file_path); }
         return Err(error.to_string());
     }
     get_bibliography(app, current.id)
@@ -499,18 +505,18 @@ pub fn rename_bibliography(
 }
 
 #[tauri::command]
-pub fn delete_bibliography(app: AppHandle, id: String) -> Result<()> {
+pub fn delete_bibliography(app: AppHandle, id: String) -> Result<DeleteResult> {
     let mut db = db(&app)?;
     let m = metadata(&db, &id)?;
     let (_, _, recovery, _) = directories(&app)?;
+    let saved = snapshot(&db, &recovery, &m, "before-delete")?;
     let tx = db.transaction().map_err(|e| e.to_string())?;
-    let saved = snapshot(&tx, &recovery, &m, "before-delete")?;
     if m.storage_kind == "managed" {
-        fs::remove_file(&m.file_path).map_err(|e| e.to_string())?;
+        let _ = fs::remove_file(&m.file_path);
     }
     if let Err(e) = tx.execute("DELETE FROM bibliographies WHERE id=?1", [&id]) {
         if m.storage_kind == "managed" {
-            if let Some(saved) = saved {
+            if let Some((saved, _)) = &saved {
                 let _ = fs::copy(saved, &m.file_path);
             }
         }
@@ -518,13 +524,15 @@ pub fn delete_bibliography(app: AppHandle, id: String) -> Result<()> {
     }
     if let Err(error) = tx.commit() {
         if m.storage_kind == "managed" {
-            if let Some(saved) = saved {
+            if let Some((saved, _)) = &saved {
                 let _ = fs::copy(saved, &m.file_path);
             }
         }
         return Err(error.to_string());
     }
-    Ok(())
+    Ok(DeleteResult {
+        recovery_id: saved.map(|(_, id)| id),
+    })
 }
 
 #[tauri::command]
