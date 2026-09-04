@@ -91,7 +91,7 @@
     bind:overrideKind
     onRender={renderPreview}
   />
-  <div class="rounded-lg border border-border bg-card p-4">
+  <div class="rounded-lg border border-border bg-card p-6 shadow-xs sm:p-8">
     {#if loading}
       <div
         class="flex min-h-48 flex-col items-center justify-center gap-2"
@@ -103,9 +103,13 @@
     {:else if error}
       <div role="alert" class="alert alert-error"><span>{error}</span></div>
     {:else if references}
-      <ol class="space-y-3 font-serif text-sm leading-relaxed">
+      <ol
+        class="list-none space-y-4 font-serif text-base leading-relaxed text-foreground sm:text-[1.05rem]"
+      >
         {#each references as reference (reference.key)}
-          <li data-entry-key={reference.key}>{reference.text}</li>
+          <li data-entry-key={reference.key} class="pl-6 -indent-6 break-words">
+            {reference.text}
+          </li>
         {/each}
       </ol>
     {:else}
