@@ -50,4 +50,4 @@ jobs:
         run: cargo clippy --all-targets --all-features
       - name: Test
         working-directory: src-tauri
-        run: cargo test --locked
+        run: cargo test --all-targets --all-features
