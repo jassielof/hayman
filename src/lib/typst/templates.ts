@@ -19,20 +19,12 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
 )
 
 #set text(
-  font: (
-    sys.inputs.at("font-sans"),
-    sys.inputs.at("font-serif"),
-    "Noto Serif CJK JP",
-    "Noto Serif CJK SC",
-    "Noto Serif CJK TC",
-    "Noto Serif CJK KR",
-  ),
   size: if compact { 13pt } else { 12pt },
 )
 
 #let key = label(sys.inputs.at("entry-key"))
 #let bib-style = if sys.inputs.at("csl") != "" {
-  bytes(sys.inputs.at("csl"))
+  "style.csl"
 } else {
   sys.inputs.at("style")
 }
@@ -40,7 +32,7 @@ export const ENTRY_CITATION_TEMPLATE = `#let compact = sys.inputs.at("compact") 
 ${ENTRY_BODY_PLACEHOLDER}
 
 #bibliography(
-  bytes(sys.inputs.at("yaml")),
+  "bibliography.yml",
   style: bib-style,
 )
 `;
@@ -51,25 +43,14 @@ export function buildEntryCitationTemplate(body: string) {
 
 export const BIBLIOGRAPHY_FULL_TEMPLATE = `#set page(margin: 1cm, height: auto)
 
-#set text(
-  font: (
-    sys.inputs.at("font-sans"),
-    sys.inputs.at("font-serif"),
-    "Noto Serif CJK JP",
-    "Noto Serif CJK SC",
-    "Noto Serif CJK TC",
-    "Noto Serif CJK KR",
-  ),
-)
-
 #let bib-style = if sys.inputs.at("csl") != "" {
-  bytes(sys.inputs.at("csl"))
+  "style.csl"
 } else {
   sys.inputs.at("style")
 }
 
 #bibliography(
-  bytes(sys.inputs.at("yaml")),
+  "bibliography.yml",
   full: true,
   style: bib-style,
 )

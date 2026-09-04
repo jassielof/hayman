@@ -47,8 +47,6 @@ function buildInputs(
     style: typstStyle,
     'style-label': styleLabel,
     csl: customCsl ?? '',
-    'font-sans': fonts.sans,
-    'font-serif': fonts.serif,
   };
 
   if (entryKey) {

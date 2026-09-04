@@ -748,14 +748,17 @@ fn render_typst_blocking(
         .remove("yaml")
         .ok_or("Typst preview is missing bibliography data.")?;
     fs::write(temporary.path().join("bibliography.yml"), yaml).map_err(|e| e.to_string())?;
-    main_content = main_content.replace(
-        "bytes(sys.inputs.at(\"yaml\"))",
-        "read(\"bibliography.yml\")",
-    );
-    if let Some(csl) = inputs.get("csl").filter(|value| !value.is_empty()).cloned() {
+    main_content = main_content
+        .replace("bytes(sys.inputs.at(\"yaml\"))", "\"bibliography.yml\"")
+        .replace("read(\"bibliography.yml\")", "\"bibliography.yml\"")
+        .replace("sys.inputs.at(\"yaml\")", "\"bibliography.yml\"");
+    if let Some(csl) = inputs.remove("csl").filter(|value| !value.is_empty()) {
         fs::write(temporary.path().join("style.csl"), csl).map_err(|e| e.to_string())?;
-        main_content = main_content.replace("bytes(sys.inputs.at(\"csl\"))", "read(\"style.csl\")");
-        inputs.insert("csl".into(), "local-file".into());
+        main_content = main_content
+            .replace("bytes(sys.inputs.at(\"csl\"))", "\"style.csl\"")
+            .replace("read(\"style.csl\")", "\"style.csl\"")
+            .replace("sys.inputs.at(\"csl\")", "\"style.csl\"");
+        inputs.insert("csl".into(), "style.csl".into());
     }
     fs::write(temporary.path().join("main.typ"), main_content).map_err(|e| e.to_string())?;
 
