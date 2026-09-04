@@ -19,7 +19,7 @@
     Hash,
     Pencil,
     Search,
-    Trash,
+    TrashIcon,
   } from '@lucide/svelte';
   import { Select } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';
@@ -315,7 +315,7 @@
               class="btn btn-sm btn-destructive"
               onclick={() => (bulkDeleteOpen = true)}
             >
-              <Trash class="size-4" />
+              <TrashIcon class="size-4" />
               Delete selected
             </button>
           </div>
@@ -373,12 +373,12 @@
                 {id}
               </div>
               <div
-                class="font-balanced font-sans text-xl leading-snug font-semibold font-stretch-expanded [font-variant-caps:small-caps]"
+                class="font-balanced font-sans text-xl leading-snug font-semibold font-stretch-expanded"
               >
                 {formatFormattableString(entry.title)}
               </div>
               {#if entry.author}
-                <div class="text-md font-serif leading-relaxed">
+                <div class="text-md font-sans leading-relaxed">
                   {formatAuthor(entry.author)}
                 </div>
               {/if}
