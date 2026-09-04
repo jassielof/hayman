@@ -8,7 +8,9 @@ use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::time::Duration;
 use tauri::{AppHandle, Manager};
+use wait_timeout::ChildExt;
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -69,6 +71,13 @@ pub struct RecoveryItem {
 #[serde(rename_all = "camelCase")]
 pub struct DeleteResult {
     recovery_id: Option<i64>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenderedReference {
+    key: String,
+    text: String,
 }
 
 fn directories(app: &AppHandle) -> Result<(PathBuf, PathBuf, PathBuf, PathBuf)> {
@@ -522,10 +531,10 @@ pub fn delete_bibliography(app: AppHandle, id: String) -> Result<DeleteResult> {
     let mut db = db(&app)?;
     let m = metadata(&db, &id)?;
     let (_, _, recovery, _) = directories(&app)?;
-    let saved = snapshot(&db, &recovery, &m, "before-delete")?;
     let tx = db.transaction().map_err(|e| e.to_string())?;
+    let saved = snapshot(&tx, &recovery, &m, "before-delete")?;
     if m.storage_kind == "managed" {
-        let _ = fs::remove_file(&m.file_path);
+        fs::remove_file(&m.file_path).map_err(|e| e.to_string())?;
     }
     if let Err(e) = tx.execute("DELETE FROM bibliographies WHERE id=?1", [&id]) {
         if m.storage_kind == "managed" {
@@ -721,7 +730,16 @@ pub fn typst_version() -> Result<String> {
 }
 
 #[tauri::command]
-pub fn render_typst(
+pub async fn render_typst(
+    main_content: String,
+    inputs: BTreeMap<String, String>,
+) -> Result<String> {
+    tauri::async_runtime::spawn_blocking(move || render_typst_blocking(main_content, inputs))
+        .await
+        .map_err(|e| format!("Typst preview worker failed: {e}"))?
+}
+
+fn render_typst_blocking(
     mut main_content: String,
     mut inputs: BTreeMap<String, String>,
 ) -> Result<String> {
@@ -741,28 +759,107 @@ pub fn render_typst(
     }
     fs::write(temporary.path().join("main.typ"), main_content).map_err(|e| e.to_string())?;
 
+    let output_path = temporary.path().join("preview.svg");
+    let diagnostics_path = temporary.path().join("diagnostics.txt");
+    let diagnostics = File::create(&diagnostics_path).map_err(|e| e.to_string())?;
     let mut command = Command::new("typst");
     command.args(["compile", "--diagnostic-format", "short", "--format", "svg"]);
     for (key, value) in inputs {
         command.args(["--input", &format!("{key}={value}")]);
     }
-    let child = command
-        .args(["main.typ", "-"])
+    let mut child = command
+        .args(["main.typ", "preview.svg"])
         .current_dir(temporary.path())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::from(diagnostics))
         .spawn()
         .map_err(|e| format!("Typst is required but could not be started: {e}"))?;
-    let output = child.wait_with_output().map_err(|e| e.to_string())?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+    let status = match child
+        .wait_timeout(Duration::from_secs(30))
+        .map_err(|e| e.to_string())?
+    {
+        Some(status) => status,
+        None => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err("Typst preview timed out after 30 seconds.".into());
+        }
+    };
+    if !status.success() {
+        let diagnostics = fs::read_to_string(diagnostics_path).unwrap_or_default();
+        return Err(if diagnostics.trim().is_empty() {
+            format!("Typst exited with {status}.")
+        } else {
+            diagnostics.trim().to_owned()
+        });
     }
-    String::from_utf8(output.stdout).map_err(|e| format!("Typst returned invalid UTF-8 SVG: {e}"))
+    fs::read_to_string(output_path).map_err(|e| format!("Could not read Typst SVG output: {e}"))
+}
+
+#[tauri::command]
+pub fn render_bibliography(
+    yaml: String,
+    style_name: String,
+    custom_csl: Option<String>,
+) -> Result<Vec<RenderedReference>> {
+    use hayagriva::archive::{ArchivedStyle, locales};
+    use hayagriva::citationberg::{IndependentStyle, Style};
+    use hayagriva::{
+        BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
+    };
+
+    let library = hayagriva::io::from_yaml_str(&yaml)
+        .map_err(|e| format!("Hayagriva rejected this bibliography: {e}"))?;
+    let style = if let Some(csl) = custom_csl.filter(|value| !value.trim().is_empty()) {
+        IndependentStyle::from_xml(&csl).map_err(|e| format!("Invalid CSL style: {e}"))?
+    } else {
+        let archived = ArchivedStyle::by_name(style_name.trim())
+            .ok_or_else(|| format!("Hayagriva does not bundle the CSL style '{style_name}'."))?;
+        match archived.get() {
+            Style::Independent(style) => style,
+            Style::Dependent(_) => {
+                return Err("The selected CSL style requires a parent style.".into());
+            }
+        }
+    };
+    let locales = locales();
+    let mut driver = BibliographyDriver::new();
+    for entry in library.iter() {
+        driver.citation(CitationRequest::from_items(
+            vec![CitationItem::with_entry(entry)],
+            &style,
+            &locales,
+        ));
+    }
+    let rendered = driver.finish(BibliographyRequest::new(&style, None, &locales));
+    let bibliography = rendered
+        .bibliography
+        .ok_or("The selected CSL style does not define a bibliography.")?;
+    bibliography
+        .items
+        .into_iter()
+        .map(|item| {
+            let mut text = String::new();
+            if let Some(first_field) = item.first_field {
+                first_field
+                    .write_buf(&mut text, BufWriteFormat::Plain)
+                    .map_err(|e| e.to_string())?;
+                text.push(' ');
+            }
+            item.content
+                .write_buf(&mut text, BufWriteFormat::Plain)
+                .map_err(|e| e.to_string())?;
+            Ok(RenderedReference {
+                key: item.key,
+                text,
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{digest, parse_import, safe_id, serialize_yaml};
+    use super::{digest, parse_import, render_bibliography, safe_id, serialize_yaml};
     #[test]
     fn identifiers_are_sanitized() {
         assert_eq!(safe_id("My Research_2026.bib"), "my-research-2026-bib");
@@ -790,5 +887,19 @@ mod tests {
         data.as_object_mut().unwrap().shift_remove("alpha");
         let yaml = serialize_yaml(&data).unwrap();
         assert!(yaml.find("zeta:").unwrap() < yaml.find("middle:").unwrap());
+    }
+    #[test]
+    fn hayagriva_renders_full_bibliography_without_typst() {
+        let references = render_bibliography(
+            "paper:\n  type: Article\n  title: A useful paper\n  author: Doe, Jane\n  date: 2026\n"
+                .into(),
+            "ieee".into(),
+            None,
+        )
+        .unwrap();
+        assert_eq!(references.len(), 1);
+        assert_eq!(references[0].key, "paper");
+        assert!(references[0].text.contains("A useful paper"));
+        assert!(references[0].text.contains("[1]"));
     }
 }

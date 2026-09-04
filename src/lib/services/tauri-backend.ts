@@ -28,6 +28,7 @@ export type RecoveryItem = {
 };
 
 export type DeleteResult = { recoveryId?: number };
+export type RenderedReference = { key: string; text: string };
 
 const changes = new EventTarget();
 
@@ -79,6 +80,12 @@ export const tauriBackend = {
   typstVersion: () => invoke<string>('typst_version'),
   renderTypst: (mainContent: string, inputs: Record<string, string>) =>
     invoke<string>('render_typst', { mainContent, inputs }),
+  renderBibliography: (yaml: string, styleName: string, customCsl?: string) =>
+    invoke<RenderedReference[]>('render_bibliography', {
+      yaml,
+      styleName,
+      customCsl,
+    }),
   listRecovery: () => invoke<RecoveryItem[]>('list_recovery_snapshots'),
   restoreRecovery: (recoveryId: number) =>
     changed(invoke<Bibliography>('restore_recovery_snapshot', { recoveryId })),

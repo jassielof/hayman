@@ -72,6 +72,9 @@
         overrideKind,
         bundledStyle: styleInputDebounced,
       });
+      // Record the attempt before invoking Typst so failures remain visible
+      // instead of immediately retriggering the same render forever.
+      lastRenderedStyleKey = previewStyleKey;
       citationSvg = await renderEntryCitationSvg(
         bibliographyData,
         entryId,
@@ -85,7 +88,6 @@
           : loaded.citation.entryPreviewBody?.trim() ||
               DEFAULT_ENTRY_CITATION_BODY,
       );
-      lastRenderedStyleKey = previewStyleKey;
     } catch (err) {
       citationError =
         err instanceof Error

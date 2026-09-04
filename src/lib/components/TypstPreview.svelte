@@ -21,8 +21,8 @@
       <span class="loading loading-md loading-spinner"></span>
       <span>Rendering Typst preview…</span>
       <span class="max-w-sm text-xs text-muted-foreground">
-        The first preview in this browser session initializes the shared Typst
-        engine. Later previews reuse it and identical renders are cached.
+        Hayman is invoking the installed Typst compiler. The process is stopped
+        automatically if it exceeds the preview time limit.
       </span>
     </div>
   {:else if error}

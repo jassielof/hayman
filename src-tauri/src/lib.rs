@@ -29,6 +29,7 @@ pub fn run() {
             storage::set_settings,
             storage::typst_version,
             storage::render_typst,
+            storage::render_bibliography,
             storage::list_recovery_snapshots,
             storage::restore_recovery_snapshot,
             storage::clear_recovery_snapshots,

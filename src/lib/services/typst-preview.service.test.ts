@@ -18,7 +18,6 @@ vi.mock('$lib/services/tauri-backend', () => ({
 
 import {
   makeSvgResponsive,
-  renderBibliographySvg,
   renderEntryCitationSvg,
 } from '$lib/services/typst-preview.service';
 
@@ -41,29 +40,6 @@ describe('typst-preview.service', () => {
     expect(responsive).toContain('width="100%"');
     expect(responsive).not.toContain('width="400"');
     expect(responsive).not.toContain('height="200"');
-  });
-
-  it('renders bibliography SVG through the native Typst command', async () => {
-    const svg = await renderBibliographySvg(
-      sampleData,
-      'apa',
-      'APA',
-      sampleFonts,
-    );
-
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('width="100%"');
-    expect(renderTypstMock).toHaveBeenCalledWith(
-      expect.stringContaining('#bibliography('),
-      expect.objectContaining({
-        style: 'apa',
-        yaml: expect.stringContaining('entry1'),
-        csl: '',
-        'font-sans': sampleFonts.sans,
-        'font-serif': sampleFonts.serif,
-      }),
-    );
-    expect(renderTypstMock.mock.calls[0][0]).toContain('style: bib-style');
   });
 
   it('passes entry key for citation preview', async () => {

@@ -27,6 +27,7 @@ tauri = { version = "2.11.3", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-log = "2"
 tempfile = "3"
+wait-timeout = "0.2"
 
 [build-dependencies]
 tauri-build = { version = "2.6.3", features = [] }

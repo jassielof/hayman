@@ -2,7 +2,6 @@ import type { AppFontSettings } from '$lib/types/app-settings';
 import type { Hayagriva } from '@hayman/hayagriva-schema';
 import { toYaml } from '$lib/services/hayagriva.service';
 import {
-  BIBLIOGRAPHY_FULL_TEMPLATE,
   DEFAULT_ENTRY_CITATION_BODY,
   buildEntryCitationTemplate,
 } from '$lib/typst/templates';
@@ -106,19 +105,6 @@ async function renderSvg(
     if (oldestKey !== undefined) renderCache.delete(oldestKey);
   }
   return cachedTask;
-}
-
-export async function renderBibliographySvg(
-  data: Hayagriva,
-  typstStyle: string,
-  styleLabel: string,
-  fonts: AppFontSettings,
-  customCsl?: string,
-): Promise<string> {
-  return renderSvg(
-    BIBLIOGRAPHY_FULL_TEMPLATE,
-    buildInputs(data, typstStyle, styleLabel, fonts, customCsl),
-  );
 }
 
 export async function renderEntryCitationSvg(

@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import BibliographyTypstPreview from '$lib/components/BibliographyTypstPreview.svelte';
+  import BibliographyPreview from '$lib/components/BibliographyPreview.svelte';
   import EntryList from '$lib/components/EntryList.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { cn } from '$lib/utils/cn';
@@ -105,7 +105,7 @@
       </Tabs.Content>
 
       <Tabs.Content value="preview" class="mt-4">
-        <BibliographyTypstPreview
+        <BibliographyPreview
           bibliographyData={bibliography.data}
           active={tab === 'preview'}
         />
