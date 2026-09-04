@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { AffiliatedPeople } from '@hayman/hayagriva-schema';
   import { AFFILIATED_ROLES } from '$lib/validators/affiliated-roles';
-  import { Plus, X } from '@lucide/svelte';
+  import { PlusIcon, XIcon } from '@lucide/svelte';
   import PeopleInput from './PeopleInput.svelte';
 
   let { value = $bindable() }: { value?: AffiliatedPeople } = $props();
@@ -39,7 +39,7 @@
               class="btn btn-circle btn-outline btn-sm btn-error"
               onclick={() => removeAffiliated(i)}
             >
-              <X class="h-4 w-4" />
+              <XIcon class="h-4 w-4" />
             </button>
           </div>
 
@@ -61,7 +61,7 @@
   {/if}
 
   <button type="button" class="btn btn-outline w-full" onclick={addAffiliated}>
-    <Plus class="size-[1.2em]" />
+    <PlusIcon class="size-[1.2em]" />
     Add Affiliated Person
   </button>
 </fieldset>

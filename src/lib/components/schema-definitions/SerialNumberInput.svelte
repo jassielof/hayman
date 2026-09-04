@@ -8,7 +8,7 @@
     pmcidResolverUrl,
     pmidResolverUrl,
   } from '$lib/utils/identifier-links';
-  import { ExternalLink, Plus, X } from '@lucide/svelte';
+  import { ExternalLinkIcon, PlusIcon, XIcon } from '@lucide/svelte';
 
   type SerialNumberObject = Exclude<
     NonNullable<BibliographyEntry['serial-number']>,
@@ -192,7 +192,7 @@
             aria-label="Open DOI resolver"
             onclick={() => openResolver(doiResolverUrl(doi))}
           >
-            <ExternalLink class="size-4" />
+            <ExternalLinkIcon class="size-4" />
           </button>
         {/if}
       </div>
@@ -214,7 +214,7 @@
             aria-label="Look up ISBN on WorldCat"
             onclick={() => openResolver(isbnResolverUrl(isbn))}
           >
-            <ExternalLink class="size-4" />
+            <ExternalLinkIcon class="size-4" />
           </button>
         {/if}
       </div>
@@ -236,7 +236,7 @@
             aria-label="Look up ISSN"
             onclick={() => openResolver(issnResolverUrl(issn))}
           >
-            <ExternalLink class="size-4" />
+            <ExternalLinkIcon class="size-4" />
           </button>
         {/if}
       </div>
@@ -258,7 +258,7 @@
             aria-label="Open PubMed record"
             onclick={() => openResolver(pmidResolverUrl(pmid))}
           >
-            <ExternalLink class="size-4" />
+            <ExternalLinkIcon class="size-4" />
           </button>
         {/if}
       </div>
@@ -280,7 +280,7 @@
             aria-label="Open PubMed Central article"
             onclick={() => openResolver(pmcidResolverUrl(pmcid))}
           >
-            <ExternalLink class="size-4" />
+            <ExternalLinkIcon class="size-4" />
           </button>
         {/if}
       </div>
@@ -302,7 +302,7 @@
             aria-label="Open arXiv abstract"
             onclick={() => openResolver(arxivResolverUrl(arxiv))}
           >
-            <ExternalLink class="size-4" />
+            <ExternalLinkIcon class="size-4" />
           </button>
         {/if}
       </div>
@@ -342,7 +342,7 @@
           customSerials.splice(i, 1);
         }}
       >
-        <X class="size-4" />
+        <XIcon class="size-4" />
       </button>
     </div>
   {/each}
@@ -354,6 +354,6 @@
       customSerials.push({ key: '', value: '' });
     }}
   >
-    <Plus class="size-4" /> Add custom serial
+    <PlusIcon class="size-4" /> Add custom serial
   </button>
 </fieldset>

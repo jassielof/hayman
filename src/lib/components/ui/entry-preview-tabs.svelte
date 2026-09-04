@@ -12,7 +12,7 @@
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
-  import { BookOpen, Code } from '@lucide/svelte';
+  import { BookOpenIcon, CodeIcon } from '@lucide/svelte';
 
   hljs.registerLanguage('yaml', yaml);
 
@@ -153,7 +153,7 @@
         'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
       )}
     >
-      <Code class="size-4" />
+      <CodeIcon class="size-4" />
       Code preview
     </Tabs.Trigger>
     <Tabs.Trigger
@@ -163,7 +163,7 @@
         'data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
       )}
     >
-      <BookOpen class="size-4" />
+      <BookOpenIcon class="size-4" />
       Citation preview
     </Tabs.Trigger>
   </Tabs.List>

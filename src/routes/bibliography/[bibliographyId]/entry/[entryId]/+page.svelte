@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import EntryPreviewTabs from '$lib/components/ui/entry-preview-tabs.svelte';
-  import { Check, Clipboard, Pencil } from '@lucide/svelte';
+  import { CheckIcon, ClipboardIcon, PencilIcon } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
   let { data, params }: PageProps = $props();
@@ -37,10 +37,10 @@
       onclick={copyYaml}
     >
       {#if copied}
-        <Check class="size-4" />
+        <CheckIcon class="size-4" />
         Copied
       {:else}
-        <Clipboard class="size-4" />
+        <ClipboardIcon class="size-4" />
         Copy YAML
       {/if}
     </button>
@@ -50,7 +50,7 @@
         `/bibliography/${params.bibliographyId}/entry/${params.entryId}/edit`,
       )}
     >
-      <Pencil class="size-4" />
+      <PencilIcon class="size-4" />
       Edit entry
     </a>
   </div>

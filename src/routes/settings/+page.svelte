@@ -13,7 +13,13 @@
     DEFAULT_APP_SETTINGS,
     type AppSettings,
   } from '$lib/types/app-settings';
-  import { ArrowLeft, Check, CircleAlert, Save, Trash2 } from '@lucide/svelte';
+  import {
+    ArrowLeftIcon,
+    CheckIcon,
+    CircleAlertIcon,
+    SaveIcon,
+    Trash2Icon,
+  } from '@lucide/svelte';
   import {
     tauriBackend,
     type RecoveryItem,
@@ -235,7 +241,7 @@
               class="btn btn-sm btn-error btn-outline"
               onclick={() => (clearSnapshotsOpen = true)}
             >
-              <Trash2 class="size-4" /> Clear all snapshots
+              <Trash2Icon class="size-4" /> Clear all snapshots
             </button>
           </div>
         {/if}
@@ -435,14 +441,14 @@
 
     {#if errorMessage}
       <div role="alert" class="alert alert-error">
-        <CircleAlert class="size-5" />
+        <CircleAlertIcon class="size-5" />
         <span>{errorMessage}</span>
       </div>
     {/if}
 
     {#if savedMessage}
       <div role="status" class="alert alert-success">
-        <Check class="size-5 shrink-0 text-primary" />
+        <CheckIcon class="size-5 shrink-0 text-primary" />
         <span class="font-medium text-foreground">{savedMessage}</span>
       </div>
     {/if}
@@ -452,11 +458,11 @@
         {#if isSubmitting}
           <span class="loading loading-sm loading-spinner"></span>
         {/if}
-        <Save class="size-4" />
+        <SaveIcon class="size-4" />
         Save settings
       </button>
       <button type="button" class="btn btn-outline" onclick={goBack}>
-        <ArrowLeft class="size-4" />
+        <ArrowLeftIcon class="size-4" />
         Back
       </button>
     </div>

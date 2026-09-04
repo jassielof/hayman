@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Author } from '@hayman/hayagriva-schema';
-  import { Plus } from '@lucide/svelte';
+  import { PlusIcon } from '@lucide/svelte';
   import PersonInput from './PersonInput.svelte';
 
   let { value = $bindable(), label }: { value?: Author; label: string } =
@@ -49,7 +49,7 @@
       class="btn btn-outline btn-success w-full"
       onclick={addPerson}
     >
-      <Plus class="size-[1.2em]" /> Add {label}
+      <PlusIcon class="size-[1.2em]" /> Add {label}
     </button>
   {:else if Array.isArray(value)}
     {#each value as person, i (`${typeof person === 'string' ? person : person.name}-${i}`)}
@@ -61,7 +61,7 @@
       class="btn btn-outline btn-success mt-2 w-full"
       onclick={addPerson}
     >
-      <Plus class="size-[1.2em]" /> Add Person
+      <PlusIcon class="size-[1.2em]" /> Add Person
     </button>
   {:else}
     <PersonInput bind:value remove={removeSingle} />
@@ -71,7 +71,7 @@
       class="btn btn-outline btn-success mt-2 w-full"
       onclick={addPerson}
     >
-      <Plus class="size-[1.2em]" /> Add Person
+      <PlusIcon class="size-[1.2em]" /> Add Person
     </button>
   {/if}
 </fieldset>

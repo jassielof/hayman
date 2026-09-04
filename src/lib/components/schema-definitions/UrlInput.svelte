@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { BibliographyEntry, URL } from '@hayman/hayagriva-schema';
   import { checkUrlReachable } from '$lib/utils/identifier-links';
-  import { ExternalLink, Radar } from '@lucide/svelte';
+  import { ExternalLinkIcon, RadarIcon } from '@lucide/svelte';
   import DateInput from './DateInput.svelte';
 
   let {
@@ -74,7 +74,7 @@
       disabled={!urlValue?.trim()}
       onclick={openUrl}
     >
-      <ExternalLink class="size-4" />
+      <ExternalLinkIcon class="size-4" />
     </button>
     <button
       type="button"
@@ -85,7 +85,7 @@
       {#if checking}
         <span class="loading loading-xs loading-spinner"></span>
       {:else}
-        <Radar class="size-4" />
+        <RadarIcon class="size-4" />
       {/if}
       Check
     </button>

@@ -15,7 +15,12 @@
   } from '$lib/services/hayagriva.service';
   import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
   import { diffEntry, formatEntryChanges } from '$lib/utils/entry-diff';
-  import { CircleAlert, ClipboardPaste, Save, X } from '@lucide/svelte';
+  import {
+    CircleAlertIcon,
+    ClipboardPasteIcon,
+    SaveIcon,
+    XIcon,
+  } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
   let { data, params }: PageProps = $props();
@@ -129,7 +134,7 @@
 
     {#if errorMessage}
       <div role="alert" class="alert alert-error">
-        <CircleAlert class="size-5 shrink-0" />
+        <CircleAlertIcon class="size-5 shrink-0" />
         <span>{errorMessage}</span>
       </div>
       <div class="divider"></div>
@@ -137,7 +142,7 @@
 
     {#if pasteMessage}
       <div role="alert" class="alert alert-warning">
-        <CircleAlert class="size-5 shrink-0" />
+        <CircleAlertIcon class="size-5 shrink-0" />
         <span>{pasteMessage}</span>
       </div>
       <div class="divider"></div>
@@ -149,7 +154,7 @@
       onclick={handlePaste}
       disabled={isSubmitting}
     >
-      <ClipboardPaste class="size-[1.2em]" />
+      <ClipboardPasteIcon class="size-[1.2em]" />
       Paste from clipboard
     </button>
 
@@ -171,7 +176,7 @@
       {#if isSubmitting}
         <span class="loading loading-sm loading-spinner"></span>
       {:else}
-        <Save class="size-[1.2em]" />
+        <SaveIcon class="size-[1.2em]" />
       {/if}
       Save changes
     </button>
@@ -179,7 +184,7 @@
       href={resolve(`/bibliography/${params.bibliographyId}/`)}
       class="btn btn-error"
     >
-      <X class="size-[1.2em]" />
+      <XIcon class="size-[1.2em]" />
       Cancel
     </a>
   </fieldset>

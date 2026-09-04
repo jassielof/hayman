@@ -6,7 +6,7 @@
     BibliographyService,
     formatValidationErrorMessage,
   } from '$lib/services/bibliography.service';
-  import { CircleAlert } from '@lucide/svelte';
+  import { CircleAlertIcon } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
   let { data, params }: PageProps = $props();
@@ -46,7 +46,7 @@
 
     {#if errorMessage}
       <div role="alert" class="alert alert-error">
-        <CircleAlert />
+        <CircleAlertIcon />
         <span>{errorMessage}</span>
       </div>
       <div class="divider"></div>

@@ -3,7 +3,7 @@
     subscribeToMutations,
     type MutationNotification,
   } from '$lib/services/mutation-notifications';
-  import { RotateCcw, X } from '@lucide/svelte';
+  import { RotateCcwIcon, XIcon } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
 
@@ -50,7 +50,7 @@
             class="btn btn-sm btn-outline"
             onclick={() => undo(notification)}
           >
-            <RotateCcw class="size-4" /> Undo
+            <RotateCcwIcon class="size-4" /> Undo
           </button>
         {/if}
         <button
@@ -58,7 +58,7 @@
           aria-label="Dismiss notification"
           onclick={() => dismiss(notification.id)}
         >
-          <X class="size-4" />
+          <XIcon class="size-4" />
         </button>
       </div>
     </div>

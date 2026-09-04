@@ -4,7 +4,7 @@
     exportBibliographiesArchive,
     type BackupArchiveFormat,
   } from '$lib/utils/export-backup';
-  import { Archive } from '@lucide/svelte';
+  import { ArchiveIcon } from '@lucide/svelte';
   import { Dialog } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';
 
@@ -108,7 +108,7 @@
           disabled={selected.size === 0}
           onclick={exportSelected}
         >
-          <Archive class="size-4" />
+          <ArchiveIcon class="size-4" />
           Export {selected.size} selected
         </button>
       </div>

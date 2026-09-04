@@ -1,61 +1,61 @@
 import { ENTRY_TYPE_NAMES, type EntryTypeName } from '@hayman/hayagriva-schema';
 import {
-  Book,
-  BookOpen,
-  BookType,
-  ClipboardList,
-  Copyright,
-  Eye,
-  FileArchive,
-  FileAudio,
-  FileText,
-  Film,
-  FolderOpen,
-  Globe,
-  GraduationCap,
-  Landmark,
-  Layers,
-  MessageCircle,
-  Music,
-  Newspaper,
-  Palette,
-  PenLine,
-  Star,
-  Users,
-  Video,
+  BookIcon,
+  BookOpenIcon,
+  BookTypeIcon,
+  ClipboardListIcon,
+  CopyrightIcon,
+  EyeIcon,
+  FileArchiveIcon,
+  FileAudioIcon,
+  FileTextIcon,
+  FilmIcon,
+  FolderOpenIcon,
+  GlobeIcon,
+  GraduationCapIcon,
+  LandmarkIcon,
+  LayersIcon,
+  MessageCircleIcon,
+  MusicIcon,
+  NewspaperIcon,
+  PaletteIcon,
+  PenLineIcon,
+  StarIcon,
+  UsersIcon,
+  VideoIcon,
 } from '@lucide/svelte';
 
-export const entryTypeIcons: Record<EntryTypeName, typeof BookOpen> = {
-  article: FileText,
-  chapter: FileText,
-  entry: FileText,
-  anthos: Layers,
-  report: ClipboardList,
-  thesis: GraduationCap,
-  web: Globe,
-  scene: Film,
-  artwork: Palette,
-  patent: Copyright,
-  case: Landmark,
-  newspaper: Newspaper,
-  legislation: Landmark,
-  manuscript: PenLine,
-  original: Star,
-  post: MessageCircle,
-  misc: FileArchive,
-  performance: Music,
-  periodical: BookType,
-  proceedings: Layers,
-  book: Book,
-  blog: Globe,
-  reference: ClipboardList,
-  conference: Users,
-  anthology: Layers,
-  repository: FolderOpen,
-  thread: MessageCircle,
-  video: Video,
-  audio: FileAudio,
-  exhibition: Eye,
+export const entryTypeIcons: Record<EntryTypeName, typeof BookOpenIcon> = {
+  article: FileTextIcon,
+  chapter: FileTextIcon,
+  entry: FileTextIcon,
+  anthos: LayersIcon,
+  report: ClipboardListIcon,
+  thesis: GraduationCapIcon,
+  web: GlobeIcon,
+  scene: FilmIcon,
+  artwork: PaletteIcon,
+  patent: CopyrightIcon,
+  case: LandmarkIcon,
+  newspaper: NewspaperIcon,
+  legislation: LandmarkIcon,
+  manuscript: PenLineIcon,
+  original: StarIcon,
+  post: MessageCircleIcon,
+  misc: FileArchiveIcon,
+  performance: MusicIcon,
+  periodical: BookTypeIcon,
+  proceedings: LayersIcon,
+  book: BookIcon,
+  blog: GlobeIcon,
+  reference: ClipboardListIcon,
+  conference: UsersIcon,
+  anthology: LayersIcon,
+  repository: FolderOpenIcon,
+  thread: MessageCircleIcon,
+  video: VideoIcon,
+  audio: FileAudioIcon,
+  exhibition: EyeIcon,
 };
 
 /**
@@ -70,13 +70,13 @@ function isEntryTypeName(value: string): value is EntryTypeName {
 
 export function formatEntryType(type: string): {
   label: string;
-  Icon: typeof BookOpen;
+  Icon: typeof BookOpenIcon;
 } {
-  if (!type) return { label: '', Icon: FileArchive };
+  if (!type) return { label: '', Icon: FileArchiveIcon };
   const normalized = type.charAt(0).toLowerCase() + type.slice(1).toLowerCase();
   const Icon = isEntryTypeName(normalized)
     ? entryTypeIcons[normalized]
-    : FileArchive;
+    : FileArchiveIcon;
   const label = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
   return { label, Icon };
 }

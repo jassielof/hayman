@@ -8,7 +8,7 @@
     resolvePreviewCitationStyle,
     usesCustomCslDefault,
   } from '$lib/utils/citation-style';
-  import { RefreshCw } from '@lucide/svelte';
+  import { RefreshCwIcon } from '@lucide/svelte';
   import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
 
   let {
@@ -198,7 +198,7 @@
     class="btn btn-outline btn-sm"
     onclick={() => onRender?.()}
   >
-    <RefreshCw class="size-4" />
+    <RefreshCwIcon class="size-4" />
     Render preview
   </button>
 </div>

@@ -17,12 +17,12 @@
   import { generateEntryId } from '$lib/utils/entry-id';
   import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
   import {
-    CircleAlert,
-    ClipboardPaste,
-    FileUp,
-    Save,
-    Sparkles,
-    X,
+    CircleAlertIcon,
+    ClipboardPasteIcon,
+    FileUpIcon,
+    SaveIcon,
+    SparklesIcon,
+    XIcon,
   } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
@@ -140,7 +140,7 @@
 
     {#if errorMessage}
       <div role="alert" class="alert alert-error">
-        <CircleAlert class="size-5 shrink-0" />
+        <CircleAlertIcon class="size-5 shrink-0" />
         <span>{errorMessage}</span>
       </div>
       <div class="divider"></div>
@@ -148,7 +148,7 @@
 
     {#if pasteMessage}
       <div role="alert" class="alert alert-warning">
-        <CircleAlert class="size-5 shrink-0" />
+        <CircleAlertIcon class="size-5 shrink-0" />
         <span>{pasteMessage}</span>
       </div>
       <div class="divider"></div>
@@ -160,12 +160,12 @@
       onclick={handlePaste}
       disabled={isSubmitting}
     >
-      <ClipboardPaste class="size-[1.2em]" />
+      <ClipboardPasteIcon class="size-[1.2em]" />
       Paste from clipboard
     </button>
 
     <label class="btn btn-outline" for="entry-file-import">
-      <FileUp class="size-[1.2em]" />
+      <FileUpIcon class="size-[1.2em]" />
       Import from file
       <input
         id="entry-file-import"
@@ -197,7 +197,7 @@
         disabled={isSubmitting}
         onclick={() => (newEntryId = generateEntryId(newEntryData))}
       >
-        <Sparkles class="size-4" />
+        <SparklesIcon class="size-4" />
         Generate ID
       </button>
     </div>
@@ -210,7 +210,7 @@
       {#if isSubmitting}
         <span class="loading loading-sm loading-spinner"></span>
       {:else}
-        <Save class="size-[1.2em]" />
+        <SaveIcon class="size-[1.2em]" />
       {/if}
       Add
     </button>
@@ -218,7 +218,7 @@
       href={resolve(`/bibliography/${params.bibliographyId}/`)}
       class="btn btn-error"
     >
-      <X class="size-[1.2em]" />
+      <XIcon class="size-[1.2em]" />
       Cancel
     </a>
   </fieldset>

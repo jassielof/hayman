@@ -4,7 +4,7 @@
   import SettingsBootstrap from '$lib/components/SettingsBootstrap.svelte';
   import MutationToastHost from '$lib/components/MutationToastHost.svelte';
   import { ModeWatcher, toggleMode } from 'mode-watcher';
-  import { Moon, Settings, Sun } from '@lucide/svelte';
+  import { MoonIcon, SettingsIcon, SunIcon } from '@lucide/svelte';
   import './layout.css';
   import './hljs-theme.css';
 
@@ -27,7 +27,7 @@
         aria-label="Settings"
         aria-current="page"
       >
-        <Settings class="size-5" />
+        <SettingsIcon class="size-5" />
       </span>
     {:else}
       <a
@@ -35,7 +35,7 @@
         class="btn btn-ghost btn-square"
         aria-label="Settings"
       >
-        <Settings class="size-5" />
+        <SettingsIcon class="size-5" />
       </a>
     {/if}
     <button
@@ -44,8 +44,8 @@
       aria-label="Toggle dark mode"
       onclick={toggleMode}
     >
-      <Sun class="size-5 dark:hidden" />
-      <Moon class="hidden size-5 dark:inline" />
+      <SunIcon class="size-5 dark:hidden" />
+      <MoonIcon class="hidden size-5 dark:inline" />
     </button>
   </div>
 </header>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X } from '@lucide/svelte';
+  import { XIcon } from '@lucide/svelte';
   import TimestampInput from './TimestampInput.svelte';
 
   let {
@@ -96,7 +96,7 @@
     </div>
     {#if value}
       <button class="btn btn-square" onclick={clearInput}>
-        <X class="h-4 w-4" />
+        <XIcon class="h-4 w-4" />
       </button>
     {/if}
   </div>

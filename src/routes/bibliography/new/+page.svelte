@@ -14,8 +14,12 @@
   } from '$lib/services/hayagriva.service';
   import type { Bibliography } from '$lib/types/bibliography';
   import { parseAndValidateHayagriva } from '$lib/validators/parse-and-validate';
-  import { CircleAlert, ClipboardPaste, Link } from '@lucide/svelte';
-  import { FileInput } from '@lucide/svelte';
+  import {
+    CircleAlertIcon,
+    ClipboardPasteIcon,
+    FileInputIcon,
+    LinkIcon,
+  } from '@lucide/svelte';
   import { open } from '@tauri-apps/plugin-dialog';
   import { tauriBackend } from '$lib/services/tauri-backend';
 
@@ -210,7 +214,7 @@
 
     {#if errorMessage}
       <div role="alert" class="alert alert-error">
-        <CircleAlert />
+        <CircleAlertIcon />
         <span>{errorMessage}</span>
       </div>
       <div class="divider"></div>
@@ -226,7 +230,7 @@
       onclick={handleNativeImport}
       disabled={isLoading}
     >
-      <FileInput class="size-4" />
+      <FileInputIcon class="size-4" />
       Import YAML, BibTeX, or BibLaTeX
     </button>
     <p class="text-xs text-muted-foreground">
@@ -261,7 +265,7 @@
         onclick={handlePasteImport}
         disabled={isLoading || isFetchingUrl}
       >
-        <ClipboardPaste class="size-4" />
+        <ClipboardPasteIcon class="size-4" />
         Paste YAML
       </button>
     </div>
@@ -285,7 +289,7 @@
         {#if isFetchingUrl}
           <span class="loading loading-sm loading-spinner"></span>
         {:else}
-          <Link class="size-4" />
+          <LinkIcon class="size-4" />
         {/if}
         Fetch
       </button>
