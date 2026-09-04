@@ -119,9 +119,10 @@ pub fn initialize(app: &AppHandle) -> Result<()> {
         "ALTER TABLE recovery ADD COLUMN description TEXT",
     ] {
         if let Err(error) = db.execute(migration, [])
-            && !error.to_string().contains("duplicate column name") {
-                return Err(error.to_string());
-            }
+            && !error.to_string().contains("duplicate column name")
+        {
+            return Err(error.to_string());
+        }
     }
     Ok(())
 }
@@ -563,16 +564,18 @@ pub fn delete_bibliography(app: AppHandle, id: String) -> Result<DeleteResult> {
     }
     if let Err(e) = tx.execute("DELETE FROM bibliographies WHERE id=?1", [&id]) {
         if m.storage_kind == "managed"
-            && let Some((saved, _)) = &saved {
-                let _ = fs::copy(saved, &m.file_path);
-            }
+            && let Some((saved, _)) = &saved
+        {
+            let _ = fs::copy(saved, &m.file_path);
+        }
         return Err(e.to_string());
     }
     if let Err(error) = tx.commit() {
         if m.storage_kind == "managed"
-            && let Some((saved, _)) = &saved {
-                let _ = fs::copy(saved, &m.file_path);
-            }
+            && let Some((saved, _)) = &saved
+        {
+            let _ = fs::copy(saved, &m.file_path);
+        }
         return Err(error.to_string());
     }
     Ok(DeleteResult {
