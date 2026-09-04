@@ -995,7 +995,10 @@ mod tests {
         ));
         assert!(result.is_err());
         let error = result.unwrap_err();
-        assert!(error.contains("Hayagriva does not bundle the CSL style 'completely-invalid-csl-style'"));
+        assert!(
+            error
+                .contains("Hayagriva does not bundle the CSL style 'completely-invalid-csl-style'")
+        );
     }
 
     #[test]
@@ -1033,8 +1036,16 @@ paper2:
 
     #[test]
     fn hayagriva_blocking_helper_handles_empty_inputs() {
-        assert!(render_bibliography_blocking("".into(), "ieee".into(), None).unwrap().is_empty());
-        assert!(render_bibliography_blocking("   ".into(), "ieee".into(), None).unwrap().is_empty());
+        assert!(
+            render_bibliography_blocking("".into(), "ieee".into(), None)
+                .unwrap()
+                .is_empty()
+        );
+        assert!(
+            render_bibliography_blocking("   ".into(), "ieee".into(), None)
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[test]
