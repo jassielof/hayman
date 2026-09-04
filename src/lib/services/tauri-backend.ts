@@ -82,6 +82,7 @@ export const tauriBackend = {
   listRecovery: () => invoke<RecoveryItem[]>('list_recovery_snapshots'),
   restoreRecovery: (recoveryId: number) =>
     changed(invoke<Bibliography>('restore_recovery_snapshot', { recoveryId })),
+  clearRecovery: () => changed(invoke<void>('clear_recovery_snapshots')),
   subscribe(listener: () => void) {
     changes.addEventListener('change', listener);
     return () => changes.removeEventListener('change', listener);

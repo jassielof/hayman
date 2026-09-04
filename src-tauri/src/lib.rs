@@ -31,6 +31,7 @@ pub fn run() {
             storage::render_typst,
             storage::list_recovery_snapshots,
             storage::restore_recovery_snapshot,
+            storage::clear_recovery_snapshots,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hayman");

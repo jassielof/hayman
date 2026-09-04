@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { SettingsService } from '$lib/services/settings.service';
+  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
   import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
   import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
   import {
@@ -12,7 +13,7 @@
     DEFAULT_APP_SETTINGS,
     type AppSettings,
   } from '$lib/types/app-settings';
-  import { ArrowLeft, CircleAlert, Save } from '@lucide/svelte';
+  import { ArrowLeft, CircleAlert, Save, Trash2 } from '@lucide/svelte';
   import {
     tauriBackend,
     type RecoveryItem,
@@ -39,6 +40,7 @@
   let typstError = $state<string | undefined>();
   let recoveryItems = $state<RecoveryItem[]>([]);
   let restoringId = $state<number | undefined>();
+  let clearSnapshotsOpen = $state(false);
 
   $effect(() => {
     tauriBackend.storageInfo().then((value) => (storage = value));
@@ -60,6 +62,17 @@
       errorMessage = String(error);
     } finally {
       restoringId = undefined;
+    }
+  }
+
+  async function clearSnapshots() {
+    errorMessage = undefined;
+    try {
+      await tauriBackend.clearRecovery();
+      recoveryItems = [];
+      savedMessage = 'Cleared all recovery snapshots.';
+    } catch (error) {
+      errorMessage = String(error);
     }
   }
 
@@ -212,9 +225,20 @@
         </div>
       {/if}
       <details class="rounded-md border border-border bg-card/60 p-3">
-        <summary class="cursor-pointer text-sm font-medium">
-          Recovery snapshots ({recoveryItems.length})
-        </summary>
+        <summary class="cursor-pointer text-sm font-medium"
+          >Recovery snapshots ({recoveryItems.length})</summary
+        >
+        {#if recoveryItems.length > 0}
+          <div class="mt-3 flex justify-end">
+            <button
+              type="button"
+              class="btn btn-sm btn-error btn-outline"
+              onclick={() => (clearSnapshotsOpen = true)}
+            >
+              <Trash2 class="size-4" /> Clear all snapshots
+            </button>
+          </div>
+        {/if}
         {#if recoveryItems.length === 0}
           <p class="mt-2 text-xs text-muted-foreground">No snapshots yet.</p>
         {:else}
@@ -437,3 +461,12 @@
     </div>
   </form>
 </main>
+
+<ConfirmDialog
+  bind:open={clearSnapshotsOpen}
+  title="Clear all recovery snapshots?"
+  description="This permanently removes every stored recovery copy. Bibliography files and linked project files are not deleted."
+  confirmLabel="Clear snapshots"
+  destructive={true}
+  onConfirm={clearSnapshots}
+/>

@@ -654,6 +654,36 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
 }
 
 #[tauri::command]
+pub fn clear_recovery_snapshots(app: AppHandle) -> Result<()> {
+    let db = db(&app)?;
+    let (_, _, recovery, _) = directories(&app)?;
+    let recovery = fs::canonicalize(recovery).map_err(|e| e.to_string())?;
+    let mut statement = db
+        .prepare("SELECT snapshot_path FROM recovery")
+        .map_err(|e| e.to_string())?;
+    let paths = statement
+        .query_map([], |row| row.get::<_, String>(0))
+        .map_err(|e| e.to_string())?
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    drop(statement);
+    for path in paths {
+        let path = PathBuf::from(path);
+        let parent = path.parent().and_then(|p| fs::canonicalize(p).ok());
+        if parent.as_deref() != Some(recovery.as_path()) {
+            return Err("Refused to remove a snapshot outside Hayman's recovery directory.".into());
+        }
+        if path.exists() {
+            fs::remove_file(&path)
+                .map_err(|e| format!("Could not remove {}: {e}", path.display()))?;
+        }
+    }
+    db.execute("DELETE FROM recovery", [])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_settings(app: AppHandle) -> Result<Option<Value>> {
     let value = db(&app)?
         .query_row("SELECT value FROM settings WHERE id=1", [], |row| {
