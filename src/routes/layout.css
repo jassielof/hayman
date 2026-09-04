@@ -57,7 +57,7 @@
   --color-destructive: oklch(0.62 0.2 25);
   --color-destructive-foreground: oklch(0.98 0.01 25);
   --color-warning: oklch(0.78 0.14 75);
-  --color-warning-foreground: oklch(0.22 0.05 75);
+  --color-warning-foreground: oklch(0.95 0.03 75);
   --color-ring: oklch(0.68 0.14 160);
 }
 
@@ -186,6 +186,10 @@
 
   .alert-warning {
     @apply border-warning/30 bg-warning/10 text-warning-foreground;
+  }
+
+  .alert-success {
+    @apply border-primary/30 bg-primary/10 text-foreground;
   }
 
   .card {

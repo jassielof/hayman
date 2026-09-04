@@ -13,7 +13,7 @@
     DEFAULT_APP_SETTINGS,
     type AppSettings,
   } from '$lib/types/app-settings';
-  import { ArrowLeft, CircleAlert, Save, Trash2 } from '@lucide/svelte';
+  import { ArrowLeft, Check, CircleAlert, Save, Trash2 } from '@lucide/svelte';
   import {
     tauriBackend,
     type RecoveryItem,
@@ -441,8 +441,9 @@
     {/if}
 
     {#if savedMessage}
-      <div role="status" class="alert alert-warning">
-        <span>{savedMessage}</span>
+      <div role="status" class="alert alert-success">
+        <Check class="size-5 shrink-0 text-primary" />
+        <span class="font-medium text-foreground">{savedMessage}</span>
       </div>
     {/if}
 
