@@ -9,7 +9,7 @@
     isSectionRelevant,
   } from '$lib/validators/entry-field-visibility';
   import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
-  import { X } from '@lucide/svelte';
+  import { XIcon } from '@lucide/svelte';
   import EntryForm from './EntryForm.svelte';
   import AffiliatedListInput from './schema-definitions/AffiliatedListInput.svelte';
   import DateInput from './schema-definitions/DateInput.svelte';
@@ -157,7 +157,7 @@
           aria-label={`Remove parent ${i + 1}`}
           onclick={() => removeParent(i)}
         >
-          <X class="h-4 w-4" />
+          <XIcon class="h-4 w-4" />
         </button>
       </div>
 

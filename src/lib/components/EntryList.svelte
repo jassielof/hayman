@@ -10,15 +10,15 @@
   import { cn } from '$lib/utils/cn';
   import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import {
-    Calendar,
-    Check,
-    ChevronDown,
-    ChevronsUpDown,
-    Copy,
-    Eye,
-    Hash,
-    Pencil,
-    Search,
+    CalendarIcon,
+    CheckIcon,
+    ChevronDownIcon,
+    ChevronsUpDownIcon,
+    CopyIcon,
+    EyeIcon,
+    HashIcon,
+    PencilIcon,
+    SearchIcon,
     TrashIcon,
   } from '@lucide/svelte';
   import { Select } from 'bits-ui';
@@ -177,7 +177,7 @@
       <label class="label mb-0 w-full">
         <span class="sr-only">Search entries</span>
         <span class="input flex items-center gap-2">
-          <Search class="size-4 text-muted-foreground" />
+          <SearchIcon class="size-4 text-muted-foreground" />
           <input
             class="w-full border-0 bg-transparent p-0 shadow-none focus:ring-0"
             placeholder="Search by ID, title, author…"
@@ -203,12 +203,12 @@
               {:else}
                 <span>All types</span>
               {/if}
-              <ChevronsUpDown class="size-4 shrink-0 opacity-50" />
+              <ChevronsUpDownIcon class="size-4 shrink-0 opacity-50" />
             </Select.Trigger>
             <Select.Portal>
               <Select.Content
                 class={cn(
-                  'z-50 max-h-72 min-w-[var(--bits-select-anchor-width)] overflow-hidden rounded-lg border border-border bg-card p-1.5 shadow-xl',
+                  'z-50 max-h-72 min-w-(--bits-select-anchor-width) overflow-hidden rounded-lg border border-border bg-card p-1.5 shadow-xl',
                   'data-[state=open]:animate-in data-[state=closed]:animate-out',
                 )}
                 sideOffset={6}
@@ -216,7 +216,7 @@
                 <Select.ScrollUpButton
                   class="flex h-6 items-center justify-center text-muted-foreground"
                 >
-                  <ChevronDown class="size-4 rotate-180" />
+                  <ChevronDownIcon class="size-4 rotate-180" />
                 </Select.ScrollUpButton>
                 <Select.Viewport>
                   <Select.Item
@@ -226,7 +226,7 @@
                   >
                     {#snippet children({ selected })}
                       <span class="w-4"
-                        >{#if selected}<Check class="size-4" />{/if}</span
+                        >{#if selected}<CheckIcon class="size-4" />{/if}</span
                       >
                       All types
                     {/snippet}
@@ -240,7 +240,7 @@
                     >
                       {#snippet children({ selected })}
                         <span class="w-4"
-                          >{#if selected}<Check class="size-4" />{/if}</span
+                          >{#if selected}<CheckIcon class="size-4" />{/if}</span
                         >
                         <Icon class="size-4 text-muted-foreground" />
                         {label}
@@ -251,7 +251,7 @@
                 <Select.ScrollDownButton
                   class="flex h-6 items-center justify-center text-muted-foreground"
                 >
-                  <ChevronDown class="size-4" />
+                  <ChevronDownIcon class="size-4" />
                 </Select.ScrollDownButton>
               </Select.Content>
             </Select.Portal>
@@ -266,11 +266,11 @@
               aria-label="Sort entries"
             >
               <span>Sort by <Select.Value /></span>
-              <ChevronsUpDown class="size-4 opacity-50" />
+              <ChevronsUpDownIcon class="size-4 opacity-50" />
             </Select.Trigger>
             <Select.Portal>
               <Select.Content
-                class="z-50 min-w-[var(--bits-select-anchor-width)] rounded-lg border border-border bg-card p-1.5 shadow-xl"
+                class="z-50 min-w-(--bits-select-anchor-width) rounded-lg border border-border bg-card p-1.5 shadow-xl"
                 sideOffset={6}
               >
                 <Select.Viewport>
@@ -282,7 +282,7 @@
                     >
                       {#snippet children({ selected })}
                         <span class="w-4"
-                          >{#if selected}<Check class="size-4" />{/if}</span
+                          >{#if selected}<CheckIcon class="size-4" />{/if}</span
                         >
                         {option.label}
                       {/snippet}
@@ -304,7 +304,7 @@
               class="btn btn-sm btn-outline"
               onclick={copySelected}
             >
-              <Copy class="size-4" />
+              <CopyIcon class="size-4" />
               Copy YAML
             </button>
             {#if copyFeedback}
@@ -369,7 +369,7 @@
               <div
                 class="flex items-center gap-1 font-mono text-sm font-semibold text-foreground/80"
               >
-                <Hash class="size-4 shrink-0" aria-hidden="true" />
+                <HashIcon class="size-4 shrink-0" aria-hidden="true" />
                 {id}
               </div>
               <div
@@ -384,7 +384,7 @@
               {/if}
               {#if entry.date}
                 <div class="flex items-center gap-1.5 text-xs">
-                  <Calendar class="size-4 shrink-0" aria-hidden="true" />
+                  <CalendarIcon class="size-4 shrink-0" aria-hidden="true" />
                   {formatEntryDateShort(entry.date)}
                 </div>
               {/if}
@@ -394,7 +394,7 @@
                 class="btn btn-sm btn-outline"
                 href={resolve(`/bibliography/${bibliographyId}/entry/${id}`)}
               >
-                <Eye class="size-4" />
+                <EyeIcon class="size-4" />
                 <span class="hidden sm:inline">View</span>
               </a>
               <a
@@ -403,7 +403,7 @@
                   `/bibliography/${bibliographyId}/entry/${id}/edit`,
                 )}
               >
-                <Pencil class="size-4" />
+                <PencilIcon class="size-4" />
                 <span class="hidden sm:inline">Edit</span>
               </a>
               <button
@@ -411,7 +411,7 @@
                 class="btn btn-sm btn-destructive"
                 onclick={() => requestDelete(id)}
               >
-                <Trash class="size-4" />
+                <TrashIcon class="size-4" />
                 <span class="hidden sm:inline">Delete</span>
               </button>
             </div>

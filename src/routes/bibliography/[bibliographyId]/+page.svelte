@@ -1,16 +1,16 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import BibliographyPreview from '$lib/components/BibliographyPreview.svelte';
+  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import EntryList from '$lib/components/EntryList.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
-  import { cn } from '$lib/utils/cn';
-  import { Tabs } from 'bits-ui';
-  import { BookPlus } from '@lucide/svelte';
-  import { onMount } from 'svelte';
-  import type { Bibliography } from '$lib/types/bibliography';
   import { tauriBackend } from '$lib/services/tauri-backend';
+  import type { Bibliography } from '$lib/types/bibliography';
+  import { cn } from '$lib/utils/cn';
+  import { BookPlusIcon } from '@lucide/svelte';
+  import { Tabs } from 'bits-ui';
+  import { onMount } from 'svelte';
 
   const bibliographyId = page.params.bibliographyId;
   let bibliography = $state<Bibliography | null | undefined>();
@@ -67,7 +67,7 @@
           class="btn btn-primary"
           href={resolve(`/bibliography/${bibliography.metadata.id}/entry/`)}
         >
-          <BookPlus class="size-[1.2em]" />
+          <BookPlusIcon class="size-[1.2em]" />
           New entry
         </a>
       </div>

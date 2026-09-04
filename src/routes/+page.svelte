@@ -4,21 +4,21 @@
   import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { hayagrivaService } from '$lib/services/hayagriva.service';
+  import { tauriBackend } from '$lib/services/tauri-backend';
   import type { Bibliography } from '$lib/types/bibliography';
   import {
-    Archive,
-    BookOpen,
-    BookPlus,
-    Copy,
-    Download,
-    Library,
-    Link,
-    Pencil,
-    Trash,
+    ArchiveIcon,
+    BookOpenIcon,
+    BookPlusIcon,
+    CopyIcon,
+    DownloadIcon,
+    LibraryIcon,
+    LinkIcon,
+    PencilIcon,
+    TrashIcon,
   } from '@lucide/svelte';
-  import { onMount } from 'svelte';
   import { open } from '@tauri-apps/plugin-dialog';
-  import { tauriBackend } from '$lib/services/tauri-backend';
+  import { onMount } from 'svelte';
 
   let desktopBibliographies = $state<Bibliography[] | undefined>();
   let desktopError = $state<string | undefined>();
@@ -100,7 +100,7 @@
         aria-label="Export backup of bibliographies"
         onclick={() => (exportOpen = true)}
       >
-        <Archive class="size-[1.2em]" />
+        <ArchiveIcon class="size-[1.2em]" />
         Export backup
       </button>
     {/if}
@@ -109,7 +109,7 @@
       class="btn btn-outline"
       onclick={linkProjectBibliography}
     >
-      <Link class="size-[1.2em]" />
+      <LinkIcon class="size-[1.2em]" />
       Link project file
     </button>
     <a
@@ -117,7 +117,7 @@
       class="btn btn-primary"
       aria-label="Create a new bibliography"
     >
-      <BookPlus class="size-[1.2em]" />
+      <BookPlusIcon class="size-[1.2em]" />
       New
     </a>
   </div>
@@ -171,7 +171,7 @@
             class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
           >
             <div class="flex items-center justify-center">
-              <Library class="size-6 shrink-0" aria-hidden="true" />
+              <LibraryIcon class="size-6 shrink-0" aria-hidden="true" />
             </div>
             <div class="min-w-0">
               <h6 class="truncate font-bold">{bib.metadata.title}</h6>
@@ -203,7 +203,7 @@
                 class="btn btn-sm btn-outline"
                 aria-label={`View entries in ${bib.metadata.title}`}
               >
-                <BookOpen class="size-4" />
+                <BookOpenIcon class="size-4" />
                 <span>View</span>
               </a>
               <a
@@ -211,7 +211,7 @@
                 href={resolve(`/bibliography/${bib.metadata.id}/edit`)}
                 aria-label={`Edit metadata for ${bib.metadata.title}`}
               >
-                <Pencil class="size-4" />
+                <PencilIcon class="size-4" />
                 <span>Edit</span>
               </a>
               <button
@@ -224,7 +224,7 @@
                     filename: `${bib.metadata.id}.yaml`,
                   })}
               >
-                <Download class="size-4" />
+                <DownloadIcon class="size-4" />
                 <span class="sr-only">Download YAML</span>
               </button>
               <button
@@ -233,7 +233,7 @@
                 title="Copy YAML"
                 onclick={() => copyYaml(bib)}
               >
-                <Copy class="size-4" />
+                <CopyIcon class="size-4" />
                 <span class="sr-only">Copy YAML</span>
               </button>
               <button
@@ -241,7 +241,7 @@
                 aria-label={`Delete bibliography ${bib.metadata.title}`}
                 onclick={() => requestDelete(bib)}
               >
-                <Trash class="size-4" />
+                <TrashIcon class="size-4" />
                 <span>Delete</span>
               </button>
               {#if copyFeedback === bib.metadata.id}
