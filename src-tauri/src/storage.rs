@@ -73,7 +73,7 @@ pub struct DeleteResult {
     recovery_id: Option<i64>,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RenderedReference {
     key: String,
@@ -135,9 +135,27 @@ fn digest(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
 }
 
+fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
+    if let Some(s) = payload.downcast_ref::<&str>() {
+        s.to_string()
+    } else if let Some(s) = payload.downcast_ref::<String>() {
+        s.clone()
+    } else {
+        "an internal formatting error occurred".to_string()
+    }
+}
+
 fn parse_yaml(content: &str) -> Result<Value> {
-    hayagriva::io::from_yaml_str(content)
-        .map_err(|e| format!("Hayagriva rejected this bibliography: {e}"))?;
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        hayagriva::io::from_yaml_str(content)
+    }))
+    .map_err(|e| {
+        format!(
+            "Hayagriva panicked while validating bibliography: {}",
+            panic_message(&*e)
+        )
+    })?
+    .map_err(|e| format!("Hayagriva rejected this bibliography: {e}"))?;
     serde_yaml::from_str(content).map_err(|e| format!("Invalid YAML: {e}"))
 }
 
@@ -151,8 +169,16 @@ fn parse_import(content: &str, extension: &str) -> Result<Value> {
     match extension {
         "yml" | "yaml" => parse_yaml(content),
         "bib" => {
-            let library = hayagriva::io::from_biblatex_str(content)
-                .map_err(|e| format!("Could not import BibTeX/BibLaTeX: {e:?}"))?;
+            let library = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                hayagriva::io::from_biblatex_str(content)
+            }))
+            .map_err(|e| {
+                format!(
+                    "Hayagriva panicked while parsing BibTeX/BibLaTeX: {}",
+                    panic_message(&*e)
+                )
+            })?
+            .map_err(|e| format!("Could not import BibTeX/BibLaTeX: {e:?}"))?;
             let entries: serde_json::Map<String, Value> = library
                 .iter()
                 .map(|entry| {
@@ -734,9 +760,17 @@ pub async fn render_typst(
     main_content: String,
     inputs: BTreeMap<String, String>,
 ) -> Result<String> {
-    tauri::async_runtime::spawn_blocking(move || render_typst_blocking(main_content, inputs))
-        .await
-        .map_err(|e| format!("Typst preview worker failed: {e}"))?
+    tauri::async_runtime::spawn_blocking(move || {
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            render_typst_blocking(main_content, inputs)
+        }))
+        .unwrap_or_else(|panic_info| {
+            let detail = panic_message(&*panic_info);
+            Err(format!("Typst preview worker failed: {detail}"))
+        })
+    })
+    .await
+    .map_err(|e| format!("Typst preview worker failed: {e}"))?
 }
 
 fn render_typst_blocking(
@@ -800,7 +834,28 @@ fn render_typst_blocking(
 }
 
 #[tauri::command]
-pub fn render_bibliography(
+pub async fn render_bibliography(
+    yaml: String,
+    style_name: String,
+    custom_csl: Option<String>,
+) -> Result<Vec<RenderedReference>> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let style_name_clone = style_name.clone();
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            render_bibliography_blocking(yaml, style_name, custom_csl)
+        }))
+        .unwrap_or_else(|panic_info| {
+            let detail = panic_message(&*panic_info);
+            Err(format!(
+                "Hayagriva was unable to format references with style '{style_name_clone}': {detail}"
+            ))
+        })
+    })
+    .await
+    .map_err(|e| format!("Bibliography formatting worker failed: {e}"))?
+}
+
+fn render_bibliography_blocking(
     yaml: String,
     style_name: String,
     custom_csl: Option<String>,
@@ -811,13 +866,29 @@ pub fn render_bibliography(
         BibliographyDriver, BibliographyRequest, BufWriteFormat, CitationItem, CitationRequest,
     };
 
-    let library = hayagriva::io::from_yaml_str(&yaml)
+    let trimmed_yaml = yaml.trim();
+    if trimmed_yaml.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let library = hayagriva::io::from_yaml_str(trimmed_yaml)
         .map_err(|e| format!("Hayagriva rejected this bibliography: {e}"))?;
+    if library.is_empty() {
+        return Ok(Vec::new());
+    }
+
     let style = if let Some(csl) = custom_csl.filter(|value| !value.trim().is_empty()) {
         IndependentStyle::from_xml(&csl).map_err(|e| format!("Invalid CSL style: {e}"))?
     } else {
-        let archived = ArchivedStyle::by_name(style_name.trim())
-            .ok_or_else(|| format!("Hayagriva does not bundle the CSL style '{style_name}'."))?;
+        let trimmed_style = style_name.trim();
+        if trimmed_style.is_empty() {
+            return Err("Citation style name cannot be empty.".into());
+        }
+        let archived = ArchivedStyle::by_name(trimmed_style).ok_or_else(|| {
+            format!(
+                "Hayagriva does not bundle the CSL style '{trimmed_style}'. Check the style name or upload a custom CSL file in Settings."
+            )
+        })?;
         match archived.get() {
             Style::Independent(style) => style,
             Style::Dependent(_) => {
@@ -862,15 +933,21 @@ pub fn render_bibliography(
 
 #[cfg(test)]
 mod tests {
-    use super::{digest, parse_import, render_bibliography, safe_id, serialize_yaml};
+    use super::{
+        digest, panic_message, parse_import, render_bibliography, render_bibliography_blocking,
+        safe_id, serialize_yaml,
+    };
+
     #[test]
     fn identifiers_are_sanitized() {
         assert_eq!(safe_id("My Research_2026.bib"), "my-research-2026-bib");
     }
+
     #[test]
     fn hashes_detect_changes() {
         assert_ne!(digest(b"one"), digest(b"two"));
     }
+
     #[test]
     fn biblatex_import_is_valid_hayagriva_yaml() {
         let data = parse_import(
@@ -881,6 +958,7 @@ mod tests {
         assert!(data.get("example").is_some());
         serialize_yaml(&data).unwrap();
     }
+
     #[test]
     fn yaml_serialization_preserves_entry_order_after_deletion() {
         let mut data: serde_json::Value = serde_yaml::from_str(
@@ -891,18 +969,85 @@ mod tests {
         let yaml = serialize_yaml(&data).unwrap();
         assert!(yaml.find("zeta:").unwrap() < yaml.find("middle:").unwrap());
     }
+
     #[test]
     fn hayagriva_renders_full_bibliography_without_typst() {
-        let references = render_bibliography(
+        let references = tauri::async_runtime::block_on(render_bibliography(
             "paper:\n  type: Article\n  title: A useful paper\n  author: Doe, Jane\n  date: 2026\n"
                 .into(),
             "ieee".into(),
             None,
-        )
+        ))
         .unwrap();
         assert_eq!(references.len(), 1);
         assert_eq!(references[0].key, "paper");
         assert!(references[0].text.contains("A useful paper"));
         assert!(references[0].text.contains("[1]"));
+    }
+
+    #[test]
+    fn hayagriva_rejects_unknown_style_gracefully() {
+        let result = tauri::async_runtime::block_on(render_bibliography(
+            "paper:\n  type: Article\n  title: A useful paper\n  author: Doe, Jane\n  date: 2026\n"
+                .into(),
+            "completely-invalid-csl-style".into(),
+            None,
+        ));
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("Hayagriva does not bundle the CSL style 'completely-invalid-csl-style'"));
+    }
+
+    #[test]
+    fn hayagriva_catches_style_panics_gracefully() {
+        // Author structure that triggers Hayagriva 0.10.1 MLA disambiguation index-out-of-bounds
+        let tricky_yaml = r#"
+paper1:
+  type: article
+  title: First Paper
+  author:
+    - Alpha, One
+    - Beta, Two
+    - Gamma, Three
+    - Delta, Four
+  date: 2024
+paper2:
+  type: article
+  title: Second Paper
+  author:
+    - Alpha, One
+    - Beta, Two
+    - Gamma, Three
+  date: 2024
+"#;
+        let result = tauri::async_runtime::block_on(render_bibliography(
+            tricky_yaml.into(),
+            "mla".into(),
+            None,
+        ));
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        assert!(error.contains("Hayagriva was unable to format references with style 'mla'"));
+        assert!(error.contains("index out of bounds"));
+    }
+
+    #[test]
+    fn hayagriva_blocking_helper_handles_empty_inputs() {
+        assert!(render_bibliography_blocking("".into(), "ieee".into(), None).unwrap().is_empty());
+        assert!(render_bibliography_blocking("   ".into(), "ieee".into(), None).unwrap().is_empty());
+    }
+
+    #[test]
+    fn panic_payload_extraction() {
+        let res = std::panic::catch_unwind(|| {
+            panic!("static error string");
+        });
+        assert_eq!(panic_message(&*res.unwrap_err()), "static error string");
+
+        let res2 = std::panic::catch_unwind(|| {
+            let vec: Vec<i32> = vec![1, 2, 3];
+            let _ = vec[3];
+        });
+        assert!(panic_message(&*res2.unwrap_err()).contains("index out of bounds"));
     }
 }
