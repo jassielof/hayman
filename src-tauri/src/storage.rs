@@ -4,12 +4,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
-use std::fs::{self, File};
+use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use tauri::{AppHandle, Manager};
+use tauri_plugin_opener::OpenerExt;
 use wait_timeout::ChildExt;
 
 type Result<T> = std::result::Result<T, String>;
@@ -73,6 +74,55 @@ pub struct DeleteResult {
     recovery_id: Option<i64>,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Attachment {
+    id: i64,
+    bibliography_id: String,
+    entry_id: String,
+    path: String,
+    name: String,
+    created_at: String,
+    available: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Project {
+    id: String,
+    title: String,
+    description: Option<String>,
+    bibliography_ids: Vec<String>,
+    created_at: String,
+    updated_at: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeletedEntry {
+    entry_id: String,
+    data: Value,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrashItem {
+    id: i64,
+    bibliography_id: String,
+    entry_id: String,
+    data: Value,
+    deleted_at: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HealthReport {
+    database_ok: bool,
+    bibliography_count: usize,
+    attachment_count: usize,
+    problems: Vec<String>,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RenderedReference {
@@ -93,8 +143,32 @@ fn directories(app: &AppHandle) -> Result<(PathBuf, PathBuf, PathBuf, PathBuf)> 
 pub fn initialize(app: &AppHandle) -> Result<()> {
     let (_, managed, recovery, database) = directories(app)?;
     fs::create_dir_all(managed).map_err(|e| e.to_string())?;
-    fs::create_dir_all(recovery).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&recovery).map_err(|e| e.to_string())?;
     let db = Connection::open(database).map_err(|e| e.to_string())?;
+    initialize_database(&db)?;
+    // Recovery files are app-owned. Files without a catalog row can remain
+    // after a crash between committing a cleanup and removing the files.
+    let mut statement = db
+        .prepare("SELECT snapshot_path FROM recovery")
+        .map_err(|e| e.to_string())?;
+    let known = statement
+        .query_map([], |row| row.get::<_, String>(0))
+        .map_err(|e| e.to_string())?
+        .collect::<std::result::Result<std::collections::HashSet<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    drop(statement);
+    if let Ok(files) = fs::read_dir(&recovery) {
+        for file in files.flatten() {
+            let path = file.path();
+            if path.is_file() && !known.contains(&path.to_string_lossy().into_owned()) {
+                let _ = fs::remove_file(path);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn initialize_database(db: &Connection) -> Result<()> {
     db.execute_batch(
         "PRAGMA journal_mode=WAL;
        CREATE TABLE IF NOT EXISTS bibliographies(
@@ -108,7 +182,24 @@ pub fn initialize(app: &AppHandle) -> Result<()> {
          content_hash TEXT NOT NULL, created_at TEXT NOT NULL, reason TEXT NOT NULL,
          storage_kind TEXT NOT NULL DEFAULT '', title TEXT, description TEXT);
        CREATE TABLE IF NOT EXISTS settings(
-         id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL);",
+         id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL);
+       CREATE TABLE IF NOT EXISTS attachments(
+         id INTEGER PRIMARY KEY, bibliography_id TEXT NOT NULL,
+         entry_id TEXT NOT NULL, path TEXT NOT NULL, name TEXT NOT NULL,
+         created_at TEXT NOT NULL,
+         UNIQUE(bibliography_id,entry_id,path));
+       CREATE TABLE IF NOT EXISTS projects(
+         id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+         created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+       CREATE TABLE IF NOT EXISTS project_files(
+         project_id TEXT NOT NULL, bibliography_id TEXT NOT NULL,
+         position INTEGER NOT NULL,
+         PRIMARY KEY(project_id,bibliography_id),
+         FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE);
+       CREATE TABLE IF NOT EXISTS entry_trash(
+         id INTEGER PRIMARY KEY, bibliography_id TEXT NOT NULL,
+         entry_id TEXT NOT NULL, data_json TEXT NOT NULL,
+         deleted_at TEXT NOT NULL);",
     )
     .map_err(|e| e.to_string())?;
     // Existing desktop profiles predate the recovery metadata required to
@@ -128,11 +219,33 @@ pub fn initialize(app: &AppHandle) -> Result<()> {
 }
 
 fn db(app: &AppHandle) -> Result<Connection> {
-    Connection::open(directories(app)?.3).map_err(|e| e.to_string())
+    let db = Connection::open(directories(app)?.3).map_err(|e| e.to_string())?;
+    db.execute_batch("PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")
+        .map_err(|e| e.to_string())?;
+    Ok(db)
 }
 
 fn digest(bytes: &[u8]) -> String {
     hex::encode(Sha256::digest(bytes))
+}
+
+fn bibliography_lock(app: &AppHandle, path: &Path) -> Result<File> {
+    let locks = directories(app)?.0.join("locks");
+    fs::create_dir_all(&locks).map_err(|e| e.to_string())?;
+    let lock_path = locks.join(format!(
+        "{}.lock",
+        digest(path.as_os_str().as_encoded_bytes())
+    ));
+    let file = OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .read(true)
+        .write(true)
+        .open(lock_path)
+        .map_err(|e| e.to_string())?;
+    file.lock()
+        .map_err(|e| format!("Could not lock the bibliography for writing: {e}"))?;
+    Ok(file)
 }
 
 fn panic_message(payload: &(dyn std::any::Any + Send)) -> String {
@@ -286,30 +399,40 @@ fn atomic_write(path: &Path, content: &[u8]) -> Result<()> {
         .parent()
         .ok_or("The bibliography has no parent directory.")?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    let temporary = parent.join(format!(
-        ".{}.hayman-tmp",
-        path.file_name().unwrap_or_default().to_string_lossy()
-    ));
-    let mut file = File::create(&temporary).map_err(|e| e.to_string())?;
+    let mut file = tempfile::Builder::new()
+        .prefix(".hayman-write-")
+        .tempfile_in(parent)
+        .map_err(|e| e.to_string())?;
     file.write_all(content).map_err(|e| e.to_string())?;
-    file.sync_all().map_err(|e| e.to_string())?;
+    file.as_file().sync_all().map_err(|e| e.to_string())?;
     if !path.exists() {
-        return fs::rename(temporary, path).map_err(|e| e.to_string());
+        file.persist(path).map_err(|e| e.error.to_string())?;
+        return sync_directory(parent);
     }
 
-    let displaced = parent.join(format!(
-        ".{}.hayman-replaced",
-        path.file_name().unwrap_or_default().to_string_lossy()
-    ));
-    if displaced.exists() {
-        fs::remove_file(&displaced).map_err(|e| e.to_string())?;
-    }
+    let displaced_file = tempfile::Builder::new()
+        .prefix(".hayman-replaced-")
+        .tempfile_in(parent)
+        .map_err(|e| e.to_string())?;
+    let displaced = displaced_file.path().to_path_buf();
+    drop(displaced_file);
     fs::rename(path, &displaced).map_err(|e| e.to_string())?;
-    if let Err(error) = fs::rename(&temporary, path) {
+    if let Err(error) = file.persist(path) {
         let _ = fs::rename(&displaced, path);
-        return Err(error.to_string());
+        return Err(error.error.to_string());
     }
-    fs::remove_file(displaced).map_err(|e| e.to_string())
+    fs::remove_file(displaced).map_err(|e| e.to_string())?;
+    sync_directory(parent)
+}
+
+fn sync_directory(_path: &Path) -> Result<()> {
+    // Windows does not permit opening a directory as a File. The file itself
+    // is still synced above; Unix also flushes the directory entry rename.
+    #[cfg(unix)]
+    File::open(_path)
+        .and_then(|directory| directory.sync_all())
+        .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 fn snapshot(
@@ -322,9 +445,21 @@ fn snapshot(
         return Ok(None);
     }
     let stamp = Utc::now().format("%Y%m%dT%H%M%S%.3fZ");
-    let target = recovery.join(format!("{}-{stamp}-{reason}.yml", m.id));
-    fs::copy(&m.file_path, &target)
+    let content = fs::read(&m.file_path)
+        .map_err(|e| format!("Could not read bibliography for recovery: {e}"))?;
+    let mut target_file = tempfile::Builder::new()
+        .prefix(&format!("{}-{stamp}-{reason}-", m.id))
+        .suffix(".yml")
+        .tempfile_in(recovery)
         .map_err(|e| format!("Could not create recovery snapshot: {e}"))?;
+    target_file
+        .write_all(&content)
+        .and_then(|_| target_file.as_file().sync_all())
+        .map_err(|e| format!("Could not persist recovery snapshot: {e}"))?;
+    let target = target_file
+        .into_temp_path()
+        .keep()
+        .map_err(|e| format!("Could not retain recovery snapshot: {e}"))?;
     db.execute(
     "INSERT INTO recovery(bibliography_id,original_path,snapshot_path,content_hash,created_at,reason,storage_kind,title,description) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
     params![m.id,m.file_path,target.to_string_lossy(),m.content_hash,Utc::now().to_rfc3339(),reason,m.storage_kind,m.title,m.description]
@@ -340,6 +475,85 @@ pub fn storage_info(app: AppHandle) -> Result<StorageInfo> {
         managed_bibliographies_directory: managed.to_string_lossy().into_owned(),
         recovery_directory: recovery.to_string_lossy().into_owned(),
         database_path: database.to_string_lossy().into_owned(),
+    })
+}
+
+#[tauri::command]
+pub fn backup_catalog_database(app: AppHandle, destination: String) -> Result<()> {
+    let destination = PathBuf::from(destination);
+    let (root, _, _, source) = directories(&app)?;
+    let destination_parent = destination
+        .parent()
+        .ok_or("Choose a complete destination path for the catalog backup.")?;
+    let root = fs::canonicalize(root).map_err(|e| e.to_string())?;
+    let destination_parent = fs::canonicalize(destination_parent)
+        .map_err(|e| format!("Could not access the backup destination: {e}"))?;
+    if destination_parent.starts_with(&root) {
+        return Err("Choose a backup destination outside Hayman's active data directory.".into());
+    }
+    let db = db(&app)?;
+    db.execute_batch("PRAGMA wal_checkpoint(FULL);")
+        .map_err(|e| e.to_string())?;
+    let bytes = fs::read(source).map_err(|e| format!("Could not read catalog database: {e}"))?;
+    atomic_write(&destination, &bytes).map_err(|e| format!("Could not write catalog backup: {e}"))
+}
+
+#[tauri::command]
+pub fn check_storage_health(app: AppHandle) -> Result<HealthReport> {
+    let db = db(&app)?;
+    let integrity: String = db
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
+    let mut problems = Vec::new();
+    if integrity != "ok" {
+        problems.push(format!("SQLite integrity check: {integrity}"));
+    }
+    let mut statement = db
+        .prepare(&format!("{SELECT} ORDER BY id"))
+        .map_err(|e| e.to_string())?;
+    let bibliographies = statement
+        .query_map([], row_metadata)
+        .map_err(|e| e.to_string())?
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(|e| e.to_string())?;
+    drop(statement);
+    for bibliography in &bibliographies {
+        match fs::read_to_string(&bibliography.file_path) {
+            Ok(content) => {
+                if let Err(error) = parse_yaml(&content) {
+                    problems.push(format!(
+                        "{} is not valid Hayagriva: {error}",
+                        bibliography.title
+                    ));
+                }
+            }
+            Err(error) => problems.push(format!("{} cannot be read: {error}", bibliography.title)),
+        }
+    }
+    let attachment_count: i64 = db
+        .query_row("SELECT COUNT(*) FROM attachments", [], |row| row.get(0))
+        .map_err(|e| e.to_string())?;
+    let missing_attachments: usize = {
+        let mut statement = db
+            .prepare("SELECT path FROM attachments")
+            .map_err(|e| e.to_string())?;
+        statement
+            .query_map([], |row| row.get::<_, String>(0))
+            .map_err(|e| e.to_string())?
+            .filter_map(|path| path.ok())
+            .filter(|path| !Path::new(path).is_file())
+            .count()
+    };
+    if missing_attachments > 0 {
+        problems.push(format!(
+            "{missing_attachments} linked attachment files are missing."
+        ));
+    }
+    Ok(HealthReport {
+        database_ok: integrity == "ok",
+        bibliography_count: bibliographies.len(),
+        attachment_count: attachment_count as usize,
+        problems,
     })
 }
 
@@ -375,6 +589,7 @@ pub fn create_managed_bibliography(
     let content = serialize_yaml(&bibliography.data)?;
     let (_, managed, _, _) = directories(&app)?;
     let path = managed.join(format!("{id}.yml"));
+    let _lock = bibliography_lock(&app, &path)?;
     if path.exists() {
         return Err("A managed bibliography file with this ID already exists.".into());
     }
@@ -474,6 +689,7 @@ pub fn save_bibliography(
 ) -> Result<Bibliography> {
     let db = db(&app)?;
     let current = metadata(&db, &bibliography.metadata.id)?;
+    let _lock = bibliography_lock(&app, Path::new(&current.file_path))?;
     let disk = fs::read(&current.file_path).map_err(|e| e.to_string())?;
     if digest(&disk) != expected_hash {
         return Err("The bibliography changed outside Hayman. Reload before saving so those changes are not overwritten.".into());
@@ -506,8 +722,9 @@ pub fn rename_bibliography(
             "The ID must contain lowercase letters, numbers, and single hyphens only.".into(),
         );
     }
-    let db = db(&app)?;
+    let mut db = db(&app)?;
     let current = metadata(&db, &old_id)?;
+    let _lock = bibliography_lock(&app, Path::new(&current.file_path))?;
     if digest(&fs::read(&current.file_path).map_err(|e| e.to_string())?) != expected_hash {
         return Err("The bibliography changed outside Hayman. Reload before renaming it.".into());
     }
@@ -525,7 +742,7 @@ pub fn rename_bibliography(
     }
     let content = serialize_yaml(&bibliography.data)?;
     let (_, _, recovery, _) = directories(&app)?;
-    snapshot(&db, &recovery, &current, "before-rename")?;
+    let saved = snapshot(&db, &recovery, &current, "before-rename")?;
     let old_path = PathBuf::from(&current.file_path);
     let new_path = if current.storage_kind == "managed" && old_id != *new_id {
         old_path.with_file_name(format!("{new_id}.yml"))
@@ -536,18 +753,48 @@ pub fn rename_bibliography(
         return Err("A managed bibliography file with the new ID already exists.".into());
     }
     atomic_write(&new_path, content.as_bytes())?;
-    if let Err(error) = db.execute(
+    let tx = db.transaction().map_err(|e| e.to_string())?;
+    if let Err(error) = tx.execute(
         "UPDATE bibliographies SET id=?2,title=?3,description=?4,file_path=?5,content_hash=?6,updated_at=?7 WHERE id=?1",
         params![old_id,new_id,bibliography.metadata.title,bibliography.metadata.description,
             new_path.to_string_lossy(),digest(content.as_bytes()),Utc::now().to_rfc3339()],
     ) {
         if new_path != old_path {
             let _ = fs::remove_file(&new_path);
+        } else if let Some((saved, _)) = &saved {
+            let _ = fs::copy(saved, &old_path);
         }
         return Err(error.to_string());
     }
-    if new_path != old_path {
-        fs::remove_file(old_path).map_err(|e| e.to_string())?;
+    for table in ["attachments", "project_files", "entry_trash"] {
+        if let Err(error) = tx.execute(
+            &format!("UPDATE {table} SET bibliography_id=?2 WHERE bibliography_id=?1"),
+            params![old_id, new_id],
+        ) {
+            if new_path != old_path {
+                let _ = fs::remove_file(&new_path);
+            } else if let Some((saved, _)) = &saved {
+                let _ = fs::copy(saved, &old_path);
+            }
+            return Err(error.to_string());
+        }
+    }
+    if new_path != old_path
+        && let Err(error) = fs::remove_file(&old_path)
+    {
+        let _ = fs::remove_file(&new_path);
+        return Err(error.to_string());
+    }
+    if let Err(error) = tx.commit() {
+        if new_path != old_path {
+            if let Some((saved, _)) = &saved {
+                let _ = fs::copy(saved, &old_path);
+            }
+            let _ = fs::remove_file(&new_path);
+        } else if let Some((saved, _)) = &saved {
+            let _ = fs::copy(saved, &old_path);
+        }
+        return Err(error.to_string());
     }
     get_bibliography(app, new_id.clone())
 }
@@ -556,6 +803,7 @@ pub fn rename_bibliography(
 pub fn delete_bibliography(app: AppHandle, id: String) -> Result<DeleteResult> {
     let mut db = db(&app)?;
     let m = metadata(&db, &id)?;
+    let _lock = bibliography_lock(&app, Path::new(&m.file_path))?;
     let (_, _, recovery, _) = directories(&app)?;
     let tx = db.transaction().map_err(|e| e.to_string())?;
     let saved = snapshot(&tx, &recovery, &m, "before-delete")?;
@@ -608,7 +856,7 @@ pub fn list_recovery_snapshots(app: AppHandle) -> Result<Vec<RecoveryItem>> {
 
 #[tauri::command]
 pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bibliography> {
-    let db = db(&app)?;
+    let mut db = db(&app)?;
     let item = db
         .query_row(
             "SELECT bibliography_id,original_path,snapshot_path,reason,storage_kind,title,description FROM recovery WHERE id=?1",
@@ -629,6 +877,7 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
         .map_err(|e| e.to_string())?
         .ok_or("Recovery snapshot was not found.")?;
     let original = PathBuf::from(&item.1);
+    let _lock = bibliography_lock(&app, &original)?;
     let existing = metadata(&db, &item.0).ok();
     let (_, managed, _, _) = directories(&app)?;
     let storage_kind = if item.4.is_empty() {
@@ -648,6 +897,14 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
     if relink_only && existing.is_some() {
         return get_bibliography(app, item.0);
     }
+    let previous_content =
+        if original.is_file() {
+            Some(fs::read(&original).map_err(|e| {
+                format!("Could not preserve the current file before restoring: {e}")
+            })?)
+        } else {
+            None
+        };
     let restored_content = if relink_only {
         fs::read(&original).map_err(|e| {
             format!(
@@ -665,11 +922,15 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
     parse_yaml(&String::from_utf8_lossy(&restored_content))?;
     let new_hash = digest(&restored_content);
     if let Some(current) = existing {
-        db.execute(
+        if let Err(error) = db.execute(
             "UPDATE bibliographies SET content_hash=?2,updated_at=?3 WHERE id=?1",
             params![current.id, new_hash, Utc::now().to_rfc3339()],
-        )
-        .map_err(|e| e.to_string())?;
+        ) {
+            if !relink_only && let Some(previous) = &previous_content {
+                let _ = atomic_write(&original, previous);
+            }
+            return Err(error.to_string());
+        }
         return get_bibliography(app, current.id);
     }
 
@@ -684,7 +945,44 @@ pub fn restore_recovery_snapshot(app: AppHandle, recovery_id: i64) -> Result<Bib
         file_path: item.1,
         content_hash: new_hash,
     };
-    insert(&db, &m)?;
+    let tx = db.transaction().map_err(|e| e.to_string())?;
+    if let Err(error) = insert(&tx, &m) {
+        if !relink_only {
+            if let Some(previous) = &previous_content {
+                let _ = atomic_write(&original, previous);
+            } else {
+                let _ = fs::remove_file(&original);
+            }
+        }
+        return Err(error);
+    }
+    if m.id != item.0 {
+        for table in ["attachments", "project_files", "entry_trash"] {
+            if let Err(error) = tx.execute(
+                &format!("UPDATE {table} SET bibliography_id=?2 WHERE bibliography_id=?1"),
+                params![item.0, m.id],
+            ) {
+                if !relink_only {
+                    if let Some(previous) = &previous_content {
+                        let _ = atomic_write(&original, previous);
+                    } else {
+                        let _ = fs::remove_file(&original);
+                    }
+                }
+                return Err(error.to_string());
+            }
+        }
+    }
+    if let Err(error) = tx.commit() {
+        if !relink_only {
+            if let Some(previous) = &previous_content {
+                let _ = atomic_write(&original, previous);
+            } else {
+                let _ = fs::remove_file(&original);
+            }
+        }
+        return Err(error.to_string());
+    }
     read(m)
 }
 
@@ -702,19 +1000,345 @@ pub fn clear_recovery_snapshots(app: AppHandle) -> Result<()> {
         .collect::<std::result::Result<Vec<_>, _>>()
         .map_err(|e| e.to_string())?;
     drop(statement);
-    for path in paths {
-        let path = PathBuf::from(path);
+    let paths = paths.into_iter().map(PathBuf::from).collect::<Vec<_>>();
+    for path in &paths {
         let parent = path.parent().and_then(|p| fs::canonicalize(p).ok());
         if parent.as_deref() != Some(recovery.as_path()) {
             return Err("Refused to remove a snapshot outside Hayman's recovery directory.".into());
         }
-        if path.exists() {
-            fs::remove_file(&path)
-                .map_err(|e| format!("Could not remove {}: {e}", path.display()))?;
-        }
     }
+    // Commit catalog removal first. A crash can then leave only harmless,
+    // app-owned orphan files, which initialize() cleans on the next launch.
     db.execute("DELETE FROM recovery", [])
         .map_err(|e| e.to_string())?;
+    for path in paths {
+        if path.exists() {
+            let _ = fs::remove_file(&path);
+        }
+    }
+    Ok(())
+}
+
+fn attachment_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<Attachment> {
+    let path: String = row.get(3)?;
+    Ok(Attachment {
+        id: row.get(0)?,
+        bibliography_id: row.get(1)?,
+        entry_id: row.get(2)?,
+        available: Path::new(&path).is_file(),
+        path,
+        name: row.get(4)?,
+        created_at: row.get(5)?,
+    })
+}
+
+#[tauri::command]
+pub fn list_attachments(
+    app: AppHandle,
+    bibliography_id: String,
+    entry_id: String,
+) -> Result<Vec<Attachment>> {
+    let db = db(&app)?;
+    let mut statement = db
+        .prepare(
+            "SELECT id,bibliography_id,entry_id,path,name,created_at
+             FROM attachments WHERE bibliography_id=?1 AND entry_id=?2
+             ORDER BY created_at,id",
+        )
+        .map_err(|e| e.to_string())?;
+    statement
+        .query_map(params![bibliography_id, entry_id], attachment_from_row)
+        .map_err(|e| e.to_string())?
+        .map(|row| row.map_err(|e| e.to_string()))
+        .collect()
+}
+
+#[tauri::command]
+pub fn link_attachment(
+    app: AppHandle,
+    bibliography_id: String,
+    entry_id: String,
+    path: String,
+) -> Result<Attachment> {
+    let path = fs::canonicalize(path).map_err(|e| format!("Could not open attachment: {e}"))?;
+    if !path.is_file() {
+        return Err("Attachments must be existing files.".into());
+    }
+    let bibliography = get_bibliography(app.clone(), bibliography_id.clone())?;
+    if bibliography.data.get(&entry_id).is_none() {
+        return Err(format!("Entry '{entry_id}' was not found."));
+    }
+    let name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("Attachment")
+        .to_owned();
+    let path = path.to_string_lossy().into_owned();
+    let db = db(&app)?;
+    db.execute(
+        "INSERT INTO attachments(bibliography_id,entry_id,path,name,created_at)
+         VALUES(?1,?2,?3,?4,?5)",
+        params![
+            bibliography_id,
+            entry_id,
+            path,
+            name,
+            Utc::now().to_rfc3339()
+        ],
+    )
+    .map_err(|e| {
+        if e.to_string().contains("UNIQUE constraint failed") {
+            "This file is already attached to the entry.".to_owned()
+        } else {
+            e.to_string()
+        }
+    })?;
+    db.query_row(
+        "SELECT id,bibliography_id,entry_id,path,name,created_at FROM attachments WHERE id=?1",
+        [db.last_insert_rowid()],
+        attachment_from_row,
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn unlink_attachment(app: AppHandle, attachment_id: i64) -> Result<()> {
+    let changed = db(&app)?
+        .execute("DELETE FROM attachments WHERE id=?1", [attachment_id])
+        .map_err(|e| e.to_string())?;
+    if changed == 0 {
+        return Err("Attachment was not found.".into());
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_attachment(app: AppHandle, attachment_id: i64) -> Result<()> {
+    let path: String = db(&app)?
+        .query_row(
+            "SELECT path FROM attachments WHERE id=?1",
+            [attachment_id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| e.to_string())?
+        .ok_or("Attachment was not found.")?;
+    if !Path::new(&path).is_file() {
+        return Err("The linked attachment file is missing.".into());
+    }
+    app.opener()
+        .open_path(path, None::<&str>)
+        .map_err(|e| e.to_string())
+}
+
+fn validated_external_url(value: &str) -> Result<url::Url> {
+    let url =
+        url::Url::parse(value.trim()).map_err(|_| "Enter a valid absolute URL.".to_owned())?;
+    if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
+        return Err("Only absolute HTTP and HTTPS URLs can be opened.".into());
+    }
+    Ok(url)
+}
+
+#[tauri::command]
+pub fn open_external_url(app: AppHandle, url: String) -> Result<()> {
+    let url = validated_external_url(&url)?;
+    app.opener()
+        .open_url(url.as_str(), None::<&str>)
+        .map_err(|e| format!("Could not open the URL in your default browser: {e}"))
+}
+
+#[tauri::command]
+pub fn rename_entry_metadata(
+    app: AppHandle,
+    bibliography_id: String,
+    old_entry_id: String,
+    new_entry_id: String,
+) -> Result<()> {
+    db(&app)?
+        .execute(
+            "UPDATE attachments SET entry_id=?3 WHERE bibliography_id=?1 AND entry_id=?2",
+            params![bibliography_id, old_entry_id, new_entry_id],
+        )
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn delete_entry_metadata(
+    app: AppHandle,
+    bibliography_id: String,
+    deleted_entries: Vec<DeletedEntry>,
+) -> Result<Vec<i64>> {
+    let mut db = db(&app)?;
+    let tx = db.transaction().map_err(|e| e.to_string())?;
+    let mut trash_ids = Vec::with_capacity(deleted_entries.len());
+    for entry in deleted_entries {
+        tx.execute(
+            "INSERT INTO entry_trash(bibliography_id,entry_id,data_json,deleted_at)
+             VALUES(?1,?2,?3,?4)",
+            params![
+                bibliography_id,
+                entry.entry_id,
+                serde_json::to_string(&entry.data).map_err(|e| e.to_string())?,
+                Utc::now().to_rfc3339()
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+        trash_ids.push(tx.last_insert_rowid());
+    }
+    tx.commit().map_err(|e| e.to_string())?;
+    Ok(trash_ids)
+}
+
+#[tauri::command]
+pub fn list_entry_trash(app: AppHandle) -> Result<Vec<TrashItem>> {
+    let db = db(&app)?;
+    let mut statement = db
+        .prepare(
+            "SELECT id,bibliography_id,entry_id,data_json,deleted_at
+             FROM entry_trash ORDER BY deleted_at DESC,id DESC",
+        )
+        .map_err(|e| e.to_string())?;
+    statement
+        .query_map([], |row| {
+            let json: String = row.get(3)?;
+            let data = serde_json::from_str(&json).map_err(|error| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    3,
+                    rusqlite::types::Type::Text,
+                    Box::new(error),
+                )
+            })?;
+            Ok(TrashItem {
+                id: row.get(0)?,
+                bibliography_id: row.get(1)?,
+                entry_id: row.get(2)?,
+                data,
+                deleted_at: row.get(4)?,
+            })
+        })
+        .map_err(|e| e.to_string())?
+        .map(|row| row.map_err(|e| e.to_string()))
+        .collect()
+}
+
+#[tauri::command]
+pub fn discard_entry_trash(app: AppHandle, trash_ids: Vec<i64>) -> Result<()> {
+    let mut db = db(&app)?;
+    let tx = db.transaction().map_err(|e| e.to_string())?;
+    for id in trash_ids {
+        tx.execute("DELETE FROM entry_trash WHERE id=?1", [id])
+            .map_err(|e| e.to_string())?;
+    }
+    tx.commit().map_err(|e| e.to_string())
+}
+
+fn project_bibliography_ids(db: &Connection, project_id: &str) -> Result<Vec<String>> {
+    let mut statement = db
+        .prepare(
+            "SELECT project_files.bibliography_id FROM project_files
+             INNER JOIN bibliographies ON bibliographies.id=project_files.bibliography_id
+             WHERE project_id=?1 ORDER BY position,project_files.bibliography_id",
+        )
+        .map_err(|e| e.to_string())?;
+    statement
+        .query_map([project_id], |row| row.get::<_, String>(0))
+        .map_err(|e| e.to_string())?
+        .map(|row| row.map_err(|e| e.to_string()))
+        .collect()
+}
+
+fn project_from_row(db: &Connection, row: &rusqlite::Row<'_>) -> rusqlite::Result<Project> {
+    let id: String = row.get(0)?;
+    let bibliography_ids = project_bibliography_ids(db, &id).map_err(|error| {
+        rusqlite::Error::FromSqlConversionFailure(
+            0,
+            rusqlite::types::Type::Text,
+            Box::new(std::io::Error::other(error)),
+        )
+    })?;
+    Ok(Project {
+        id,
+        title: row.get(1)?,
+        description: row.get(2)?,
+        created_at: row.get(3)?,
+        updated_at: row.get(4)?,
+        bibliography_ids,
+    })
+}
+
+#[tauri::command]
+pub fn list_projects(app: AppHandle) -> Result<Vec<Project>> {
+    let db = db(&app)?;
+    let mut statement = db
+        .prepare("SELECT id,title,description,created_at,updated_at FROM projects ORDER BY updated_at DESC")
+        .map_err(|e| e.to_string())?;
+    statement
+        .query_map([], |row| project_from_row(&db, row))
+        .map_err(|e| e.to_string())?
+        .map(|row| row.map_err(|e| e.to_string()))
+        .collect()
+}
+
+#[tauri::command]
+pub fn save_project(app: AppHandle, project: Project) -> Result<Project> {
+    if project.id.is_empty() || safe_id(&project.id) != project.id {
+        return Err(
+            "The project ID must contain lowercase letters, numbers, and single hyphens only."
+                .into(),
+        );
+    }
+    if project.title.trim().is_empty() {
+        return Err("Project title cannot be empty.".into());
+    }
+    let mut db = db(&app)?;
+    let tx = db.transaction().map_err(|e| e.to_string())?;
+    let existing_created: Option<String> = tx
+        .query_row(
+            "SELECT created_at FROM projects WHERE id=?1",
+            [&project.id],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| e.to_string())?;
+    let now = Utc::now().to_rfc3339();
+    let created_at = existing_created.unwrap_or_else(|| now.clone());
+    tx.execute(
+        "INSERT INTO projects(id,title,description,created_at,updated_at) VALUES(?1,?2,?3,?4,?5)
+         ON CONFLICT(id) DO UPDATE SET title=excluded.title,description=excluded.description,updated_at=excluded.updated_at",
+        params![project.id, project.title.trim(), project.description, created_at, now],
+    )
+    .map_err(|e| e.to_string())?;
+    tx.execute(
+        "DELETE FROM project_files WHERE project_id=?1",
+        [&project.id],
+    )
+    .map_err(|e| e.to_string())?;
+    for (position, bibliography_id) in project.bibliography_ids.iter().enumerate() {
+        tx.execute(
+            "INSERT INTO project_files(project_id,bibliography_id,position) VALUES(?1,?2,?3)",
+            params![project.id, bibliography_id, position as i64],
+        )
+        .map_err(|e| {
+            format!("Could not add bibliography '{bibliography_id}' to the project: {e}")
+        })?;
+    }
+    tx.commit().map_err(|e| e.to_string())?;
+    list_projects(app)?
+        .into_iter()
+        .find(|item| item.id == project.id)
+        .ok_or("Project was not found after saving.".into())
+}
+
+#[tauri::command]
+pub fn delete_project(app: AppHandle, id: String) -> Result<()> {
+    let changed = db(&app)?
+        .execute("DELETE FROM projects WHERE id=?1", [&id])
+        .map_err(|e| e.to_string())?;
+    if changed == 0 {
+        return Err("Project was not found.".into());
+    }
     Ok(())
 }
 
@@ -934,9 +1558,69 @@ fn render_bibliography_blocking(
 #[cfg(test)]
 mod tests {
     use super::{
-        digest, panic_message, parse_import, render_bibliography, render_bibliography_blocking,
-        safe_id, serialize_yaml,
+        Metadata, atomic_write, digest, initialize_database, panic_message, parse_import,
+        render_bibliography, render_bibliography_blocking, safe_id, serialize_yaml, snapshot,
+        validated_external_url,
     };
+
+    #[test]
+    fn database_schema_migrates_legacy_recovery_and_preserves_relational_invariants() {
+        let db = rusqlite::Connection::open_in_memory().unwrap();
+        db.execute_batch(
+            "CREATE TABLE recovery(
+               id INTEGER PRIMARY KEY, bibliography_id TEXT NOT NULL,
+               original_path TEXT NOT NULL, snapshot_path TEXT NOT NULL,
+               content_hash TEXT NOT NULL, created_at TEXT NOT NULL, reason TEXT NOT NULL);
+             PRAGMA foreign_keys=ON;",
+        )
+        .unwrap();
+
+        initialize_database(&db).unwrap();
+        initialize_database(&db).unwrap();
+
+        let mut statement = db.prepare("PRAGMA table_info(recovery)").unwrap();
+        let columns = statement
+            .query_map([], |row| row.get::<_, String>(1))
+            .unwrap()
+            .collect::<std::result::Result<Vec<_>, _>>()
+            .unwrap();
+        assert!(columns.contains(&"storage_kind".to_string()));
+        assert!(columns.contains(&"title".to_string()));
+        assert!(columns.contains(&"description".to_string()));
+        drop(statement);
+
+        db.execute(
+            "INSERT INTO projects(id,title,created_at,updated_at) VALUES('research','Research','now','now')",
+            [],
+        )
+        .unwrap();
+        db.execute(
+            "INSERT INTO project_files(project_id,bibliography_id,position) VALUES('research','library',0)",
+            [],
+        )
+        .unwrap();
+        db.execute("DELETE FROM projects WHERE id='research'", [])
+            .unwrap();
+        let memberships: i64 = db
+            .query_row("SELECT COUNT(*) FROM project_files", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(memberships, 0);
+
+        db.execute(
+            "INSERT INTO attachments(bibliography_id,entry_id,path,name,created_at)
+             VALUES('library','entry','paper.pdf','paper.pdf','now')",
+            [],
+        )
+        .unwrap();
+        assert!(
+            db.execute(
+                "INSERT INTO attachments(bibliography_id,entry_id,path,name,created_at)
+                 VALUES('library','entry','paper.pdf','paper.pdf','now')",
+                [],
+            )
+            .is_err()
+        );
+    }
 
     #[test]
     fn identifiers_are_sanitized() {
@@ -944,8 +1628,69 @@ mod tests {
     }
 
     #[test]
+    fn external_urls_are_limited_to_absolute_http_urls() {
+        assert!(validated_external_url("https://example.com/reference").is_ok());
+        assert!(validated_external_url("http://localhost:8080").is_ok());
+        assert!(validated_external_url("javascript:alert(1)").is_err());
+        assert!(validated_external_url("file:///C:/private.txt").is_err());
+        assert!(validated_external_url("example.com").is_err());
+    }
+
+    #[test]
     fn hashes_detect_changes() {
         assert_ne!(digest(b"one"), digest(b"two"));
+    }
+
+    #[test]
+    fn atomic_write_replaces_content_without_leaving_work_files() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("library.yml");
+        atomic_write(&path, b"first").unwrap();
+        atomic_write(&path, b"second").unwrap();
+        assert_eq!(std::fs::read(&path).unwrap(), b"second");
+        let names = std::fs::read_dir(directory.path())
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<Vec<_>>();
+        assert_eq!(names, vec![std::ffi::OsString::from("library.yml")]);
+    }
+
+    #[test]
+    fn recovery_snapshots_never_reuse_a_filename() {
+        let directory = tempfile::tempdir().unwrap();
+        let source = directory.path().join("library.yml");
+        let recovery = directory.path().join("recovery");
+        std::fs::create_dir(&recovery).unwrap();
+        std::fs::write(&source, "entry:\n  type: misc\n").unwrap();
+        let db = rusqlite::Connection::open_in_memory().unwrap();
+        initialize_database(&db).unwrap();
+        let metadata = Metadata {
+            id: "library".into(),
+            title: "Library".into(),
+            description: None,
+            created_at: "now".into(),
+            updated_at: "now".into(),
+            storage_kind: "linked".into(),
+            file_path: source.to_string_lossy().into_owned(),
+            content_hash: digest(b"entry:\n  type: misc\n"),
+        };
+
+        let first = snapshot(&db, &recovery, &metadata, "before-save")
+            .unwrap()
+            .unwrap();
+        let second = snapshot(&db, &recovery, &metadata, "before-save")
+            .unwrap()
+            .unwrap();
+
+        assert_ne!(first.0, second.0);
+        assert_eq!(
+            std::fs::read_to_string(first.0).unwrap(),
+            "entry:\n  type: misc\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(second.0).unwrap(),
+            "entry:\n  type: misc\n"
+        );
     }
 
     #[test]

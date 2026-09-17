@@ -1,6 +1,8 @@
 import type { Bibliography } from '$lib/types/bibliography';
 import { invoke } from '@tauri-apps/api/core';
 import type { AppSettings } from '$lib/types/app-settings';
+import type { BibliographyProject } from '$lib/types/project';
+import type { TopLevelEntry } from '@hayman/hayagriva-schema';
 
 export type ImportResult = {
   suggestedId: string;
@@ -29,6 +31,28 @@ export type RecoveryItem = {
 
 export type DeleteResult = { recoveryId?: number };
 export type RenderedReference = { key: string; text: string };
+export type Attachment = {
+  id: number;
+  bibliographyId: string;
+  entryId: string;
+  path: string;
+  name: string;
+  createdAt: string;
+  available: boolean;
+};
+export type TrashItem = {
+  id: number;
+  bibliographyId: string;
+  entryId: string;
+  data: TopLevelEntry;
+  deletedAt: string;
+};
+export type HealthReport = {
+  databaseOk: boolean;
+  bibliographyCount: number;
+  attachmentCount: number;
+  problems: string[];
+};
 
 const changes = new EventTarget();
 
@@ -74,6 +98,9 @@ export const tauriBackend = {
   importFile: (path: string) =>
     invoke<ImportResult>('import_bibliography_file', { path }),
   storageInfo: () => invoke<StorageInfo>('storage_info'),
+  backupCatalogDatabase: (destination: string) =>
+    invoke<void>('backup_catalog_database', { destination }),
+  checkStorageHealth: () => invoke<HealthReport>('check_storage_health'),
   getSettings: () => invoke<AppSettings | null>('get_settings'),
   setSettings: (settings: AppSettings) =>
     invoke<void>('set_settings', { settings }),
@@ -90,6 +117,51 @@ export const tauriBackend = {
   restoreRecovery: (recoveryId: number) =>
     changed(invoke<Bibliography>('restore_recovery_snapshot', { recoveryId })),
   clearRecovery: () => changed(invoke<void>('clear_recovery_snapshots')),
+  listAttachments: (bibliographyId: string, entryId: string) =>
+    invoke<Attachment[]>('list_attachments', { bibliographyId, entryId }),
+  linkAttachment: (bibliographyId: string, entryId: string, path: string) =>
+    changed(
+      invoke<Attachment>('link_attachment', {
+        bibliographyId,
+        entryId,
+        path,
+      }),
+    ),
+  unlinkAttachment: (attachmentId: number) =>
+    changed(invoke<void>('unlink_attachment', { attachmentId })),
+  openAttachment: (attachmentId: number) =>
+    invoke<void>('open_attachment', { attachmentId }),
+  openExternalUrl: (url: string) => invoke<void>('open_external_url', { url }),
+  renameEntryMetadata: (
+    bibliographyId: string,
+    oldEntryId: string,
+    newEntryId: string,
+  ) =>
+    changed(
+      invoke<void>('rename_entry_metadata', {
+        bibliographyId,
+        oldEntryId,
+        newEntryId,
+      }),
+    ),
+  deleteEntryMetadata: (
+    bibliographyId: string,
+    deletedEntries: { entryId: string; data: TopLevelEntry }[],
+  ) =>
+    changed(
+      invoke<number[]>('delete_entry_metadata', {
+        bibliographyId,
+        deletedEntries,
+      }),
+    ),
+  listEntryTrash: () => invoke<TrashItem[]>('list_entry_trash'),
+  discardEntryTrash: (trashIds: number[]) =>
+    changed(invoke<void>('discard_entry_trash', { trashIds })),
+  listProjects: () => invoke<BibliographyProject[]>('list_projects'),
+  saveProject: (project: BibliographyProject) =>
+    changed(invoke<BibliographyProject>('save_project', { project })),
+  deleteProject: (id: string) =>
+    changed(invoke<void>('delete_project', { id })),
   subscribe(listener: () => void) {
     changes.addEventListener('change', listener);
     return () => changes.removeEventListener('change', listener);

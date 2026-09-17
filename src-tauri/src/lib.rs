@@ -4,6 +4,7 @@ mod storage;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -17,6 +18,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             storage::storage_info,
+            storage::backup_catalog_database,
+            storage::check_storage_health,
             storage::list_bibliographies,
             storage::get_bibliography,
             storage::create_managed_bibliography,
@@ -33,6 +36,18 @@ pub fn run() {
             storage::list_recovery_snapshots,
             storage::restore_recovery_snapshot,
             storage::clear_recovery_snapshots,
+            storage::list_attachments,
+            storage::link_attachment,
+            storage::unlink_attachment,
+            storage::open_attachment,
+            storage::open_external_url,
+            storage::rename_entry_metadata,
+            storage::delete_entry_metadata,
+            storage::list_entry_trash,
+            storage::discard_entry_trash,
+            storage::list_projects,
+            storage::save_project,
+            storage::delete_project,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Hayman");
