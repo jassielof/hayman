@@ -3,8 +3,9 @@
   import { page } from '$app/state';
   import SettingsBootstrap from '$lib/components/SettingsBootstrap.svelte';
   import MutationToastHost from '$lib/components/MutationToastHost.svelte';
-  import { ModeWatcher, toggleMode } from 'mode-watcher';
-  import { MoonIcon, SettingsIcon, SunIcon } from '@lucide/svelte';
+  import { ModeWatcher, setMode, userPrefersMode } from 'mode-watcher';
+  import { MonitorIcon, MoonIcon, SettingsIcon, SunIcon } from '@lucide/svelte';
+  import { nextThemeMode, themeModeLabel } from '$lib/utils/theme-mode';
   import './layout.css';
   import './hljs-theme.css';
 
@@ -14,7 +15,7 @@
   const settingsActive = $derived(page.url.pathname === settingsPath);
 </script>
 
-<ModeWatcher />
+<ModeWatcher defaultMode="system" track={true} />
 <SettingsBootstrap />
 <MutationToastHost />
 
@@ -41,11 +42,17 @@
     <button
       type="button"
       class="btn btn-ghost btn-square"
-      aria-label="Toggle dark mode"
-      onclick={toggleMode}
+      aria-label={`${themeModeLabel(userPrefersMode.current)}. Change theme mode`}
+      title={`${themeModeLabel(userPrefersMode.current)} — click to change`}
+      onclick={() => setMode(nextThemeMode(userPrefersMode.current))}
     >
-      <SunIcon class="size-5 dark:hidden" />
-      <MoonIcon class="hidden size-5 dark:inline" />
+      {#if userPrefersMode.current === 'system'}
+        <MonitorIcon class="size-5" />
+      {:else if userPrefersMode.current === 'light'}
+        <SunIcon class="size-5" />
+      {:else}
+        <MoonIcon class="size-5" />
+      {/if}
     </button>
   </div>
 </header>

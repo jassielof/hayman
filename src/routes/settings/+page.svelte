@@ -24,7 +24,18 @@
     tauriBackend,
     type RecoveryItem,
     type StorageInfo,
+    type TrashItem,
+    type HealthReport,
   } from '$lib/services/tauri-backend';
+  import { save } from '@tauri-apps/plugin-dialog';
+  import { BibliographyService } from '$lib/services/bibliography.service';
+  import { formatFormattableString } from '$lib/formatters/formattable-string';
+  import { setMode, userPrefersMode } from 'mode-watcher';
+  import {
+    THEME_MODES,
+    themeModeLabel,
+    type ThemeMode,
+  } from '$lib/utils/theme-mode';
 
   let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
   let errorMessage = $state<string | undefined>();
@@ -47,10 +58,14 @@
   let recoveryItems = $state<RecoveryItem[]>([]);
   let restoringId = $state<number | undefined>();
   let clearSnapshotsOpen = $state(false);
+  let trashItems = $state<TrashItem[]>([]);
+  let health = $state<HealthReport | undefined>();
+  let checkingHealth = $state(false);
 
   $effect(() => {
     tauriBackend.storageInfo().then((value) => (storage = value));
     tauriBackend.listRecovery().then((value) => (recoveryItems = value));
+    tauriBackend.listEntryTrash().then((value) => (trashItems = value));
     tauriBackend.typstVersion().then(
       (value) => (typstVersion = value),
       (error) => (typstError = String(error)),
@@ -79,6 +94,46 @@
       savedMessage = 'Cleared all recovery snapshots.';
     } catch (error) {
       errorMessage = String(error);
+    }
+  }
+
+  async function restoreTrashedEntry(item: TrashItem) {
+    restoringId = item.id;
+    errorMessage = undefined;
+    try {
+      await BibliographyService.restoreTrashedEntry(item);
+      trashItems = trashItems.filter((candidate) => candidate.id !== item.id);
+      savedMessage = `Restored entry ${item.entryId}.`;
+    } catch (error) {
+      errorMessage = String(error);
+    } finally {
+      restoringId = undefined;
+    }
+  }
+
+  async function backupCatalog() {
+    const destination = await save({
+      defaultPath: `hayman-catalog-${new Date().toISOString().slice(0, 10)}.sqlite3`,
+      filters: [{ name: 'SQLite database', extensions: ['sqlite3'] }],
+    });
+    if (!destination) return;
+    try {
+      await tauriBackend.backupCatalogDatabase(destination);
+      savedMessage = 'Catalog database backup created.';
+    } catch (error) {
+      errorMessage = String(error);
+    }
+  }
+
+  async function checkHealth() {
+    checkingHealth = true;
+    try {
+      health = await tauriBackend.checkStorageHealth();
+      errorMessage = undefined;
+    } catch (error) {
+      errorMessage = String(error);
+    } finally {
+      checkingHealth = false;
     }
   }
 
@@ -171,6 +226,8 @@
       await SettingsService.update({
         fonts: settings.fonts,
         citation,
+        editor: settings.editor,
+        library: settings.library,
       });
       savedMessage = 'Settings saved.';
     } catch (err) {
@@ -197,6 +254,25 @@
 
   <form class="space-y-6" onsubmit={handleSubmit}>
     <fieldset class="fieldset">
+      <legend class="fieldset-legend">Appearance</legend>
+      <label class="label" for="theme-mode">Theme</label>
+      <select
+        id="theme-mode"
+        class="select w-full"
+        value={userPrefersMode.current}
+        onchange={(event) => setMode(event.currentTarget.value as ThemeMode)}
+      >
+        {#each THEME_MODES as themeMode (themeMode)}
+          <option value={themeMode}>{themeModeLabel(themeMode)}</option>
+        {/each}
+      </select>
+      <p class="text-xs text-muted-foreground">
+        System theme is the default and follows operating-system appearance
+        changes automatically.
+      </p>
+    </fieldset>
+
+    <fieldset class="fieldset">
       <legend class="fieldset-legend">Local data and tools</legend>
       <p class="text-sm text-muted-foreground">
         Hayman keeps its catalog and managed bibliographies in the application
@@ -221,6 +297,58 @@
           </div>
         </dl>
       {/if}
+      <button
+        type="button"
+        class="btn btn-sm btn-outline"
+        onclick={backupCatalog}
+      >
+        Back up catalog database
+      </button>
+      <p class="text-xs text-muted-foreground">
+        This preserves projects, attachment links, settings, and trash. Export
+        Hayagriva YAML separately for the portable bibliography data.
+      </p>
+      <div class="rounded-md border border-border p-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="text-sm font-semibold">Storage health</p>
+            <p class="text-xs text-muted-foreground">
+              Checks SQLite, every Hayagriva file, and attachment paths.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            disabled={checkingHealth}
+            onclick={checkHealth}
+          >
+            {#if checkingHealth}<span class="loading loading-spinner"
+              ></span>{/if}
+            Run check
+          </button>
+        </div>
+        {#if health}
+          <div class="mt-3 text-sm" role="status">
+            <p
+              class={health.problems.length === 0
+                ? 'text-primary'
+                : 'text-warning-foreground'}
+            >
+              {health.problems.length === 0
+                ? 'Everything looks healthy.'
+                : `${health.problems.length} problems found.`}
+              {health.bibliographyCount} files · {health.attachmentCount} attachments
+            </p>
+            {#if health.problems.length > 0}
+              <ul class="mt-2 list-inside list-disc text-xs">
+                {#each health.problems as problem (problem)}<li>
+                    {problem}
+                  </li>{/each}
+              </ul>
+            {/if}
+          </div>
+        {/if}
+      </div>
       {#if typstVersion}
         <p class="text-sm">
           Typst prerequisite found: <code>{typstVersion}</code>
@@ -281,6 +409,44 @@
           </ul>
         {/if}
       </details>
+      <details class="rounded-md border border-border bg-card/60 p-3">
+        <summary class="cursor-pointer text-sm font-medium"
+          >Entry trash ({trashItems.length})</summary
+        >
+        <p class="mt-2 text-xs text-muted-foreground">
+          Deleted entries stay here until restored or removed from a future
+          retention cleanup. Their linked attachments remain untouched.
+        </p>
+        {#if trashItems.length === 0}
+          <p class="mt-2 text-xs text-muted-foreground">Trash is empty.</p>
+        {:else}
+          <ul class="mt-3 space-y-2">
+            {#each trashItems as item (item.id)}
+              <li
+                class="flex flex-wrap items-center gap-2 rounded border border-border p-2 text-xs"
+              >
+                <span class="min-w-0 flex-1">
+                  <strong
+                    >{formatFormattableString(item.data.title) ||
+                      item.entryId}</strong
+                  >
+                  <span class="block font-mono text-muted-foreground"
+                    >{item.entryId} · {item.bibliographyId}</span
+                  >
+                </span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline"
+                  disabled={restoringId !== undefined}
+                  onclick={() => restoreTrashedEntry(item)}
+                >
+                  Restore
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </details>
     </fieldset>
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
@@ -327,6 +493,41 @@
         {#each availableFonts.mono as font (font)}
           <option value={font}>{formatFontFamilyLabel(font)}</option>
         {/each}
+      </select>
+    </fieldset>
+
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Editing and library</legend>
+      <p class="text-sm text-muted-foreground">
+        Choose whether Hayman opens as a focused guided editor or a direct YAML
+        tool.
+      </p>
+      <label class="label" for="default-editor">Default entry editor</label>
+      <select
+        id="default-editor"
+        class="select"
+        bind:value={settings.editor.defaultMode}
+      >
+        <option value="guided">Guided form</option>
+        <option value="yaml">Raw Hayagriva YAML</option>
+      </select>
+      <label class="label" for="default-fields">Guided form fields</label>
+      <select
+        id="default-fields"
+        class="select"
+        bind:value={settings.editor.fieldMode}
+      >
+        <option value="recommended">Recommended for the entry type</option>
+        <option value="all">All Hayagriva fields</option>
+      </select>
+      <label class="label" for="library-density">Entry list density</label>
+      <select
+        id="library-density"
+        class="select"
+        bind:value={settings.library.density}
+      >
+        <option value="comfortable">Comfortable</option>
+        <option value="compact">Compact</option>
       </select>
     </fieldset>
 
