@@ -2,6 +2,7 @@
   import { resolve } from '$app/paths';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import EntryPreviewTabs from '$lib/components/ui/entry-preview-tabs.svelte';
+  import EntryAttachments from '$lib/components/EntryAttachments.svelte';
   import { CheckIcon, ClipboardIcon, PencilIcon } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
@@ -59,5 +60,10 @@
     entryId={params.entryId}
     bibliographyData={data.bibliographyData}
     entryYamlData={data.entryYamlData}
+  />
+
+  <EntryAttachments
+    bibliographyId={params.bibliographyId}
+    entryId={params.entryId}
   />
 </main>

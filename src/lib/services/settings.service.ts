@@ -9,7 +9,15 @@ import { tauriBackend } from '$lib/services/tauri-backend';
 export class SettingsService {
   static async get(): Promise<AppSettings> {
     const stored = await tauriBackend.getSettings();
-    return stored ?? { ...DEFAULT_APP_SETTINGS };
+    if (!stored) return structuredClone(DEFAULT_APP_SETTINGS);
+    return {
+      ...DEFAULT_APP_SETTINGS,
+      ...stored,
+      fonts: { ...DEFAULT_APP_SETTINGS.fonts, ...stored.fonts },
+      citation: { ...DEFAULT_APP_SETTINGS.citation, ...stored.citation },
+      editor: { ...DEFAULT_APP_SETTINGS.editor, ...stored.editor },
+      library: { ...DEFAULT_APP_SETTINGS.library, ...stored.library },
+    };
   }
 
   static async update(changes: Partial<Omit<AppSettings, 'id'>>) {
@@ -20,6 +28,8 @@ export class SettingsService {
       id: SETTINGS_ROW_ID,
       fonts: { ...current.fonts, ...changes.fonts },
       citation: { ...current.citation, ...changes.citation },
+      editor: { ...current.editor, ...changes.editor },
+      library: { ...current.library, ...changes.library },
     };
     await tauriBackend.setSettings(next);
     applyFontSettings(next.fonts);
@@ -44,6 +54,8 @@ export class SettingsService {
         defaultStyle: nextDefaultStyle,
         entryPreviewBody: current.citation.entryPreviewBody,
       },
+      editor: current.editor,
+      library: current.library,
     };
     await tauriBackend.setSettings(next);
     applyFontSettings(next.fonts);

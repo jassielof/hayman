@@ -26,10 +26,18 @@ vi.mock('$lib/services/tauri-backend', () => ({
       return clone(bibliography);
     }),
     delete: vi.fn(async (id: string) => records.delete(id)),
+    deleteEntryMetadata: vi.fn(async () => [1]),
+    discardEntryTrash: vi.fn(async () => undefined),
+    renameEntryMetadata: vi.fn(async () => undefined),
   },
 }));
 
 import { BibliographyService } from '$lib/services/bibliography.service';
+import { tauriBackend } from '$lib/services/tauri-backend';
+import {
+  subscribeToMutations,
+  type MutationNotification,
+} from '$lib/services/mutation-notifications';
 
 const sampleBibliography = (): Bibliography => ({
   metadata: {
@@ -42,7 +50,10 @@ const sampleBibliography = (): Bibliography => ({
 });
 
 describe('BibliographyService', () => {
-  beforeEach(() => records.clear());
+  beforeEach(() => {
+    records.clear();
+    vi.clearAllMocks();
+  });
 
   it('adds and retrieves a bibliography through the native repository', async () => {
     await BibliographyService.add(sampleBibliography());
@@ -60,5 +71,71 @@ describe('BibliographyService', () => {
     expect((await BibliographyService.get('test-bib')).data.entry2?.title).toBe(
       'Second',
     );
+  });
+
+  it('deletes a batch with one atomic repository save', async () => {
+    const bibliography = sampleBibliography();
+    bibliography.data.entry2 = { type: 'article', title: 'Second' };
+    bibliography.data.entry3 = { type: 'book', title: 'Third' };
+    await BibliographyService.add(bibliography);
+
+    await BibliographyService.deleteEntries('test-bib', ['entry1', 'entry2']);
+
+    expect(tauriBackend.save).toHaveBeenCalledTimes(1);
+    expect(
+      Object.keys((await BibliographyService.get('test-bib')).data),
+    ).toEqual(['entry3']);
+  });
+
+  it('rolls back a trash restore when removing its trash record fails', async () => {
+    await BibliographyService.add(sampleBibliography());
+    vi.mocked(tauriBackend.discardEntryTrash).mockRejectedValueOnce(
+      new Error('catalog write failed'),
+    );
+
+    await expect(
+      BibliographyService.restoreTrashedEntry({
+        id: 42,
+        bibliographyId: 'test-bib',
+        entryId: 'entry2',
+        data: { type: 'article', title: 'Second' },
+      }),
+    ).rejects.toThrow('catalog write failed');
+
+    expect(
+      (await BibliographyService.get('test-bib')).data.entry2,
+    ).toBeUndefined();
+    expect(tauriBackend.save).toHaveBeenCalledTimes(2);
+  });
+
+  it('moves attachment metadata back when undoing an entry rename', async () => {
+    await BibliographyService.add(sampleBibliography());
+    let notification: MutationNotification | undefined;
+    const unsubscribe = subscribeToMutations((value) => (notification = value));
+
+    await BibliographyService.updateEntry(
+      'test-bib',
+      'renamed',
+      { type: 'misc', title: 'First' },
+      'entry1',
+    );
+    await notification?.undo?.();
+    unsubscribe();
+
+    expect(tauriBackend.renameEntryMetadata).toHaveBeenNthCalledWith(
+      1,
+      'test-bib',
+      'entry1',
+      'renamed',
+    );
+    expect(tauriBackend.renameEntryMetadata).toHaveBeenNthCalledWith(
+      2,
+      'test-bib',
+      'renamed',
+      'entry1',
+    );
+    expect(
+      (await BibliographyService.get('test-bib')).data.entry1,
+    ).toBeDefined();
   });
 });

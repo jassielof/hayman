@@ -8,6 +8,7 @@
   import { BibliographyService } from '$lib/services/bibliography.service';
   import { hayagrivaService } from '$lib/services/hayagriva.service';
   import { cn } from '$lib/utils/cn';
+  import { findDuplicateGroups } from '$lib/utils/duplicate-detection';
   import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import {
     CalendarIcon,
@@ -23,6 +24,8 @@
   } from '@lucide/svelte';
   import { Select } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';
+  import { SettingsService } from '$lib/services/settings.service';
+  import { onMount } from 'svelte';
 
   let {
     entries,
@@ -48,12 +51,21 @@
   let deleteOpen = $state(false);
   let bulkDeleteOpen = $state(false);
   let copyFeedback = $state(false);
+  let duplicatesOnly = $state(false);
+  let density = $state<'comfortable' | 'compact'>('comfortable');
+
+  onMount(async () => {
+    density = (await SettingsService.get()).library.density;
+  });
 
   const entryList = $derived(Object.entries(entries));
+  const duplicateGroups = $derived(findDuplicateGroups(entries));
+  const duplicateIds = $derived(new Set(duplicateGroups.flat()));
 
   const filteredEntries = $derived(
     entryList
       .filter(([id, entry]) => {
+        if (duplicatesOnly && !duplicateIds.has(id)) return false;
         const q = search.trim().toLowerCase();
         if (q) {
           const haystack = [
@@ -123,10 +135,9 @@
   }
 
   async function confirmBulkDelete() {
-    for (const id of [...selected]) {
-      await BibliographyService.deleteEntry(bibliographyId, id);
-      delete entries[id];
-    }
+    const ids = [...selected];
+    await BibliographyService.deleteEntries(bibliographyId, ids);
+    for (const id of ids) delete entries[id];
     selected.clear();
   }
 
@@ -320,6 +331,18 @@
             </button>
           </div>
         {/if}
+        {#if duplicateIds.size > 0}
+          <button
+            type="button"
+            class="btn btn-sm"
+            class:btn-primary={duplicatesOnly}
+            class:btn-outline={!duplicatesOnly}
+            aria-pressed={duplicatesOnly}
+            onclick={() => (duplicatesOnly = !duplicatesOnly)}
+          >
+            {duplicateIds.size} possible duplicates
+          </button>
+        {/if}
       </div>
     </div>
 
@@ -348,7 +371,9 @@
         {#each filteredEntries as [id, entry] (id)}
           {@const { label, Icon } = formatEntryType(entry.type)}
           <li
-            class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 p-4"
+            class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3"
+            class:p-4={density === 'comfortable'}
+            class:p-2={density === 'compact'}
           >
             <div class="flex items-center">
               <input
@@ -376,6 +401,12 @@
                 class="font-balanced font-sans text-xl leading-snug font-semibold font-stretch-expanded"
               >
                 {formatFormattableString(entry.title)}
+                {#if duplicateIds.has(id)}
+                  <span
+                    class="ml-2 rounded-full bg-warning/15 px-2 py-0.5 align-middle font-sans text-[0.65rem] font-semibold tracking-normal text-warning-foreground normal-case"
+                    >Possible duplicate</span
+                  >
+                {/if}
               </div>
               {#if entry.author}
                 <div class="text-md font-sans leading-relaxed">

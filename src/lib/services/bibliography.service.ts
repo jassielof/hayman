@@ -183,17 +183,63 @@ export class BibliographyService {
   }
 
   static async deleteEntry(bibliographyId: string, entryId: string) {
+    return this.deleteEntries(bibliographyId, [entryId]);
+  }
+
+  static async deleteEntries(bibliographyId: string, entryIds: string[]) {
+    const uniqueIds = [...new Set(entryIds)];
+    if (uniqueIds.length === 0) return;
     const bibliography = await this.get(bibliographyId);
     const previous = structuredClone(bibliography);
-    const deleted = bibliography.data[entryId];
-    delete bibliography.data[entryId];
+    const deleted = uniqueIds
+      .map((entryId) => bibliography.data[entryId])
+      .filter((entry): entry is TopLevelEntry => entry !== undefined);
+    for (const entryId of uniqueIds) delete bibliography.data[entryId];
+    if (deleted.length === 0) return;
     const saved = await tauriBackend.save(bibliography);
+    let trashIds: number[];
+    try {
+      trashIds = await tauriBackend.deleteEntryMetadata(
+        bibliographyId,
+        uniqueIds.flatMap((entryId) => {
+          const data = previous.data[entryId];
+          return data ? [{ entryId, data }] : [];
+        }),
+      );
+    } catch (caught) {
+      await tauriBackend.save(previous, saved.metadata.contentHash);
+      throw caught;
+    }
     notifyMutation(
-      `Deleted entry “${formatFormattableString(deleted?.title) || entryId}”. A recovery snapshot was retained.`,
+      deleted.length === 1
+        ? `Deleted entry “${formatFormattableString(deleted[0].title) || uniqueIds[0]}”. A recovery snapshot was retained.`
+        : `Deleted ${deleted.length} entries. One recovery snapshot was retained.`,
       async () => {
         await tauriBackend.save(previous, saved.metadata.contentHash);
+        await tauriBackend.discardEntryTrash(trashIds);
       },
     );
+  }
+
+  static async restoreTrashedEntry(item: {
+    id: number;
+    bibliographyId: string;
+    entryId: string;
+    data: TopLevelEntry;
+  }) {
+    const bibliography = await this.get(item.bibliographyId);
+    const previous = structuredClone(bibliography);
+    if (bibliography.data[item.entryId]) {
+      throw new EntryAlreadyExistsError(item.entryId);
+    }
+    bibliography.data[item.entryId] = item.data;
+    const saved = await tauriBackend.save(bibliography);
+    try {
+      await tauriBackend.discardEntryTrash([item.id]);
+    } catch (caught) {
+      await tauriBackend.save(previous, saved.metadata.contentHash);
+      throw caught;
+    }
   }
 
   static async getEntry(bibliographyId: string, entryId: string) {
@@ -226,10 +272,40 @@ export class BibliographyService {
       bibliography.data[updatedEntryId] = updatedEntryData;
     }
     const saved = await tauriBackend.save(bibliography);
+    if (renamed) {
+      try {
+        await tauriBackend.renameEntryMetadata(
+          bibliographyId,
+          oldEntryId,
+          updatedEntryId,
+        );
+      } catch (caught) {
+        await tauriBackend.save(previous, saved.metadata.contentHash);
+        throw caught;
+      }
+    }
     notifyMutation(
       `Updated entry “${formatFormattableString(updatedEntryData.title) || updatedEntryId}”.`,
       async () => {
-        await tauriBackend.save(previous, saved.metadata.contentHash);
+        const restored = await tauriBackend.save(
+          previous,
+          saved.metadata.contentHash,
+        );
+        if (renamed) {
+          try {
+            await tauriBackend.renameEntryMetadata(
+              bibliographyId,
+              updatedEntryId,
+              oldEntryId,
+            );
+          } catch (caught) {
+            await tauriBackend.save(
+              bibliography,
+              restored.metadata.contentHash,
+            );
+            throw caught;
+          }
+        }
       },
     );
   }

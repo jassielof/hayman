@@ -34,6 +34,20 @@ describe('SettingsService', () => {
     expect(state.value?.id).toBe(SETTINGS_ROW_ID);
   });
 
+  it('migrates older settings by filling new editor and library defaults', async () => {
+    state.value = {
+      id: SETTINGS_ROW_ID,
+      fonts: DEFAULT_APP_SETTINGS.fonts,
+      citation: { defaultStyle: 'apa' },
+    } as AppSettings;
+
+    const settings = await SettingsService.get();
+
+    expect(settings.editor).toEqual(DEFAULT_APP_SETTINGS.editor);
+    expect(settings.library).toEqual(DEFAULT_APP_SETTINGS.library);
+    expect(settings.citation.defaultStyle).toBe('apa');
+  });
+
   it('clears custom CSL', async () => {
     await SettingsService.update({
       citation: {

@@ -6,8 +6,10 @@
   import { hayagrivaService } from '$lib/services/hayagriva.service';
   import { tauriBackend } from '$lib/services/tauri-backend';
   import type { Bibliography } from '$lib/types/bibliography';
+  import type { BibliographyProject } from '$lib/types/project';
   import {
     ArchiveIcon,
+    SearchIcon,
     BookOpenIcon,
     BookPlusIcon,
     CopyIcon,
@@ -15,12 +17,15 @@
     LibraryIcon,
     LinkIcon,
     PencilIcon,
+    FolderKanbanIcon,
+    FolderPlusIcon,
     TrashIcon,
   } from '@lucide/svelte';
   import { open } from '@tauri-apps/plugin-dialog';
   import { onMount } from 'svelte';
 
   let desktopBibliographies = $state<Bibliography[] | undefined>();
+  let projects = $state<BibliographyProject[]>([]);
   let desktopError = $state<string | undefined>();
   const bibliographyQueryLoading = $derived(
     desktopBibliographies === undefined,
@@ -30,6 +35,7 @@
   async function refreshDesktop() {
     try {
       desktopBibliographies = await BibliographyService.getAll();
+      projects = await tauriBackend.listProjects();
       desktopError = undefined;
     } catch (error) {
       desktopError = String(error);
@@ -66,14 +72,15 @@
 
   async function linkProjectBibliography() {
     const selected = await open({
-      multiple: false,
+      multiple: true,
       filters: [
         { name: 'Hayagriva bibliography', extensions: ['yml', 'yaml'] },
       ],
     });
     if (!selected) return;
     try {
-      await tauriBackend.link(selected);
+      const paths = Array.isArray(selected) ? selected : [selected];
+      for (const path of paths) await tauriBackend.link(path);
       await refreshDesktop();
     } catch (error) {
       desktopError = String(error);
@@ -160,8 +167,62 @@
       {@render actions(true)}
     </section>
   {:else}
-    <div class="mb-4 flex justify-end">
-      {@render actions()}
+    <section class="mb-8" aria-labelledby="projects-heading">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 id="projects-heading" class="text-xl font-bold">Projects</h1>
+          <p class="text-sm text-muted-foreground">
+            Work across several Hayagriva files without duplicating them.
+          </p>
+        </div>
+        <a class="btn btn-sm btn-outline" href={resolve('/project/new')}>
+          <FolderPlusIcon class="size-4" /> New project
+        </a>
+      </div>
+      {#if projects.length === 0}
+        <div
+          class="rounded-lg border border-dashed border-border p-5 text-sm text-muted-foreground"
+        >
+          Projects are optional. Create one when a paper or book draws from
+          multiple bibliography files.
+        </div>
+      {:else}
+        <div class="grid gap-3 sm:grid-cols-2">
+          {#each projects as project (project.id)}
+            <a
+              class="card flex items-start gap-3 p-4 transition hover:border-primary/40 hover:bg-accent/40"
+              href={resolve(`/project/${project.id}`)}
+            >
+              <FolderKanbanIcon class="mt-0.5 size-5 shrink-0 text-primary" />
+              <span class="min-w-0">
+                <span class="block truncate font-semibold">{project.title}</span
+                >
+                <span class="block text-xs text-muted-foreground"
+                  >{project.bibliographyIds.length} Hayagriva {project
+                    .bibliographyIds.length === 1
+                    ? 'file'
+                    : 'files'}</span
+                >
+              </span>
+            </a>
+          {/each}
+        </div>
+      {/if}
+      <a class="btn btn-sm btn-outline mt-3" href={resolve('/library')}>
+        <SearchIcon class="size-4" /> Search all references
+      </a>
+    </section>
+
+    <div class="mb-3 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="text-xl font-bold">Hayagriva files</h2>
+        <p class="text-sm text-muted-foreground">
+          Open a file directly for quick editing.
+        </p>
+      </div>
+      <div class="mb-4 flex justify-end">
+        {@render actions()}
+      </div>
     </div>
 
     <div class="overflow-x-auto">
