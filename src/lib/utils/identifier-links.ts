@@ -22,32 +22,3 @@ export function pmcidResolverUrl(pmcid: string) {
 export function arxivResolverUrl(arxiv: string) {
   return `https://arxiv.org/abs/${encodeURIComponent(arxiv.trim())}`;
 }
-
-export async function checkUrlReachable(url: string): Promise<string> {
-  const trimmed = url.trim();
-  if (!trimmed) return 'Enter a URL first.';
-
-  try {
-    const parsed = new URL(trimmed);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return 'Only http and https URLs are supported.';
-    }
-
-    const response = await fetch(parsed.href, {
-      method: 'HEAD',
-      mode: 'no-cors',
-    });
-
-    if (response.type === 'opaque') {
-      return 'Request sent (browser blocked reading the status, but the host responded).';
-    }
-
-    if (response.ok) {
-      return `Reachable (${response.status}).`;
-    }
-
-    return `Responded with status ${response.status}.`;
-  } catch {
-    return 'Could not reach this URL from the browser.';
-  }
-}

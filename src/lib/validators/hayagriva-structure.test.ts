@@ -39,6 +39,48 @@ describe('parseAndValidateEntry', () => {
     expect(result.valid).toBe(false);
     expect(result.errors?.length).toBeGreaterThan(0);
   });
+
+  it('accepts the documented long, short, and verbatim formattable string', () => {
+    const result = parseAndValidateEntry({
+      type: 'article',
+      title: {
+        value: 'UN World Food Programme',
+        short: 'WFP',
+        verbatim: true,
+      },
+    });
+
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects removed formattable string keys instead of silently losing them', () => {
+    const result = parseAndValidateEntry({
+      type: 'article',
+      title: {
+        value: 'A title',
+        'sentence-case': 'A title',
+      },
+    } as never);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: expect.stringContaining('title') }),
+      ]),
+    );
+  });
+
+  it('accepts custom serial-number schemes supported by Hayagriva', () => {
+    const result = parseAndValidateEntry({
+      type: 'report',
+      'serial-number': {
+        doi: '10.1000/182',
+        report: 'TR-2026-04',
+      },
+    });
+
+    expect(result.valid).toBe(true);
+  });
 });
 
 describe('HayagrivaService.import', () => {

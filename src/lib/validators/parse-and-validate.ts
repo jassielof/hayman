@@ -38,6 +38,12 @@ export function parseAndValidateHayagriva(data: Hayagriva): ValidationResult {
 }
 
 export function parseAndValidateEntry(entry: TopLevelEntry): ValidationResult {
+  try {
+    assertHayagrivaStructure(entry);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Invalid structure.';
+    return { valid: false, errors: [{ path: '(structure)', message }] };
+  }
   const result = topLevelEntrySchema.safeParse(entry);
   return {
     valid: result.success,

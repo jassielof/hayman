@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import EntryForm from '$lib/components/EntryForm.svelte';
+  import EntryEditor from '$lib/components/EntryEditor.svelte';
   import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
   import {
     BibliographyService,
@@ -37,6 +37,22 @@
   let pasteMessage = $state<string | undefined>();
   let isSubmitting = $state(false);
   let importFile: FileList | undefined = $state(undefined);
+  let allowNavigation = $state(false);
+  let editorInvalid = $state(false);
+  const dirty = $derived(
+    editorInvalid ||
+      newEntryId.trim().length > 0 ||
+      Object.keys(newEntryData).length > 1,
+  );
+
+  beforeNavigate(({ cancel }) => {
+    if (
+      !allowNavigation &&
+      dirty &&
+      !window.confirm('Discard this unsaved entry?')
+    )
+      cancel();
+  });
 
   function applyImportedEntry(data: Record<string, TopLevelEntry>) {
     const dataLength = Object.keys(data).length;
@@ -74,7 +90,7 @@
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || editorInvalid) return;
 
     isSubmitting = true;
     errorMessage = undefined;
@@ -94,6 +110,7 @@
         newEntryData,
       );
 
+      allowNavigation = true;
       goto(resolve(`/bibliography/${params.bibliographyId}/`));
     } catch (err) {
       errorMessage = formatValidationErrorMessage(err);
@@ -202,11 +219,11 @@
       </button>
     </div>
 
-    <EntryForm bind:entryData={newEntryData} />
+    <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
 
     <div class="divider"></div>
 
-    <button class="btn btn-success" disabled={isSubmitting}>
+    <button class="btn btn-success" disabled={isSubmitting || editorInvalid}>
       {#if isSubmitting}
         <span class="loading loading-sm loading-spinner"></span>
       {:else}

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
+  import { beforeNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import EntryForm from '$lib/components/EntryForm.svelte';
+  import EntryEditor from '$lib/components/EntryEditor.svelte';
   import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
   import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
   import {
@@ -40,10 +40,26 @@
   let isSubmitting = $state(false);
   let confirmOpen = $state(false);
   let changeSummary = $state('');
+  let allowNavigation = $state(false);
+  let editorInvalid = $state(false);
+  const dirty = $derived(
+    editorInvalid ||
+      newEntryId !== originalEntryId ||
+      JSON.stringify(newEntryData) !== JSON.stringify(originalEntry),
+  );
+
+  beforeNavigate(({ cancel }) => {
+    if (
+      !allowNavigation &&
+      dirty &&
+      !window.confirm('Discard your unsaved entry changes?')
+    )
+      cancel();
+  });
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || editorInvalid) return;
 
     isSubmitting = true;
     errorMessage = undefined;
@@ -83,6 +99,7 @@
         params.entryId,
       );
 
+      allowNavigation = true;
       goto(resolve(`/bibliography/${params.bibliographyId}/`));
     } catch (err) {
       errorMessage = formatValidationErrorMessage(err);
@@ -170,9 +187,12 @@
       bind:value={newEntryId}
     />
 
-    <EntryForm bind:entryData={newEntryData} />
+    <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
 
-    <button class="btn btn-success mt-4" disabled={isSubmitting}>
+    <button
+      class="btn btn-success mt-4"
+      disabled={isSubmitting || editorInvalid}
+    >
       {#if isSubmitting}
         <span class="loading loading-sm loading-spinner"></span>
       {:else}

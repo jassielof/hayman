@@ -26,15 +26,21 @@
   let {
     entryData = $bindable(),
     parentDepth = 0,
+    preferredAllFields = false,
   }: {
     entryData: BibliographyEntry;
     parentDepth?: number;
+    preferredAllFields?: boolean;
   } = $props();
 
   const uid = $props.id();
 
   let parentType: 'none' | 'single' | 'list' = $state('none');
   let showAllFields = $state(false);
+
+  $effect(() => {
+    if (parentDepth === 0 && preferredAllFields) showAllFields = true;
+  });
 
   const entryTitle = $derived(
     formatFormattableString(entryData.title) || 'Untitled',
@@ -45,6 +51,11 @@
   const sectionOpen = $derived(
     (section: Parameters<typeof isSectionRelevant>[0]) =>
       isSectionRelevant(section, entryData.type, showAllFields),
+  );
+  const completedFieldCount = $derived(
+    Object.values(entryData).filter(
+      (value) => value !== undefined && value !== '',
+    ).length,
   );
 
   $effect(() => {
@@ -90,6 +101,44 @@
     }
   }
 </script>
+
+{#if parentDepth === 0}
+  <section
+    class="sticky top-2 z-10 mb-4 rounded-lg border border-border bg-card/95 p-3 shadow-sm backdrop-blur"
+  >
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="font-semibold">Entry details</h2>
+        <p class="text-xs text-muted-foreground">
+          {completedFieldCount} populated {completedFieldCount === 1
+            ? 'field'
+            : 'fields'} · Suggested fields adapt to the entry type.
+        </p>
+      </div>
+      <div
+        class="inline-flex rounded-md border border-border bg-muted p-1"
+        aria-label="Field visibility"
+      >
+        <button
+          type="button"
+          class="rounded px-3 py-1.5 text-xs font-medium"
+          class:bg-card={!showAllFields}
+          class:shadow-sm={!showAllFields}
+          aria-pressed={!showAllFields}
+          onclick={() => (showAllFields = false)}>Recommended</button
+        >
+        <button
+          type="button"
+          class="rounded px-3 py-1.5 text-xs font-medium"
+          class:bg-card={showAllFields}
+          class:shadow-sm={showAllFields}
+          aria-pressed={showAllFields}
+          onclick={() => (showAllFields = true)}>All Hayagriva fields</button
+        >
+      </div>
+    </div>
+  </section>
+{/if}
 
 <FormSection title="Core" open={true}>
   <EntryTypeInput bind:value={entryData.type!} />
@@ -345,10 +394,3 @@
     {/if}
   </FormSection>
 {/if}
-
-<FormSection title="Additional fields" open={showAllFields}>
-  <label class="label flex cursor-pointer items-center gap-2 font-normal">
-    <input type="checkbox" class="checkbox" bind:checked={showAllFields} />
-    Show all Hayagriva fields for this entry type
-  </label>
-</FormSection>

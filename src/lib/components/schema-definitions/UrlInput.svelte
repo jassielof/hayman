@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { BibliographyEntry, URL } from '@hayman/hayagriva-schema';
-  import { checkUrlReachable } from '$lib/utils/identifier-links';
-  import { ExternalLinkIcon, RadarIcon } from '@lucide/svelte';
+  import { validateWebUrl } from '$lib/utils/identifier-validation';
+  import { BadgeCheckIcon, ExternalLinkIcon } from '@lucide/svelte';
   import DateInput from './DateInput.svelte';
+  import { tauriBackend } from '$lib/services/tauri-backend';
 
   let {
     value = $bindable(),
@@ -27,7 +28,6 @@
   });
 
   let checkMessage = $state<string | undefined>();
-  let checking = $state(false);
 
   $effect(() => {
     if (dateValue) {
@@ -37,20 +37,24 @@
     }
   });
 
-  async function checkReachability() {
-    checking = true;
-    checkMessage = undefined;
-    try {
-      checkMessage = await checkUrlReachable(urlValue ?? '');
-    } finally {
-      checking = false;
-    }
+  function checkFormat() {
+    checkMessage = validateWebUrl(urlValue ?? '').message;
   }
 
-  function openUrl() {
+  async function openUrl() {
     const trimmed = urlValue?.trim();
     if (!trimmed) return;
-    window.open(trimmed, '_blank', 'noopener,noreferrer');
+    const validation = validateWebUrl(trimmed);
+    if (!validation.valid) {
+      checkMessage = validation.message;
+      return;
+    }
+    try {
+      await tauriBackend.openExternalUrl(trimmed);
+      checkMessage = 'Opened in your default browser.';
+    } catch (error) {
+      checkMessage = String(error);
+    }
   }
 </script>
 
@@ -79,15 +83,11 @@
     <button
       type="button"
       class="btn btn-outline shrink-0"
-      disabled={!urlValue?.trim() || checking}
-      onclick={checkReachability}
+      disabled={!urlValue?.trim()}
+      onclick={checkFormat}
     >
-      {#if checking}
-        <span class="loading loading-xs loading-spinner"></span>
-      {:else}
-        <RadarIcon class="size-4" />
-      {/if}
-      Check
+      <BadgeCheckIcon class="size-4" />
+      Validate
     </button>
   </div>
   {#if checkMessage}

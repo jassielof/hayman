@@ -8,7 +8,12 @@
     pmcidResolverUrl,
     pmidResolverUrl,
   } from '$lib/utils/identifier-links';
+  import {
+    validateIdentifier,
+    type IdentifierKind,
+  } from '$lib/utils/identifier-validation';
   import { ExternalLinkIcon, PlusIcon, XIcon } from '@lucide/svelte';
+  import { tauriBackend } from '$lib/services/tauri-backend';
 
   type SerialNumberObject = Exclude<
     NonNullable<BibliographyEntry['serial-number']>,
@@ -44,6 +49,20 @@
   let pmcid = $state('');
   let arxiv = $state('');
   let customSerials: { key: string; value: string }[] = $state([]);
+  const identifierChecks = $derived(
+    (
+      [
+        ['doi', doi],
+        ['isbn', isbn],
+        ['issn', issn],
+        ['pmid', pmid],
+        ['pmcid', pmcid],
+        ['arxiv', arxiv],
+      ] as [IdentifierKind, string][]
+    )
+      .filter(([, identifier]) => identifier.trim())
+      .map(([kind, identifier]) => validateIdentifier(kind, identifier)),
+  );
 
   function toNonEmptyString(v: unknown): string {
     return typeof v === 'string'
@@ -53,8 +72,15 @@
         : String(v);
   }
 
-  function openResolver(url: string) {
-    window.open(url, '_blank', 'noopener,noreferrer');
+  let resolverError = $state<string | undefined>();
+
+  async function openResolver(url: string) {
+    resolverError = undefined;
+    try {
+      await tauriBackend.openExternalUrl(url);
+    } catch (error) {
+      resolverError = String(error);
+    }
   }
 
   // Populate form fields from parent value (incoming data)
@@ -308,6 +334,24 @@
       </div>
     </div>
   </div>
+
+  {#if identifierChecks.length > 0}
+    <ul class="space-y-1" aria-label="Identifier validation">
+      {#each identifierChecks as check (check.message)}
+        <li
+          class:text-primary={check.valid}
+          class:text-warning={!check.valid}
+          class="text-xs"
+        >
+          {check.valid ? '✓' : '△'}
+          {check.message}
+        </li>
+      {/each}
+    </ul>
+  {/if}
+  {#if resolverError}
+    <p class="text-error text-xs" role="alert">{resolverError}</p>
+  {/if}
 
   <div class="divider">Custom serials</div>
 

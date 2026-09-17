@@ -18,7 +18,6 @@
     CircleAlertIcon,
     ClipboardPasteIcon,
     FileInputIcon,
-    LinkIcon,
   } from '@lucide/svelte';
   import { open } from '@tauri-apps/plugin-dialog';
   import { tauriBackend } from '$lib/services/tauri-backend';
@@ -77,8 +76,6 @@
   });
 
   let isSubmitting = $state(false);
-  let importUrl = $state('');
-  let isFetchingUrl = $state(false);
 
   async function handleNativeImport() {
     const selected = await open({
@@ -131,30 +128,6 @@
         error instanceof HayagrivaStructureError
           ? error.message
           : 'Failed to parse pasted YAML.';
-    }
-  }
-
-  async function handleUrlImport() {
-    if (!importUrl.trim()) return;
-    isFetchingUrl = true;
-    errorMessage = undefined;
-    validationIssues = [];
-    try {
-      const response = await fetch(importUrl.trim());
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      const imported = hayagrivaService.import(text);
-      const validation = parseAndValidateHayagriva(imported);
-      newBibliography.data = imported;
-      if (!validation.valid) {
-        validationIssues = validation.errors ?? [];
-        errorMessage = 'Imported YAML has validation errors.';
-      }
-    } catch (error) {
-      errorMessage =
-        error instanceof Error ? error.message : 'Failed to import from URL.';
-    } finally {
-      isFetchingUrl = false;
     }
   }
 
@@ -263,35 +236,10 @@
         type="button"
         class="btn btn-outline"
         onclick={handlePasteImport}
-        disabled={isLoading || isFetchingUrl}
+        disabled={isLoading}
       >
         <ClipboardPasteIcon class="size-4" />
         Paste YAML
-      </button>
-    </div>
-
-    <label for="import-url" class="label">Import from URL</label>
-    <div class="flex flex-wrap gap-2">
-      <input
-        id="import-url"
-        type="url"
-        class="input min-w-0 flex-1"
-        placeholder="https://example.com/bibliography.yaml"
-        bind:value={importUrl}
-        disabled={isFetchingUrl}
-      />
-      <button
-        type="button"
-        class="btn btn-outline"
-        onclick={handleUrlImport}
-        disabled={isFetchingUrl || !importUrl.trim()}
-      >
-        {#if isFetchingUrl}
-          <span class="loading loading-sm loading-spinner"></span>
-        {:else}
-          <LinkIcon class="size-4" />
-        {/if}
-        Fetch
       </button>
     </div>
 
