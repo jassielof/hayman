@@ -49,6 +49,13 @@ pub struct ImportResult {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ParsedImport {
+    data: Value,
+    source_format: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StorageInfo {
     app_data_directory: String,
     managed_bibliographies_directory: String,
@@ -304,6 +311,36 @@ fn parse_import(content: &str, extension: &str) -> Result<Value> {
         }
         _ => Err("Choose a .bib, .yml, or .yaml bibliography file.".into()),
     }
+}
+
+fn parse_import_content_value(content: &str, format: &str) -> Result<ParsedImport> {
+    let normalized = format.trim().to_ascii_lowercase();
+    if matches!(normalized.as_str(), "yaml" | "yml") {
+        return parse_import(content, "yaml").map(|data| ParsedImport {
+            data,
+            source_format: "yaml".into(),
+        });
+    }
+    if matches!(normalized.as_str(), "bib" | "bibtex" | "biblatex") {
+        return parse_import(content, "bib").map(|data| ParsedImport {
+            data,
+            source_format: "biblatex".into(),
+        });
+    }
+    if normalized != "auto" {
+        return Err("Import format must be auto, yaml, or biblatex.".into());
+    }
+
+    if let Ok(data) = parse_import(content, "yaml") {
+        return Ok(ParsedImport {
+            data,
+            source_format: "yaml".into(),
+        });
+    }
+    parse_import(content, "bib").map(|data| ParsedImport {
+        data,
+        source_format: "biblatex".into(),
+    })
 }
 
 fn row_metadata(row: &rusqlite::Row<'_>) -> rusqlite::Result<Metadata> {
@@ -679,6 +716,63 @@ pub fn import_bibliography_file(path: String) -> Result<ImportResult> {
         source_path: path.to_string_lossy().into_owned(),
         source_format: ext,
     })
+}
+
+#[tauri::command]
+pub fn parse_import_content(content: String, format: String) -> Result<ParsedImport> {
+    parse_import_content_value(&content, &format)
+}
+
+#[tauri::command]
+pub fn insert_entries(
+    app: AppHandle,
+    bibliography_id: String,
+    entries: Value,
+    expected_hash: String,
+) -> Result<Bibliography> {
+    let incoming = entries
+        .as_object()
+        .ok_or("Imported entries must be a mapping of citation keys to entries.")?;
+    if incoming.is_empty() {
+        return Err("Select at least one entry to import.".into());
+    }
+    parse_yaml(&serde_yaml::to_string(&entries).map_err(|e| e.to_string())?)?;
+
+    let db = db(&app)?;
+    let current = metadata(&db, &bibliography_id)?;
+    let path = Path::new(&current.file_path);
+    let _lock = bibliography_lock(&app, path)?;
+    let disk = fs::read(path).map_err(|e| e.to_string())?;
+    if digest(&disk) != expected_hash {
+        return Err("The bibliography changed outside Hayman. Reload before importing so those changes are not overwritten.".into());
+    }
+
+    let mut data = parse_yaml(&String::from_utf8(disk).map_err(|e| e.to_string())?)?;
+    let existing = data
+        .as_object_mut()
+        .ok_or("The current bibliography is not a mapping.")?;
+    for (key, entry) in incoming {
+        if existing.contains_key(key) {
+            return Err(format!("Entry '{key}' already exists."));
+        }
+        existing.insert(key.clone(), entry.clone());
+    }
+
+    let content = serialize_yaml(&data)?;
+    let (_, _, recovery, _) = directories(&app)?;
+    let saved = snapshot(&db, &recovery, &current, "before-batch-import")?;
+    atomic_write(path, content.as_bytes())?;
+    let new_hash = digest(content.as_bytes());
+    if let Err(error) = db.execute(
+        "UPDATE bibliographies SET content_hash=?2,updated_at=?3 WHERE id=?1",
+        params![current.id, new_hash, Utc::now().to_rfc3339()],
+    ) {
+        if let Some((saved, _)) = saved {
+            let _ = fs::copy(saved, path);
+        }
+        return Err(error.to_string());
+    }
+    get_bibliography(app, current.id)
 }
 
 #[tauri::command]
@@ -1559,8 +1653,8 @@ fn render_bibliography_blocking(
 mod tests {
     use super::{
         Metadata, atomic_write, digest, initialize_database, panic_message, parse_import,
-        render_bibliography, render_bibliography_blocking, safe_id, serialize_yaml, snapshot,
-        validated_external_url,
+        parse_import_content_value, render_bibliography, render_bibliography_blocking, safe_id,
+        serialize_yaml, snapshot, validated_external_url,
     };
 
     #[test]
@@ -1702,6 +1796,21 @@ mod tests {
         .unwrap();
         assert!(data.get("example").is_some());
         serialize_yaml(&data).unwrap();
+    }
+
+    #[test]
+    fn content_import_detects_yaml_and_biblatex() {
+        let yaml = parse_import_content_value("demo:\n  type: article\n", "auto").unwrap();
+        assert_eq!(yaml.source_format, "yaml");
+        assert!(yaml.data.get("demo").is_some());
+
+        let bib = parse_import_content_value(
+            "@article{paper, title={A Paper}, author={Doe, Jane}}",
+            "auto",
+        )
+        .unwrap();
+        assert_eq!(bib.source_format, "biblatex");
+        assert!(bib.data.get("paper").is_some());
     }
 
     #[test]

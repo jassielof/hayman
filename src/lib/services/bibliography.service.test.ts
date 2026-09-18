@@ -29,6 +29,14 @@ vi.mock('$lib/services/tauri-backend', () => ({
     deleteEntryMetadata: vi.fn(async () => [1]),
     discardEntryTrash: vi.fn(async () => undefined),
     renameEntryMetadata: vi.fn(async () => undefined),
+    insertEntries: vi.fn(
+      async (bibliographyId: string, entries: Bibliography['data']) => {
+        const bibliography = records.get(bibliographyId)!;
+        bibliography.data = { ...bibliography.data, ...clone(entries) };
+        records.set(bibliographyId, bibliography);
+        return clone(bibliography);
+      },
+    ),
   },
 }));
 
@@ -71,6 +79,20 @@ describe('BibliographyService', () => {
     expect((await BibliographyService.get('test-bib')).data.entry2?.title).toBe(
       'Second',
     );
+  });
+
+  it('imports several entries through one native operation', async () => {
+    await BibliographyService.add(sampleBibliography());
+
+    await BibliographyService.importEntries('test-bib', {
+      second: { type: 'article', title: 'Second' },
+      third: { type: 'book', title: 'Third' },
+    });
+
+    expect(tauriBackend.insertEntries).toHaveBeenCalledTimes(1);
+    expect(
+      Object.keys((await BibliographyService.get('test-bib')).data),
+    ).toEqual(['entry1', 'second', 'third']);
   });
 
   it('deletes a batch with one atomic repository save', async () => {

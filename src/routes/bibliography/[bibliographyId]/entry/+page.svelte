@@ -3,6 +3,7 @@
   import { resolve } from '$app/paths';
   import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
   import EntryEditor from '$lib/components/EntryEditor.svelte';
+  import ImportEntriesDialog from '$lib/components/ImportEntriesDialog.svelte';
   import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
   import {
     BibliographyService,
@@ -19,7 +20,7 @@
   import {
     CircleAlertIcon,
     ClipboardPasteIcon,
-    FileUpIcon,
+    ImportIcon,
     SaveIcon,
     SparklesIcon,
     XIcon,
@@ -36,7 +37,7 @@
   let errorMessage = $state<string | undefined>();
   let pasteMessage = $state<string | undefined>();
   let isSubmitting = $state(false);
-  let importFile: FileList | undefined = $state(undefined);
+  let importDialogOpen = $state(false);
   let allowNavigation = $state(false);
   let editorInvalid = $state(false);
   const dirty = $derived(
@@ -64,29 +65,6 @@
     newEntryData = data[newEntryId];
     pasteMessage = undefined;
   }
-
-  $effect(() => {
-    if (!importFile || importFile.length === 0) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        applyImportedEntry(
-          hayagrivaService.import(reader.result as string) as Record<
-            string,
-            TopLevelEntry
-          >,
-        );
-      } catch (err) {
-        pasteMessage =
-          err instanceof HayagrivaStructureError
-            ? err.message
-            : 'Invalid bibliography file.';
-      } finally {
-        importFile = undefined;
-      }
-    };
-    reader.readAsText(importFile[0]);
-  });
 
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
@@ -135,6 +113,15 @@
   }
 </script>
 
+<ImportEntriesDialog
+  bind:open={importDialogOpen}
+  bibliographyId={params.bibliographyId}
+  onImported={() => {
+    allowNavigation = true;
+    return goto(resolve(`/bibliography/${params.bibliographyId}/`));
+  }}
+/>
+
 <form onsubmit={handleSubmit} class="mx-auto w-full max-w-5xl p-6">
   <Breadcrumbs
     items={[
@@ -178,21 +165,18 @@
       disabled={isSubmitting}
     >
       <ClipboardPasteIcon class="size-[1.2em]" />
-      Paste from clipboard
+      Paste one Hayagriva entry
     </button>
 
-    <label class="btn btn-outline" for="entry-file-import">
-      <FileUpIcon class="size-[1.2em]" />
-      Import from file
-      <input
-        id="entry-file-import"
-        type="file"
-        class="sr-only"
-        accept=".yaml,.yml,application/yaml"
-        bind:files={importFile}
-        disabled={isSubmitting}
-      />
-    </label>
+    <button
+      class="btn btn-outline"
+      type="button"
+      onclick={() => (importDialogOpen = true)}
+      disabled={isSubmitting}
+    >
+      <ImportIcon class="size-[1.2em]" />
+      Import several references
+    </button>
 
     <div class="divider"></div>
 

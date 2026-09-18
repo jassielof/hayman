@@ -182,6 +182,26 @@ export class BibliographyService {
     );
   }
 
+  static async importEntries(bibliographyId: string, entries: Hayagriva) {
+    await validateBibliography(entries);
+    const bibliography = await this.get(bibliographyId);
+    for (const key of Object.keys(entries)) {
+      if (bibliography.data[key]) throw new EntryAlreadyExistsError(key);
+    }
+    const saved = await tauriBackend.insertEntries(
+      bibliographyId,
+      entries,
+      bibliography.metadata.contentHash ?? '',
+    );
+    notifyMutation(
+      `Imported ${Object.keys(entries).length} ${Object.keys(entries).length === 1 ? 'entry' : 'entries'}.`,
+      async () => {
+        await tauriBackend.save(bibliography, saved.metadata.contentHash);
+      },
+    );
+    return saved;
+  }
+
   static async deleteEntry(bibliographyId: string, entryId: string) {
     return this.deleteEntries(bibliographyId, [entryId]);
   }

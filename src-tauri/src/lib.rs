@@ -25,6 +25,8 @@ pub fn run() {
             storage::create_managed_bibliography,
             storage::link_bibliography,
             storage::import_bibliography_file,
+            storage::parse_import_content,
+            storage::insert_entries,
             storage::save_bibliography,
             storage::rename_bibliography,
             storage::delete_bibliography,

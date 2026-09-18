@@ -11,6 +11,10 @@ export type ImportResult = {
   sourcePath: string;
   sourceFormat: string;
 };
+export type ParsedImport = {
+  data: Bibliography['data'];
+  sourceFormat: 'yaml' | 'biblatex';
+};
 
 export type StorageInfo = {
   appDataDirectory: string;
@@ -97,6 +101,20 @@ export const tauriBackend = {
     changed(invoke<Bibliography>('link_bibliography', { path })),
   importFile: (path: string) =>
     invoke<ImportResult>('import_bibliography_file', { path }),
+  parseImportContent: (content: string, format: 'auto' | 'yaml' | 'biblatex') =>
+    invoke<ParsedImport>('parse_import_content', { content, format }),
+  insertEntries: (
+    bibliographyId: string,
+    entries: Bibliography['data'],
+    expectedHash: string,
+  ) =>
+    changed(
+      invoke<Bibliography>('insert_entries', {
+        bibliographyId,
+        entries,
+        expectedHash,
+      }),
+    ),
   storageInfo: () => invoke<StorageInfo>('storage_info'),
   backupCatalogDatabase: (destination: string) =>
     invoke<void>('backup_catalog_database', { destination }),
