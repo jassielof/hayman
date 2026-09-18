@@ -5,8 +5,11 @@
   import { formatFormattableString } from '$lib/formatters/formattable-string';
   import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import {
+    ALL_ENTRY_FIELDS,
+    formatEntryFieldLabel,
     isFieldVisible,
     isSectionRelevant,
+    type EntryFieldKey,
   } from '$lib/validators/entry-field-visibility';
   import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
   import { XIcon } from '@lucide/svelte';
@@ -22,35 +25,50 @@
   import TimestampInput from './schema-definitions/TimestampInput.svelte';
   import TimestampRangeInput from './schema-definitions/TimestampRangeInput.svelte';
   import UrlInput from './schema-definitions/UrlInput.svelte';
+  import type { AppSettings } from '$lib/types/app-settings';
+  import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
+  import { PlusIcon } from '@lucide/svelte';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let {
     entryData = $bindable(),
     parentDepth = 0,
-    preferredAllFields = false,
+    editorSettings = DEFAULT_APP_SETTINGS.editor,
   }: {
     entryData: BibliographyEntry;
     parentDepth?: number;
-    preferredAllFields?: boolean;
+    editorSettings?: AppSettings['editor'];
   } = $props();
 
   const uid = $props.id();
 
   let parentType: 'none' | 'single' | 'list' = $state('none');
   let showAllFields = $state(false);
-
-  $effect(() => {
-    if (parentDepth === 0 && preferredAllFields) showAllFields = true;
-  });
+  const sessionFields = new SvelteSet<EntryFieldKey>();
 
   const entryTitle = $derived(
     formatFormattableString(entryData.title) || 'Untitled',
   );
-  const visible = $derived((field: Parameters<typeof isFieldVisible>[0]) =>
-    isFieldVisible(field, entryData.type, showAllFields),
+  const visible = $derived((field: EntryFieldKey) =>
+    isFieldVisible(
+      field,
+      entryData.type,
+      showAllFields || sessionFields.has(field),
+      entryData,
+      editorSettings.visibleFields,
+      editorSettings.fieldsByType,
+    ),
   );
   const sectionOpen = $derived(
     (section: Parameters<typeof isSectionRelevant>[0]) =>
-      isSectionRelevant(section, entryData.type, showAllFields),
+      isSectionRelevant(
+        section,
+        entryData.type,
+        showAllFields,
+        entryData,
+        [...editorSettings.visibleFields, ...sessionFields],
+        editorSettings.fieldsByType,
+      ),
   );
   const completedFieldCount = $derived(
     Object.values(entryData).filter(
@@ -125,7 +143,7 @@
           class:bg-card={!showAllFields}
           class:shadow-sm={!showAllFields}
           aria-pressed={!showAllFields}
-          onclick={() => (showAllFields = false)}>Recommended</button
+          onclick={() => (showAllFields = false)}>Focused</button
         >
         <button
           type="button"
@@ -137,6 +155,27 @@
         >
       </div>
     </div>
+    <details class="mt-3 border-t border-border pt-3">
+      <summary
+        class="inline-flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-primary"
+      >
+        <PlusIcon class="size-4" /> Add a field
+      </summary>
+      <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {#each ALL_ENTRY_FIELDS.filter((field) => !visible(field)) as field (field)}
+          <button
+            type="button"
+            class="btn btn-outline btn-sm justify-start"
+            onclick={() => sessionFields.add(field)}
+          >
+            <PlusIcon class="size-3.5" />
+            {formatEntryFieldLabel(field)}
+          </button>
+        {:else}
+          <p class="text-sm text-muted-foreground">All fields are visible.</p>
+        {/each}
+      </div>
+    </details>
   </section>
 {/if}
 
@@ -187,6 +226,7 @@
       <EntryForm
         bind:entryData={entryData.parent}
         parentDepth={parentDepth + 1}
+        {editorSettings}
       />
     {/if}
   {/if}
@@ -219,6 +259,7 @@
         <EntryForm
           bind:entryData={entryData.parent[i]}
           parentDepth={parentDepth + 1}
+          {editorSettings}
         />
       {/if}
     {/each}

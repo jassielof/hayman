@@ -1,4 +1,7 @@
-import type { EntryTypeName } from '@hayman/hayagriva-schema';
+import type {
+  BibliographyEntry,
+  EntryTypeName,
+} from '@hayman/hayagriva-schema';
 
 export type EntryFieldKey =
   | 'author'
@@ -26,12 +29,48 @@ export type EntryFieldKey =
   | 'archive-location'
   | 'note';
 
+export const ALL_ENTRY_FIELDS: readonly EntryFieldKey[] = [
+  'author',
+  'editor',
+  'affiliated',
+  'publisher',
+  'issue',
+  'volume',
+  'edition',
+  'chapter',
+  'page-range',
+  'volume-total',
+  'page-total',
+  'time-range',
+  'runtime',
+  'url',
+  'serial-number',
+  'language',
+  'abstract',
+  'genre',
+  'call-number',
+  'location',
+  'organization',
+  'archive',
+  'archive-location',
+  'note',
+] as const;
+
+export function formatEntryFieldLabel(field: EntryFieldKey): string {
+  return field
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 function normalizeType(type: string | undefined): EntryTypeName {
   return (type?.toLowerCase() ?? 'misc') as EntryTypeName;
 }
 
 /** Fields commonly relevant per entry type (progressive disclosure). */
-const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
+export const DEFAULT_FIELDS_BY_TYPE: Partial<
+  Record<EntryTypeName, EntryFieldKey[]>
+> = {
   article: [
     'author',
     'editor',
@@ -100,7 +139,7 @@ const TYPE_FIELD_MAP: Partial<Record<EntryTypeName, EntryFieldKey[]>> = {
   misc: ['author', 'note'],
 };
 
-const DEFAULT_FIELDS: EntryFieldKey[] = [
+export const DEFAULT_ENTRY_FIELDS: EntryFieldKey[] = [
   'author',
   'publisher',
   'serial-number',
@@ -109,19 +148,34 @@ const DEFAULT_FIELDS: EntryFieldKey[] = [
 
 export function getSuggestedFields(
   type: string | undefined,
+  defaultFields: readonly EntryFieldKey[] = DEFAULT_ENTRY_FIELDS,
+  fieldsByType: Partial<
+    Record<EntryTypeName, readonly EntryFieldKey[]>
+  > = DEFAULT_FIELDS_BY_TYPE,
 ): Set<EntryFieldKey> {
   const normalized = normalizeType(type);
-  const fields = TYPE_FIELD_MAP[normalized] ?? DEFAULT_FIELDS;
+  const fields = fieldsByType[normalized] ?? defaultFields;
   return new Set(fields);
+}
+
+export function hasPopulatedValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === '') return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value).length > 0;
+  return true;
 }
 
 export function isFieldVisible(
   field: EntryFieldKey,
   type: string | undefined,
   showAllFields: boolean,
+  entry?: BibliographyEntry,
+  defaultFields?: readonly EntryFieldKey[],
+  fieldsByType?: Partial<Record<EntryTypeName, readonly EntryFieldKey[]>>,
 ): boolean {
   if (showAllFields) return true;
-  return getSuggestedFields(type).has(field);
+  if (entry && hasPopulatedValue(entry[field])) return true;
+  return getSuggestedFields(type, defaultFields, fieldsByType).has(field);
 }
 
 export type FormSectionId =
@@ -139,10 +193,12 @@ export function isSectionRelevant(
   section: FormSectionId,
   type: string | undefined,
   showAllFields: boolean,
+  entry?: BibliographyEntry,
+  defaultFields?: readonly EntryFieldKey[],
+  fieldsByType?: Partial<Record<EntryTypeName, readonly EntryFieldKey[]>>,
 ): boolean {
   if (showAllFields || section === 'core' || section === 'parent') return true;
 
-  const fields = getSuggestedFields(type);
   const sectionFields: Record<FormSectionId, EntryFieldKey[]> = {
     core: [],
     parent: [],
@@ -167,5 +223,7 @@ export function isSectionRelevant(
     additional: [],
   };
 
-  return sectionFields[section].some((field) => fields.has(field));
+  return sectionFields[section].some((field) =>
+    isFieldVisible(field, type, false, entry, defaultFields, fieldsByType),
+  );
 }

@@ -36,6 +36,17 @@
     themeModeLabel,
     type ThemeMode,
   } from '$lib/utils/theme-mode';
+  import {
+    ENTRY_TYPE_NAMES,
+    type EntryTypeName,
+  } from '@hayman/hayagriva-schema';
+  import {
+    ALL_ENTRY_FIELDS,
+    DEFAULT_FIELDS_BY_TYPE,
+    formatEntryFieldLabel,
+    type EntryFieldKey,
+  } from '$lib/validators/entry-field-visibility';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });
   let errorMessage = $state<string | undefined>();
@@ -61,6 +72,44 @@
   let trashItems = $state<TrashItem[]>([]);
   let health = $state<HealthReport | undefined>();
   let checkingHealth = $state(false);
+  let fieldProfile = $state<'global' | EntryTypeName>('global');
+
+  function selectedEditorFields(): EntryFieldKey[] {
+    if (fieldProfile === 'global') return settings.editor.visibleFields;
+    return (
+      settings.editor.fieldsByType[fieldProfile] ??
+      settings.editor.visibleFields
+    );
+  }
+
+  function toggleEditorField(field: EntryFieldKey, enabled: boolean) {
+    const current = new SvelteSet(selectedEditorFields());
+    if (enabled) current.add(field);
+    else current.delete(field);
+    const next = [...current];
+    if (fieldProfile === 'global') {
+      settings.editor.visibleFields = next;
+    } else {
+      settings.editor.fieldsByType = {
+        ...settings.editor.fieldsByType,
+        [fieldProfile]: next,
+      };
+    }
+  }
+
+  function resetFieldProfile() {
+    if (fieldProfile === 'global') {
+      settings.editor.visibleFields = [
+        ...DEFAULT_APP_SETTINGS.editor.visibleFields,
+      ];
+      return;
+    }
+    const next = { ...settings.editor.fieldsByType };
+    const defaults = DEFAULT_FIELDS_BY_TYPE[fieldProfile];
+    if (defaults) next[fieldProfile] = [...defaults];
+    else delete next[fieldProfile];
+    settings.editor.fieldsByType = next;
+  }
 
   $effect(() => {
     tauriBackend.storageInfo().then((value) => (storage = value));
@@ -511,15 +560,44 @@
         <option value="guided">Guided form</option>
         <option value="yaml">Raw Hayagriva YAML</option>
       </select>
-      <label class="label" for="default-fields">Guided form fields</label>
-      <select
-        id="default-fields"
-        class="select"
-        bind:value={settings.editor.fieldMode}
+      <label class="label" for="default-fields"
+        >Configure visible fields for</label
       >
-        <option value="recommended">Recommended for the entry type</option>
-        <option value="all">All Hayagriva fields</option>
+      <select id="default-fields" class="select" bind:value={fieldProfile}>
+        <option value="global">Other entry types</option>
+        {#each ENTRY_TYPE_NAMES as type (type)}
+          <option value={type}
+            >{type.charAt(0).toUpperCase() + type.slice(1)}</option
+          >
+        {/each}
       </select>
+      <p class="text-xs text-muted-foreground">
+        Populated fields are always shown. These choices control which empty
+        fields appear in the focused editor.
+      </p>
+      <div class="grid gap-2 sm:grid-cols-2">
+        {#each ALL_ENTRY_FIELDS as field (field)}
+          <label
+            class="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm"
+          >
+            <input
+              type="checkbox"
+              class="checkbox"
+              checked={selectedEditorFields().includes(field)}
+              onchange={(event) =>
+                toggleEditorField(field, event.currentTarget.checked)}
+            />
+            {formatEntryFieldLabel(field)}
+          </label>
+        {/each}
+      </div>
+      <button
+        type="button"
+        class="btn btn-outline btn-sm"
+        onclick={resetFieldProfile}
+      >
+        Reset this profile
+      </button>
       <label class="label" for="library-density">Entry list density</label>
       <select
         id="library-density"

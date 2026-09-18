@@ -19,7 +19,8 @@ export interface AppSettings {
   citation: AppCitationSettings;
   editor: {
     defaultMode: 'guided' | 'yaml';
-    fieldMode: 'recommended' | 'all';
+    visibleFields: EntryFieldKey[];
+    fieldsByType: Partial<Record<EntryTypeName, EntryFieldKey[]>>;
   };
   library: {
     density: 'comfortable' | 'compact';
@@ -39,9 +40,16 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   },
   editor: {
     defaultMode: 'guided',
-    fieldMode: 'recommended',
+    visibleFields: [...DEFAULT_ENTRY_FIELDS],
+    fieldsByType: structuredClone(DEFAULT_FIELDS_BY_TYPE),
   },
   library: {
     density: 'comfortable',
   },
 };
+import type { EntryTypeName } from '@hayman/hayagriva-schema';
+import type { EntryFieldKey } from '$lib/validators/entry-field-visibility';
+import {
+  DEFAULT_ENTRY_FIELDS,
+  DEFAULT_FIELDS_BY_TYPE,
+} from '$lib/validators/entry-field-visibility';

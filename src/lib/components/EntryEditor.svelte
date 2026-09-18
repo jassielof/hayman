@@ -6,6 +6,10 @@
   import { BracesIcon, ListTreeIcon } from '@lucide/svelte';
   import { SettingsService } from '$lib/services/settings.service';
   import { onMount } from 'svelte';
+  import {
+    DEFAULT_APP_SETTINGS,
+    type AppSettings,
+  } from '$lib/types/app-settings';
 
   let {
     entryData = $bindable(),
@@ -17,11 +21,13 @@
   let mode = $state<'guided' | 'yaml'>('guided');
   let source = $state('');
   let sourceError = $state<string | undefined>();
-  let showAllFieldsInitially = $state(false);
+  let editorSettings = $state<AppSettings['editor']>(
+    structuredClone(DEFAULT_APP_SETTINGS.editor),
+  );
 
   onMount(async () => {
     const settings = await SettingsService.get();
-    showAllFieldsInitially = settings.editor.fieldMode === 'all';
+    editorSettings = settings.editor;
     if (settings.editor.defaultMode === 'yaml') showYaml();
   });
 
@@ -85,7 +91,7 @@
 </div>
 
 {#if mode === 'guided'}
-  <EntryForm bind:entryData preferredAllFields={showAllFieldsInitially} />
+  <EntryForm bind:entryData {editorSettings} />
 {:else}
   <div class="space-y-2">
     <label for="entry-yaml-source" class="label">Hayagriva entry YAML</label>

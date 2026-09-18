@@ -48,6 +48,19 @@ describe('SettingsService', () => {
     expect(settings.citation.defaultStyle).toBe('apa');
   });
 
+  it('migrates the legacy all-fields preference', async () => {
+    state.value = {
+      ...structuredClone(DEFAULT_APP_SETTINGS),
+      editor: { defaultMode: 'guided', fieldMode: 'all' },
+    } as unknown as AppSettings;
+
+    const settings = await SettingsService.get();
+
+    expect(settings.editor.visibleFields.length).toBeGreaterThan(20);
+    expect(settings.editor.fieldsByType).toEqual({});
+    expect(settings.editor).not.toHaveProperty('fieldMode');
+  });
+
   it('clears custom CSL', async () => {
     await SettingsService.update({
       citation: {

@@ -5,17 +5,40 @@ import {
 } from '$lib/types/app-settings';
 import { applyFontSettings } from '$lib/utils/apply-font-settings';
 import { tauriBackend } from '$lib/services/tauri-backend';
+import { ALL_ENTRY_FIELDS } from '$lib/validators/entry-field-visibility';
 
 export class SettingsService {
   static async get(): Promise<AppSettings> {
     const stored = await tauriBackend.getSettings();
     if (!stored) return structuredClone(DEFAULT_APP_SETTINGS);
+    const legacyEditor = stored.editor as
+      | (Partial<AppSettings['editor']> & {
+          fieldMode?: 'recommended' | 'all';
+        })
+      | undefined;
+    const migratedEditor = {
+      ...DEFAULT_APP_SETTINGS.editor,
+      ...legacyEditor,
+      visibleFields:
+        legacyEditor?.visibleFields ??
+        (legacyEditor?.fieldMode === 'all'
+          ? [...ALL_ENTRY_FIELDS]
+          : [...DEFAULT_APP_SETTINGS.editor.visibleFields]),
+      fieldsByType:
+        legacyEditor?.fieldMode === 'all'
+          ? {}
+          : {
+              ...DEFAULT_APP_SETTINGS.editor.fieldsByType,
+              ...legacyEditor?.fieldsByType,
+            },
+    };
+    delete (migratedEditor as { fieldMode?: string }).fieldMode;
     return {
       ...DEFAULT_APP_SETTINGS,
       ...stored,
       fonts: { ...DEFAULT_APP_SETTINGS.fonts, ...stored.fonts },
       citation: { ...DEFAULT_APP_SETTINGS.citation, ...stored.citation },
-      editor: { ...DEFAULT_APP_SETTINGS.editor, ...stored.editor },
+      editor: migratedEditor,
       library: { ...DEFAULT_APP_SETTINGS.library, ...stored.library },
     };
   }
