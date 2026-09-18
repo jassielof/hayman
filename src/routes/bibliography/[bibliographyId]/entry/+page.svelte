@@ -26,6 +26,7 @@
     XIcon,
   } from '@lucide/svelte';
   import type { PageProps } from './$types';
+  import { tick } from 'svelte';
 
   let { params }: PageProps = $props();
 
@@ -40,6 +41,7 @@
   let importDialogOpen = $state(false);
   let allowNavigation = $state(false);
   let editorInvalid = $state(false);
+  let formElement: HTMLFormElement | undefined = $state(undefined);
   const dirty = $derived(
     editorInvalid ||
       newEntryId.trim().length > 0 ||
@@ -78,6 +80,8 @@
     if (!validation.valid) {
       validationIssues = validation.errors ?? [];
       isSubmitting = false;
+      await tick();
+      document.getElementById('validation-errors')?.focus();
       return;
     }
 
@@ -111,7 +115,16 @@
           : 'Invalid bibliography.';
     }
   }
+
+  function handleShortcut(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      formElement?.requestSubmit();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleShortcut} />
 
 <ImportEntriesDialog
   bind:open={importDialogOpen}
@@ -122,7 +135,11 @@
   }}
 />
 
-<form onsubmit={handleSubmit} class="mx-auto w-full max-w-5xl p-6">
+<form
+  bind:this={formElement}
+  onsubmit={handleSubmit}
+  class="mx-auto w-full max-w-5xl p-6"
+>
   <Breadcrumbs
     items={[
       { label: 'Home', href: '/' },
@@ -136,6 +153,9 @@
 
   <fieldset class="fieldset">
     <legend class="fieldset-legend text-xl">New entry</legend>
+    <p class="text-xs text-muted-foreground" role="status">
+      {dirty ? 'Unsaved entry · Press Ctrl+S to save' : 'No unsaved changes'}
+    </p>
 
     {#if validationIssues.length > 0}
       <ValidationErrorList issues={validationIssues} />
@@ -207,7 +227,7 @@
 
     <div class="divider"></div>
 
-    <button class="btn btn-success" disabled={isSubmitting || editorInvalid}>
+    <button class="btn btn-primary" disabled={isSubmitting || editorInvalid}>
       {#if isSubmitting}
         <span class="loading loading-sm loading-spinner"></span>
       {:else}
@@ -217,7 +237,7 @@
     </button>
     <a
       href={resolve(`/bibliography/${params.bibliographyId}/`)}
-      class="btn btn-error"
+      class="btn btn-outline"
     >
       <XIcon class="size-[1.2em]" />
       Cancel

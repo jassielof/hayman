@@ -22,6 +22,7 @@
     XIcon,
   } from '@lucide/svelte';
   import type { PageProps } from './$types';
+  import { tick } from 'svelte';
 
   let { data, params }: PageProps = $props();
   // svelte-ignore state_referenced_locally
@@ -42,6 +43,7 @@
   let changeSummary = $state('');
   let allowNavigation = $state(false);
   let editorInvalid = $state(false);
+  let formElement: HTMLFormElement | undefined = $state(undefined);
   const dirty = $derived(
     editorInvalid ||
       newEntryId !== originalEntryId ||
@@ -69,6 +71,8 @@
     if (!validation.valid) {
       validationIssues = validation.errors ?? [];
       isSubmitting = false;
+      await tick();
+      document.getElementById('validation-errors')?.focus();
       return;
     }
 
@@ -130,7 +134,16 @@
           : 'Invalid bibliography.';
     }
   }
+
+  function handleShortcut(event: KeyboardEvent) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      formElement?.requestSubmit();
+    }
+  }
 </script>
+
+<svelte:window onkeydown={handleShortcut} />
 
 <ConfirmDialog
   bind:open={confirmOpen}
@@ -140,9 +153,16 @@
   onConfirm={confirmSave}
 />
 
-<form onsubmit={handleSubmit} class="mx-auto w-full max-w-5xl p-6">
+<form
+  bind:this={formElement}
+  onsubmit={handleSubmit}
+  class="mx-auto w-full max-w-5xl p-6"
+>
   <fieldset class="fieldset">
     <legend class="fieldset-legend text-xl">Edit entry</legend>
+    <p class="text-xs text-muted-foreground" role="status">
+      {dirty ? 'Unsaved changes · Press Ctrl+S to save' : 'No unsaved changes'}
+    </p>
 
     {#if validationIssues.length > 0}
       <ValidationErrorList issues={validationIssues} />
@@ -190,7 +210,7 @@
     <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
 
     <button
-      class="btn btn-success mt-4"
+      class="btn btn-primary mt-4"
       disabled={isSubmitting || editorInvalid}
     >
       {#if isSubmitting}
@@ -202,7 +222,7 @@
     </button>
     <a
       href={resolve(`/bibliography/${params.bibliographyId}/`)}
-      class="btn btn-error"
+      class="btn btn-outline"
     >
       <XIcon class="size-[1.2em]" />
       Cancel

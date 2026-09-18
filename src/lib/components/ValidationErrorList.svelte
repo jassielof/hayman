@@ -6,7 +6,12 @@
 </script>
 
 {#if issues.length > 0}
-  <div role="alert" class="alert alert-error">
+  <div
+    id="validation-errors"
+    role="alert"
+    tabindex="-1"
+    class="alert alert-error focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+  >
     <CircleAlertIcon class="size-5 shrink-0" />
     <div>
       <p class="font-medium">Please fix the following validation errors:</p>

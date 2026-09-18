@@ -82,6 +82,17 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @layer components {
   .btn {
     @apply inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-4 text-sm font-semibold whitespace-nowrap;
