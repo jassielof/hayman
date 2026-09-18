@@ -14,6 +14,7 @@ use tauri_plugin_opener::OpenerExt;
 use wait_timeout::ChildExt;
 
 type Result<T> = std::result::Result<T, String>;
+const DATABASE_SCHEMA_VERSION: i64 = 1;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -315,6 +316,42 @@ fn initialize_database(db: &Connection) -> Result<()> {
             && !error.to_string().contains("duplicate column name")
         {
             return Err(error.to_string());
+        }
+    }
+    db.pragma_update(None, "user_version", DATABASE_SCHEMA_VERSION)
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+fn verify_catalog_database(path: &Path) -> Result<()> {
+    let backup =
+        Connection::open(path).map_err(|e| format!("Could not open the catalog backup: {e}"))?;
+    let integrity: String = backup
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .map_err(|e| format!("Could not verify the catalog backup: {e}"))?;
+    if integrity != "ok" {
+        return Err(format!(
+            "Catalog backup integrity check failed: {integrity}"
+        ));
+    }
+    for table in [
+        "bibliographies",
+        "recovery",
+        "settings",
+        "attachments",
+        "projects",
+        "project_files",
+        "entry_trash",
+    ] {
+        let exists: bool = backup
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name=?1)",
+                [table],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Could not inspect the catalog backup: {e}"))?;
+        if !exists {
+            return Err(format!("Catalog backup is missing the '{table}' table."));
         }
     }
     Ok(())
@@ -627,7 +664,13 @@ pub fn backup_catalog_database(app: AppHandle, destination: String) -> Result<()
     db.execute_batch("PRAGMA wal_checkpoint(FULL);")
         .map_err(|e| e.to_string())?;
     let bytes = fs::read(source).map_err(|e| format!("Could not read catalog database: {e}"))?;
-    atomic_write(&destination, &bytes).map_err(|e| format!("Could not write catalog backup: {e}"))
+    atomic_write(&destination, &bytes)
+        .map_err(|e| format!("Could not write catalog backup: {e}"))?;
+    if let Err(error) = verify_catalog_database(&destination) {
+        let _ = fs::remove_file(&destination);
+        return Err(error);
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -1748,10 +1791,11 @@ fn render_bibliography_blocking(
 #[cfg(test)]
 mod tests {
     use super::{
-        EditorSettings, FontSettings, LibrarySettings, Metadata, SettingsPayload, atomic_write,
-        digest, initialize_database, panic_message, parse_import, parse_import_content_value,
-        render_bibliography, render_bibliography_blocking, safe_id, serialize_yaml, snapshot,
-        validate_settings, validated_external_url,
+        DATABASE_SCHEMA_VERSION, EditorSettings, FontSettings, LibrarySettings, Metadata,
+        SettingsPayload, atomic_write, digest, initialize_database, panic_message, parse_import,
+        parse_import_content_value, render_bibliography, render_bibliography_blocking, safe_id,
+        serialize_yaml, snapshot, validate_settings, validated_external_url,
+        verify_catalog_database,
     };
 
     #[test]
@@ -1797,6 +1841,11 @@ mod tests {
             .unwrap();
         assert_eq!(memberships, 0);
 
+        let schema_version: i64 = db
+            .query_row("PRAGMA user_version", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(schema_version, DATABASE_SCHEMA_VERSION);
+
         db.execute(
             "INSERT INTO attachments(bibliography_id,entry_id,path,name,created_at)
              VALUES('library','entry','paper.pdf','paper.pdf','now')",
@@ -1839,6 +1888,20 @@ mod tests {
         };
 
         assert!(validate_settings(&settings).is_err());
+    }
+
+    #[test]
+    fn catalog_backup_verification_rejects_invalid_files() {
+        let directory = tempfile::tempdir().unwrap();
+        let valid = directory.path().join("valid.sqlite3");
+        let db = rusqlite::Connection::open(&valid).unwrap();
+        initialize_database(&db).unwrap();
+        drop(db);
+        verify_catalog_database(&valid).unwrap();
+
+        let invalid = directory.path().join("invalid.sqlite3");
+        std::fs::write(&invalid, b"not a database").unwrap();
+        assert!(verify_catalog_database(&invalid).is_err());
     }
 
     #[test]
