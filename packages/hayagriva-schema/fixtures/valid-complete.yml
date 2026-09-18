@@ -1,0 +1,48 @@
+article-example:
+  type: article
+  title:
+    value: A complete article
+    short: Complete article
+    verbatim: true
+  author:
+    - name: Doe
+      given-name: Jane
+    - Smith, John
+  editor: Curator, Casey
+  affiliated:
+    - role: translator
+      names: Translator, Taylor
+  date: 2026-09-18
+  parent:
+    type: periodical
+    title: Journal of Reliable Bibliographies
+  abstract: A fixture shared by the TypeScript and Rust validators.
+  genre: Research article
+  publisher:
+    name: Example Press
+    location: La Paz
+  location: Bolivia
+  organization: Hayman Project
+  issue: 2
+  volume: 4
+  volume-total: 8
+  chapter: 3
+  edition: 2
+  page-range: 12-30
+  page-total: 19
+  url:
+    value: https://example.com/article
+    date: 2026-09
+  serial-number:
+    doi: 10.1000/example
+    custom: HX-42
+  language: en-US
+  archive: Local Archive
+  archive-location: Shelf 2
+  call-number: QA76.9
+  note: Verified fixture
+video-example:
+  type: video
+  title: A recorded lecture
+  runtime: 01:20:00
+  time-range: 00:10-01:15

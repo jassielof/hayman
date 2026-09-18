@@ -7,7 +7,17 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "check": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "zod": "^4.0.0"
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "yaml": "^2.9.1"
   }
 }

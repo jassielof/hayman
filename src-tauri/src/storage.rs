@@ -1814,6 +1814,13 @@ mod tests {
     }
 
     #[test]
+    fn official_hayagriva_accepts_shared_schema_fixture() {
+        let fixture = include_str!("../../packages/hayagriva-schema/fixtures/valid-complete.yml");
+        let library = hayagriva::io::from_yaml_str(fixture).unwrap();
+        assert_eq!(library.len(), 2);
+    }
+
+    #[test]
     fn yaml_serialization_preserves_entry_order_after_deletion() {
         let mut data: serde_json::Value = serde_yaml::from_str(
             "zeta:\n  type: Book\n  title: Zeta\nalpha:\n  type: Book\n  title: Alpha\nmiddle:\n  type: Book\n  title: Middle\n",

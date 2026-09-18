@@ -20,7 +20,7 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
       - name: Lint
         run: bun lint
       - name: Check
@@ -29,6 +29,21 @@ jobs:
         run: bun run test
       - name: Build static frontend
         run: bun run build
+
+  schema:
+    name: Hayagriva Zod schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Typecheck schema package
+        run: bun run --filter @hayman/hayagriva-schema check
+      - name: Test schema package
+        run: bun run --filter @hayman/hayagriva-schema test
 
   rust:
     name: Rust backend
@@ -51,7 +66,7 @@ jobs:
         run: cargo fmt --check
       - name: Clippy
         working-directory: src-tauri
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Test
         working-directory: src-tauri
         run: cargo test --all-targets --all-features
