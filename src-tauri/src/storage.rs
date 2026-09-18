@@ -130,6 +130,101 @@ pub struct HealthReport {
     problems: Vec<String>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FontSettings {
+    sans: String,
+    serif: String,
+    mono: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EditorSettings {
+    default_mode: String,
+    visible_fields: Vec<String>,
+    fields_by_type: BTreeMap<String, Vec<String>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LibrarySettings {
+    density: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SettingsPayload {
+    id: String,
+    fonts: FontSettings,
+    citation: Value,
+    editor: EditorSettings,
+    library: LibrarySettings,
+}
+
+const ENTRY_FIELD_KEYS: &[&str] = &[
+    "author",
+    "editor",
+    "affiliated",
+    "publisher",
+    "issue",
+    "volume",
+    "edition",
+    "chapter",
+    "page-range",
+    "volume-total",
+    "page-total",
+    "time-range",
+    "runtime",
+    "url",
+    "serial-number",
+    "language",
+    "abstract",
+    "genre",
+    "call-number",
+    "location",
+    "organization",
+    "archive",
+    "archive-location",
+    "note",
+];
+
+fn validate_settings(settings: &SettingsPayload) -> Result<()> {
+    if settings.id != "app" {
+        return Err("Settings ID must be 'app'.".into());
+    }
+    if !matches!(settings.editor.default_mode.as_str(), "guided" | "yaml") {
+        return Err("Default editor mode must be guided or yaml.".into());
+    }
+    if !matches!(settings.library.density.as_str(), "comfortable" | "compact") {
+        return Err("Library density must be comfortable or compact.".into());
+    }
+    if [
+        &settings.fonts.sans,
+        &settings.fonts.serif,
+        &settings.fonts.mono,
+    ]
+    .iter()
+    .any(|font| font.trim().is_empty())
+    {
+        return Err("Font family names cannot be empty.".into());
+    }
+    if !settings.citation.is_object() {
+        return Err("Citation settings must be an object.".into());
+    }
+    for field in settings
+        .editor
+        .visible_fields
+        .iter()
+        .chain(settings.editor.fields_by_type.values().flatten())
+    {
+        if !ENTRY_FIELD_KEYS.contains(&field.as_str()) {
+            return Err(format!("Unknown editor field '{field}'."));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RenderedReference {
@@ -1450,7 +1545,8 @@ pub fn get_settings(app: AppHandle) -> Result<Option<Value>> {
 }
 
 #[tauri::command]
-pub fn set_settings(app: AppHandle, settings: Value) -> Result<()> {
+pub fn set_settings(app: AppHandle, settings: SettingsPayload) -> Result<()> {
+    validate_settings(&settings)?;
     let json = serde_json::to_string(&settings).map_err(|e| e.to_string())?;
     db(&app)?
         .execute(
@@ -1652,9 +1748,10 @@ fn render_bibliography_blocking(
 #[cfg(test)]
 mod tests {
     use super::{
-        Metadata, atomic_write, digest, initialize_database, panic_message, parse_import,
-        parse_import_content_value, render_bibliography, render_bibliography_blocking, safe_id,
-        serialize_yaml, snapshot, validated_external_url,
+        EditorSettings, FontSettings, LibrarySettings, Metadata, SettingsPayload, atomic_write,
+        digest, initialize_database, panic_message, parse_import, parse_import_content_value,
+        render_bibliography, render_bibliography_blocking, safe_id, serialize_yaml, snapshot,
+        validate_settings, validated_external_url,
     };
 
     #[test]
@@ -1719,6 +1816,29 @@ mod tests {
     #[test]
     fn identifiers_are_sanitized() {
         assert_eq!(safe_id("My Research_2026.bib"), "my-research-2026-bib");
+    }
+
+    #[test]
+    fn settings_boundary_rejects_unknown_editor_fields() {
+        let settings = SettingsPayload {
+            id: "app".into(),
+            fonts: FontSettings {
+                sans: "Inter".into(),
+                serif: "Georgia".into(),
+                mono: "Consolas".into(),
+            },
+            citation: serde_json::json!({ "defaultStyle": "ieee" }),
+            editor: EditorSettings {
+                default_mode: "guided".into(),
+                visible_fields: vec!["author".into(), "not-a-field".into()],
+                fields_by_type: std::collections::BTreeMap::new(),
+            },
+            library: LibrarySettings {
+                density: "comfortable".into(),
+            },
+        };
+
+        assert!(validate_settings(&settings).is_err());
     }
 
     #[test]
