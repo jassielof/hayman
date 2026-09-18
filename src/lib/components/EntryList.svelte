@@ -53,6 +53,7 @@
   let copyFeedback = $state(false);
   let duplicatesOnly = $state(false);
   let density = $state<'comfortable' | 'compact'>('comfortable');
+  let visibleLimit = $state(200);
 
   onMount(async () => {
     density = (await SettingsService.get()).library.density;
@@ -100,6 +101,15 @@
         }
       }),
   );
+  const displayedEntries = $derived(filteredEntries.slice(0, visibleLimit));
+  const filterState = $derived(
+    `${search}\0${typeFilter}\0${sortKey}\0${duplicatesOnly}`,
+  );
+
+  $effect(() => {
+    void filterState;
+    visibleLimit = 200;
+  });
 
   const allVisibleSelected = $derived(
     filteredEntries.length > 0 &&
@@ -368,7 +378,7 @@
           <p class="text-muted-foreground">No entries match your filters.</p>
         </li>
       {:else}
-        {#each filteredEntries as [id, entry] (id)}
+        {#each displayedEntries as [id, entry] (id)}
           {@const { label, Icon } = formatEntryType(entry.type)}
           <li
             class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3"
@@ -448,6 +458,21 @@
             </div>
           </li>
         {/each}
+        {#if displayedEntries.length < filteredEntries.length}
+          <li class="p-4 text-center">
+            <button
+              type="button"
+              class="btn btn-outline"
+              onclick={() => (visibleLimit += 200)}
+            >
+              Show 200 more
+            </button>
+            <p class="mt-2 text-xs text-muted-foreground" role="status">
+              Showing {displayedEntries.length} of {filteredEntries.length}
+              matching entries.
+            </p>
+          </li>
+        {/if}
       {/if}
     </ul>
   {/if}
