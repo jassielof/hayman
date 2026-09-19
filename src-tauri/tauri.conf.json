@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Hayman",
-  "version": "0.1.0",
+  "version": "0.1.0-rc.1",
   "identifier": "dev.jassiel.hayman",
   "build": {
     "frontendDist": "../build",

@@ -1,10 +1,10 @@
 [package]
 name = "hayman"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 edition = "2024"
 description = "A local-first bibliography manager for Hayagriva"
 repository = "https://github.com/jassielof/hayman"
-license = "GPL-3.0-or-later"
+license = "AGPL-3.0-or-later"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
