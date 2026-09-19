@@ -17,6 +17,7 @@
     "lint": "prettier --check . && eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "version:check": "bun run scripts/check-version.ts",
     "tauri": "tauri"
   },
   "devDependencies": {
