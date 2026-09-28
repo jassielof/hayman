@@ -4,6 +4,10 @@ import { zipSync } from 'fflate';
 
 export type BackupArchiveFormat = 'zip-yaml' | 'zip-json';
 
+// Portable Hayagriva export and catalog backup serve different ownership
+// boundaries: YAML preserves bibliography data, while the SQLite catalog is
+// required for Hayman-only metadata such as projects and attachment links.
+
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');

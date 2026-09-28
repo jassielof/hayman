@@ -1,3 +1,6 @@
+// These helpers only construct destinations for explicit user actions. They
+// must not grow background fetches: validation, editing, and previews remain
+// fully local and the system browser owns any resulting network request.
 export function doiResolverUrl(doi: string) {
   return `https://doi.org/${encodeURIComponent(doi.trim())}`;
 }

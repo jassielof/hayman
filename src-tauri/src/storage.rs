@@ -1,3 +1,25 @@
+//! Local-first storage boundary for Hayman.
+//!
+//! Hayagriva files are the source of truth for citation keys and bibliography
+//! fields; SQLite stores only Hayman-owned metadata such as projects,
+//! attachments, settings, trash, and recovery history. A project is therefore
+//! a view over bibliography files, never a copied collection of entries, and
+//! an entry's identity is `(bibliography_id, citation_key)`.
+//!
+//! Managed files belong to Hayman while linked files remain user-owned.
+//! Attachments are links and must never be deleted when unlinked. File writes
+//! must keep the official Hayagriva validation, expected-hash conflict check,
+//! recovery snapshot, and same-directory atomic replacement together.
+//! Serialization is semantic and canonical, so YAML comments, anchors, quote
+//! choices, and hand formatting are not promised to round-trip.
+//!
+//! Keep future organization features (collections and saved searches) in app
+//! metadata. Duplicate merging must show an explicit field diff and choose one
+//! destination instead of modifying multiple sources. If attachment copies are
+//! introduced, model them as a separate managed/checksummed ownership mode.
+//! Database migrations must remain additive and gain tests from every released
+//! schema version.
+
 use chrono::Utc;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
@@ -14,6 +36,8 @@ use tauri_plugin_opener::OpenerExt;
 use wait_timeout::ChildExt;
 
 type Result<T> = std::result::Result<T, String>;
+// Increment only with an additive, upgrade-tested migration; released local
+// catalogs are user data and do not have a cloud copy to repair from.
 const DATABASE_SCHEMA_VERSION: i64 = 1;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -84,6 +108,7 @@ pub struct DeleteResult {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+/// A link to a user-owned file. Removing this record must not remove the file.
 pub struct Attachment {
     id: i64,
     bibliography_id: String,
@@ -96,6 +121,7 @@ pub struct Attachment {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
+/// An ordered app-side view over bibliographies; entries stay in their files.
 pub struct Project {
     id: String,
     title: String,
@@ -412,6 +438,8 @@ fn parse_yaml(content: &str) -> Result<Value> {
 }
 
 fn serialize_yaml(data: &Value) -> Result<String> {
+    // Both structured and raw authoring converge here. We preserve Hayagriva
+    // meaning, not the source document's presentation details.
     let content = serde_yaml::to_string(data).map_err(|e| e.to_string())?;
     parse_yaml(&content)?;
     Ok(content)
@@ -1374,6 +1402,8 @@ fn validated_external_url(value: &str) -> Result<url::Url> {
 
 #[tauri::command]
 pub fn open_external_url(app: AppHandle, url: String) -> Result<()> {
+    // Network access is opt-in: resolver actions only hand a validated URL to
+    // the user's browser. Hayman performs no background lookup or tracking.
     let url = validated_external_url(&url)?;
     app.opener()
         .open_url(url.as_str(), None::<&str>)

@@ -36,6 +36,12 @@ export function duplicateFingerprint(entry: TopLevelEntry): string[] {
   return exact;
 }
 
+/**
+ * Suggests possible duplicates within the supplied view; it does not establish
+ * identity or merge data. Entries remain identified by bibliography plus
+ * citation key, and any future merge UI must let the user choose the fields and
+ * destination file explicitly.
+ */
 export function findDuplicateGroups(entries: Hayagriva): string[][] {
   const fingerprints = new Map<string, Set<string>>();
   for (const [id, entry] of Object.entries(entries)) {
