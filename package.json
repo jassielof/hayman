@@ -57,7 +57,7 @@
   "dependencies": {
     "@hayman/hayagriva-schema": "workspace:*",
     "@lucide/svelte": "^1.47.0",
-    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/api": "^2.12.0",
     "@tauri-apps/plugin-dialog": "^2.7.3",
     "bits-ui": "^2.19.2",
     "fflate": "^0.8.3",
