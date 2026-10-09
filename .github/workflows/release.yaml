@@ -24,7 +24,9 @@ jobs:
             args: ''
           - name: Windows x86_64
             platform: windows-latest
-            args: ''
+            # WiX/MSI only accepts numeric prerelease identifiers, so SemVer
+            # versions such as 0.1.0-rc.2 must be distributed as NSIS.
+            args: '--bundles nsis'
           - name: macOS Apple Silicon
             platform: macos-latest
             args: '--target aarch64-apple-darwin'

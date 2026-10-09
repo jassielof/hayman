@@ -1,6 +1,6 @@
 [package]
 name = "hayman"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 edition = "2024"
 description = "A local-first bibliography manager for Hayagriva"
 repository = "https://github.com/jassielof/hayman"
