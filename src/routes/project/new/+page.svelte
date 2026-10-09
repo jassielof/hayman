@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { tauriBackend } from '$lib/services/tauri-backend';
-  import type { Bibliography } from '$lib/types/bibliography';
-  import type { BibliographyProject } from '$lib/types/project';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
+  import type { Bibliography } from '#lib/types/bibliography.js';
+  import type { BibliographyProject } from '#lib/types/project.js';
   import { FolderPlusIcon, SaveIcon } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { SvelteSet } from 'svelte/reactivity';
@@ -55,7 +55,7 @@
     };
     try {
       await tauriBackend.saveProject(project);
-      await goto(resolve(`/project/${project.id}`));
+      await goto(resolve(`project/${project.id}`));
     } catch (error) {
       errorMessage = String(error);
     } finally {

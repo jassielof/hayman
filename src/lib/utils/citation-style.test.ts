@@ -6,8 +6,8 @@ import {
   resolvePreviewCitationStyle,
   resolveSettingsDefaultCitationStyle,
   usesCustomCslDefault,
-} from '$lib/utils/citation-style';
-import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
+} from '#lib/utils/citation-style.js';
+import { DEFAULT_APP_SETTINGS } from '#lib/types/app-settings.js';
 
 describe('resolveCitationStyle', () => {
   it('uses built-in style name', () => {

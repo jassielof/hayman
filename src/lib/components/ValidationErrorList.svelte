@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ValidationIssue } from '$lib/services/bibliography.service';
+  import type { ValidationIssue } from '#lib/services/bibliography.service.js';
   import { CircleAlertIcon } from '@lucide/svelte';
 
   let { issues }: { issues: ValidationIssue[] } = $props();

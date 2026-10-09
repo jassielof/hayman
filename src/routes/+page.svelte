@@ -1,12 +1,12 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import ExportBackupDialog from '$lib/components/ExportBackupDialog.svelte';
-  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { hayagrivaService } from '$lib/services/hayagriva.service';
-  import { tauriBackend } from '$lib/services/tauri-backend';
-  import type { Bibliography } from '$lib/types/bibliography';
-  import type { BibliographyProject } from '$lib/types/project';
+  import ExportBackupDialog from '#lib/components/ExportBackupDialog.svelte';
+  import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { hayagrivaService } from '#lib/services/hayagriva.service.js';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
+  import type { Bibliography } from '#lib/types/bibliography.js';
+  import type { BibliographyProject } from '#lib/types/project.js';
   import {
     ArchiveIcon,
     SearchIcon,
@@ -106,10 +106,8 @@
         class="btn btn-outline"
         aria-label="Export backup of bibliographies"
         onclick={() => (exportOpen = true)}
+        ><ArchiveIcon class="size-[1.2em]" />Export backup</button
       >
-        <ArchiveIcon class="size-[1.2em]" />
-        Export backup
-      </button>
     {/if}
     <button
       type="button"
@@ -120,7 +118,7 @@
       Link project file
     </button>
     <a
-      href={resolve('/bibliography/new')}
+      href={resolve('bibliography/new')}
       class="btn btn-primary"
       aria-label="Create a new bibliography"
     >
@@ -175,9 +173,10 @@
             Work across several Hayagriva files without duplicating them.
           </p>
         </div>
-        <a class="btn btn-sm btn-outline" href={resolve('/project/new')}>
-          <FolderPlusIcon class="size-4" /> New project
-        </a>
+
+        <a class="btn btn-sm btn-outline" href={resolve('project/new')}
+          ><FolderPlusIcon class="size-4" />New project</a
+        >
       </div>
       {#if projects.length === 0}
         <div
@@ -191,7 +190,7 @@
           {#each projects as project (project.id)}
             <a
               class="card flex items-start gap-3 p-4 transition hover:border-primary/40 hover:bg-accent/40"
-              href={resolve(`/project/${project.id}`)}
+              href={resolve(`project/${project.id}`)}
             >
               <FolderKanbanIcon class="mt-0.5 size-5 shrink-0 text-primary" />
               <span class="min-w-0">
@@ -208,9 +207,10 @@
           {/each}
         </div>
       {/if}
-      <a class="btn btn-sm btn-outline mt-3" href={resolve('/library')}>
-        <SearchIcon class="size-4" /> Search all references
-      </a>
+
+      <a class="btn btn-sm btn-outline mt-3" href={resolve('library')}
+        ><SearchIcon class="size-4" />Search all references</a
+      >
     </section>
 
     <div class="mb-3 flex items-center justify-between gap-3">
@@ -260,7 +260,7 @@
               class="col-span-2 flex shrink-0 flex-row flex-wrap items-center justify-end gap-2 sm:col-span-1"
             >
               <a
-                href={resolve(`/bibliography/${bib.metadata.id}`)}
+                href={resolve(`bibliography/${bib.metadata.id}`)}
                 class="btn btn-sm btn-outline"
                 aria-label={`View entries in ${bib.metadata.title}`}
               >
@@ -269,7 +269,7 @@
               </a>
               <a
                 class="btn btn-sm btn-outline"
-                href={resolve(`/bibliography/${bib.metadata.id}/edit`)}
+                href={resolve(`bibliography/${bib.metadata.id}/edit`)}
                 aria-label={`Edit metadata for ${bib.metadata.title}`}
               >
                 <PencilIcon class="size-4" />

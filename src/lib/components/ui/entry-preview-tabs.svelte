@@ -1,14 +1,14 @@
 <script lang="ts">
-  import CitationStyleControls from '$lib/components/CitationStyleControls.svelte';
-  import TypstPreview from '$lib/components/TypstPreview.svelte';
-  import { SettingsService } from '$lib/services/settings.service';
-  import { renderEntryCitationSvg } from '$lib/services/typst-preview.service';
-  import type { AppSettings } from '$lib/types/app-settings';
+  import CitationStyleControls from '#lib/components/CitationStyleControls.svelte';
+  import TypstPreview from '#lib/components/TypstPreview.svelte';
+  import { SettingsService } from '#lib/services/settings.service.js';
+  import { renderEntryCitationSvg } from '#lib/services/typst-preview.service.js';
+  import type { AppSettings } from '#lib/types/app-settings.js';
   import type { Hayagriva } from '@hayman/hayagriva-schema';
-  import { resolvePreviewCitationStyle } from '$lib/utils/citation-style';
-  import { isMobileViewport } from '$lib/utils/match-mobile';
-  import { cn } from '$lib/utils/cn';
-  import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
+  import { resolvePreviewCitationStyle } from '#lib/utils/citation-style.js';
+  import { isMobileViewport } from '#lib/utils/match-mobile.js';
+  import { cn } from '#lib/utils/cn.js';
+  import { DEFAULT_ENTRY_CITATION_BODY } from '#lib/typst/templates.js';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';

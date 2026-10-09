@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings } from '$lib/types/app-settings';
+import type { AppSettings } from '#lib/types/app-settings.js';
 
 const state = vi.hoisted(() => ({ value: null as AppSettings | null }));
 
-vi.mock('$lib/services/tauri-backend', () => ({
+vi.mock('#lib/services/tauri-backend.js', () => ({
   tauriBackend: {
     getSettings: vi.fn(async () => structuredClone(state.value)),
     setSettings: vi.fn(async (value: AppSettings) => {
@@ -12,8 +12,11 @@ vi.mock('$lib/services/tauri-backend', () => ({
   },
 }));
 
-import { SettingsService } from '$lib/services/settings.service';
-import { DEFAULT_APP_SETTINGS, SETTINGS_ROW_ID } from '$lib/types/app-settings';
+import { SettingsService } from '#lib/services/settings.service.js';
+import {
+  DEFAULT_APP_SETTINGS,
+  SETTINGS_ROW_ID,
+} from '#lib/types/app-settings.js';
 
 describe('SettingsService', () => {
   beforeEach(() => {

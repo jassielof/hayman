@@ -1,7 +1,7 @@
 import type { Hayagriva, TopLevelEntry } from '@hayman/hayagriva-schema';
-import { formatAuthor } from '$lib/formatters/author';
-import { formatEntryDateShort } from '$lib/formatters/date-formatter';
-import { formatFormattableString } from '$lib/formatters/formattable-string';
+import { formatAuthor } from '#lib/formatters/author.js';
+import { formatEntryDateShort } from '#lib/formatters/date-formatter.js';
+import { formatFormattableString } from '#lib/formatters/formattable-string.js';
 import { validateIdentifier } from './identifier-validation';
 
 function normalizedText(value: string): string {

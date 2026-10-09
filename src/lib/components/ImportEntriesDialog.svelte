@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { tauriBackend } from '$lib/services/tauri-backend';
-  import { duplicateFingerprint } from '$lib/utils/duplicate-detection';
-  import { formatAuthor } from '$lib/formatters/author';
-  import { formatFormattableString } from '$lib/formatters/formattable-string';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
+  import { duplicateFingerprint } from '#lib/utils/duplicate-detection.js';
+  import { formatAuthor } from '#lib/formatters/author.js';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import type { Hayagriva, TopLevelEntry } from '@hayman/hayagriva-schema';
   import {
     ClipboardPasteIcon,

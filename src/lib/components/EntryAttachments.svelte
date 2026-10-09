@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { tauriBackend, type Attachment } from '$lib/services/tauri-backend';
+  import {
+    tauriBackend,
+    type Attachment,
+  } from '#lib/services/tauri-backend.js';
   import { open } from '@tauri-apps/plugin-dialog';
   import {
     CheckIcon,

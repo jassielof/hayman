@@ -8,7 +8,7 @@ import { assertHayagrivaStructure } from '@hayman/hayagriva-schema';
 import type {
   ValidationIssue,
   ValidationResult,
-} from '$lib/services/bibliography.service';
+} from '#lib/services/bibliography.service.js';
 import type { z } from 'zod';
 
 function toValidationIssues(error: z.ZodError): ValidationIssue[] {

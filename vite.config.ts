@@ -1,10 +1,18 @@
 import tailwindcss from '@tailwindcss/vite';
+import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
 
 /** @type {import('vite').UserConfig} */
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit()],
+  plugins: [
+    tailwindcss(),
+    sveltekit({
+      adapter: adapter({ fallback: 'index.html' }),
+      preprocess: vitePreprocess(),
+    }),
+  ],
   server: {
     strictPort: true,
     fs: {

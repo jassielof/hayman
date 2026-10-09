@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { dateFormatter } from '$lib/formatters/date-formatter';
-  import { getLanguageFlag } from '$lib/formatters/language';
+  import { dateFormatter } from '#lib/formatters/date-formatter.js';
+  import { getLanguageFlag } from '#lib/formatters/language.js';
   import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
   import Self from './PreviewEntry.svelte';

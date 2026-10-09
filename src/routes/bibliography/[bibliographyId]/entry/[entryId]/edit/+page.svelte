@@ -1,20 +1,20 @@
 <script lang="ts">
   import { beforeNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import EntryEditor from '$lib/components/EntryEditor.svelte';
-  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-  import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
+  import EntryEditor from '#lib/components/EntryEditor.svelte';
+  import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
+  import ValidationErrorList from '#lib/components/ValidationErrorList.svelte';
   import {
     BibliographyService,
     formatValidationErrorMessage,
     type ValidationIssue,
-  } from '$lib/services/bibliography.service';
+  } from '#lib/services/bibliography.service.js';
   import {
     hayagrivaService,
     HayagrivaStructureError,
-  } from '$lib/services/hayagriva.service';
-  import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
-  import { diffEntry, formatEntryChanges } from '$lib/utils/entry-diff';
+  } from '#lib/services/hayagriva.service.js';
+  import { parseAndValidateEntry } from '#lib/validators/parse-and-validate.js';
+  import { diffEntry, formatEntryChanges } from '#lib/utils/entry-diff.js';
   import {
     CircleAlertIcon,
     ClipboardPasteIcon,
@@ -50,7 +50,8 @@
       JSON.stringify(newEntryData) !== JSON.stringify(originalEntry),
   );
 
-  beforeNavigate(({ cancel }) => {
+  beforeNavigate(({ cancel, shallow, type }) => {
+    if (shallow && type === 'goto') return;
     if (
       !allowNavigation &&
       dirty &&
@@ -104,7 +105,7 @@
       );
 
       allowNavigation = true;
-      goto(resolve(`/bibliography/${params.bibliographyId}/`));
+      goto(resolve(`bibliography/${params.bibliographyId}/`));
     } catch (err) {
       errorMessage = formatValidationErrorMessage(err);
       console.error('Error updating entry:', err);
@@ -221,7 +222,7 @@
       Save changes
     </button>
     <a
-      href={resolve(`/bibliography/${params.bibliographyId}/`)}
+      href={resolve(`bibliography/${params.bibliographyId}/`)}
       class="btn btn-outline"
     >
       <XIcon class="size-[1.2em]" />

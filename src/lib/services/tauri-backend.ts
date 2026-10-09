@@ -1,7 +1,7 @@
-import type { Bibliography } from '$lib/types/bibliography';
+import type { Bibliography } from '#lib/types/bibliography.js';
 import { invoke } from '@tauri-apps/api/core';
-import type { AppSettings } from '$lib/types/app-settings';
-import type { BibliographyProject } from '$lib/types/project';
+import type { AppSettings } from '#lib/types/app-settings.js';
+import type { BibliographyProject } from '#lib/types/project.js';
 import type { TopLevelEntry } from '@hayman/hayagriva-schema';
 
 export type ImportResult = {

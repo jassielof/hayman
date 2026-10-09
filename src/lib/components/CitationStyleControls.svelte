@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { SettingsService } from '$lib/services/settings.service';
+  import { SettingsService } from '#lib/services/settings.service.js';
   import { onMount } from 'svelte';
-  import type { AppSettings } from '$lib/types/app-settings';
+  import type { AppSettings } from '#lib/types/app-settings.js';
   import {
     describeSettingsDefaultCitation,
     hasCustomCsl,
     resolvePreviewCitationStyle,
     usesCustomCslDefault,
-  } from '$lib/utils/citation-style';
+  } from '#lib/utils/citation-style.js';
   import { RefreshCwIcon } from '@lucide/svelte';
-  import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
+  import { DEFAULT_ENTRY_CITATION_BODY } from '#lib/typst/templates.js';
 
   let {
     settings = $bindable(null as AppSettings | null),

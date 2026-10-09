@@ -2,7 +2,7 @@
   import {
     ENTRY_TYPES,
     formatEntryType,
-  } from '$lib/formatters/entry-type-formatter';
+  } from '#lib/formatters/entry-type-formatter.js';
   import type { Type } from '@hayman/hayagriva-schema';
 
   let {

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import BibliographyPreview from '$lib/components/BibliographyPreview.svelte';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import EntryList from '$lib/components/EntryList.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { tauriBackend } from '$lib/services/tauri-backend';
-  import type { Bibliography } from '$lib/types/bibliography';
-  import { cn } from '$lib/utils/cn';
+  import BibliographyPreview from '#lib/components/BibliographyPreview.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import EntryList from '#lib/components/EntryList.svelte';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
+  import type { Bibliography } from '#lib/types/bibliography.js';
+  import { cn } from '#lib/utils/cn.js';
   import { BookPlusIcon } from '@lucide/svelte';
   import { Tabs } from 'bits-ui';
   import { onMount } from 'svelte';
@@ -65,11 +65,9 @@
       <div class="flex flex-auto items-end justify-end md:items-start">
         <a
           class="btn btn-primary"
-          href={resolve(`/bibliography/${bibliography.metadata.id}/entry/`)}
+          href={resolve(`bibliography/${bibliography.metadata.id}/entry/`)}
+          ><BookPlusIcon class="size-[1.2em]" />New entry</a
         >
-          <BookPlusIcon class="size-[1.2em]" />
-          New entry
-        </a>
       </div>
     </div>
 

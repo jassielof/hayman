@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { DATE_REGEX } from '$lib/formatters/date-formatter';
+  import { DATE_REGEX } from '#lib/formatters/date-formatter.js';
   import { type BibliographyEntry } from '@hayman/hayagriva-schema';
 
   let {

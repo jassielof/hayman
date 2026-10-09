@@ -1,5 +1,5 @@
 import type { PageLoad } from './$types';
-import { BibliographyService } from '$lib/services/bibliography.service';
+import { BibliographyService } from '#lib/services/bibliography.service.js';
 
 export const ssr = false;
 

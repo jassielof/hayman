@@ -7,13 +7,13 @@
     issnResolverUrl,
     pmcidResolverUrl,
     pmidResolverUrl,
-  } from '$lib/utils/identifier-links';
+  } from '#lib/utils/identifier-links.js';
   import {
     validateIdentifier,
     type IdentifierKind,
-  } from '$lib/utils/identifier-validation';
+  } from '#lib/utils/identifier-validation.js';
   import { ExternalLinkIcon, PlusIcon, XIcon } from '@lucide/svelte';
-  import { tauriBackend } from '$lib/services/tauri-backend';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
 
   type SerialNumberObject = Exclude<
     NonNullable<BibliographyEntry['serial-number']>,

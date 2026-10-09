@@ -1,8 +1,8 @@
 <script lang="ts">
-  import FormSection from '$lib/components/ui/form-section.svelte';
-  import EntryTypeInput from '$lib/components/schema-definitions/EntryTypeInput.svelte';
-  import FormattableStringInput from '$lib/components/schema-definitions/FormattableStringInput.svelte';
-  import { formatFormattableString } from '$lib/formatters/formattable-string';
+  import FormSection from '#lib/components/ui/form-section.svelte';
+  import EntryTypeInput from '#lib/components/schema-definitions/EntryTypeInput.svelte';
+  import FormattableStringInput from '#lib/components/schema-definitions/FormattableStringInput.svelte';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import {
     ALL_ENTRY_FIELDS,
@@ -10,7 +10,7 @@
     isFieldVisible,
     isSectionRelevant,
     type EntryFieldKey,
-  } from '$lib/validators/entry-field-visibility';
+  } from '#lib/validators/entry-field-visibility.js';
   import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
   import { XIcon } from '@lucide/svelte';
   import EntryForm from './EntryForm.svelte';
@@ -25,8 +25,8 @@
   import TimestampInput from './schema-definitions/TimestampInput.svelte';
   import TimestampRangeInput from './schema-definitions/TimestampRangeInput.svelte';
   import UrlInput from './schema-definitions/UrlInput.svelte';
-  import type { AppSettings } from '$lib/types/app-settings';
-  import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
+  import type { AppSettings } from '#lib/types/app-settings.js';
+  import { DEFAULT_APP_SETTINGS } from '#lib/types/app-settings.js';
   import { PlusIcon } from '@lucide/svelte';
   import { SvelteSet } from 'svelte/reactivity';
 

@@ -3,7 +3,7 @@ import {
   getSuggestedFields,
   isFieldVisible,
   isSectionRelevant,
-} from '$lib/validators/entry-field-visibility';
+} from '#lib/validators/entry-field-visibility.js';
 
 describe('entry field visibility', () => {
   it('always exposes populated fields even outside the active profile', () => {

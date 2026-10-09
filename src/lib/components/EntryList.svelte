@@ -1,14 +1,14 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-  import { formatAuthor } from '$lib/formatters/author';
-  import { formatEntryDateShort } from '$lib/formatters/date-formatter';
-  import { formatEntryType } from '$lib/formatters/entry-type-formatter';
-  import { formatFormattableString } from '$lib/formatters/formattable-string';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { hayagrivaService } from '$lib/services/hayagriva.service';
-  import { cn } from '$lib/utils/cn';
-  import { findDuplicateGroups } from '$lib/utils/duplicate-detection';
+  import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
+  import { formatAuthor } from '#lib/formatters/author.js';
+  import { formatEntryDateShort } from '#lib/formatters/date-formatter.js';
+  import { formatEntryType } from '#lib/formatters/entry-type-formatter.js';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { hayagrivaService } from '#lib/services/hayagriva.service.js';
+  import { cn } from '#lib/utils/cn.js';
+  import { findDuplicateGroups } from '#lib/utils/duplicate-detection.js';
   import { ENTRY_TYPE_NAMES, type Hayagriva } from '@hayman/hayagriva-schema';
   import {
     CalendarIcon,
@@ -24,7 +24,7 @@
   } from '@lucide/svelte';
   import { Select } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';
-  import { SettingsService } from '$lib/services/settings.service';
+  import { SettingsService } from '#lib/services/settings.service.js';
   import { onMount } from 'svelte';
 
   let {
@@ -335,10 +335,8 @@
               type="button"
               class="btn btn-sm btn-destructive"
               onclick={() => (bulkDeleteOpen = true)}
+              ><TrashIcon class="size-4" />Delete selected</button
             >
-              <TrashIcon class="size-4" />
-              Delete selected
-            </button>
           </div>
         {/if}
         {#if duplicateIds.size > 0}
@@ -349,9 +347,8 @@
             class:btn-outline={!duplicatesOnly}
             aria-pressed={duplicatesOnly}
             onclick={() => (duplicatesOnly = !duplicatesOnly)}
+            >{duplicateIds.size} possible duplicates</button
           >
-            {duplicateIds.size} possible duplicates
-          </button>
         {/if}
       </div>
     </div>
@@ -433,7 +430,7 @@
             <div class="flex flex-wrap items-center justify-end gap-1">
               <a
                 class="btn btn-sm btn-outline"
-                href={resolve(`/bibliography/${bibliographyId}/entry/${id}`)}
+                href={resolve(`bibliography/${bibliographyId}/entry/${id}`)}
               >
                 <EyeIcon class="size-4" />
                 <span class="hidden sm:inline">View</span>
@@ -441,7 +438,7 @@
               <a
                 class="btn btn-sm btn-outline"
                 href={resolve(
-                  `/bibliography/${bibliographyId}/entry/${id}/edit`,
+                  `bibliography/${bibliographyId}/entry/${id}/edit`,
                 )}
               >
                 <PencilIcon class="size-4" />
@@ -463,13 +460,12 @@
             <button
               type="button"
               class="btn btn-outline"
-              onclick={() => (visibleLimit += 200)}
+              onclick={() => (visibleLimit += 200)}>Show 200 more</button
             >
-              Show 200 more
-            </button>
+
             <p class="mt-2 text-xs text-muted-foreground" role="status">
-              Showing {displayedEntries.length} of {filteredEntries.length}
-              matching entries.
+              Showing {displayedEntries.length} of {filteredEntries.length} matching
+              entries.
             </p>
           </li>
         {/if}

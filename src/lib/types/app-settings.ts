@@ -48,8 +48,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   },
 };
 import type { EntryTypeName } from '@hayman/hayagriva-schema';
-import type { EntryFieldKey } from '$lib/validators/entry-field-visibility';
+import type { EntryFieldKey } from '#lib/validators/entry-field-visibility.js';
 import {
   DEFAULT_ENTRY_FIELDS,
   DEFAULT_FIELDS_BY_TYPE,
-} from '$lib/validators/entry-field-visibility';
+} from '#lib/validators/entry-field-visibility.js';

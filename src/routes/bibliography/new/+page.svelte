@@ -1,26 +1,26 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import BibliographyMetadataForm from '$lib/components/BibliographyMetadataForm.svelte';
-  import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
+  import BibliographyMetadataForm from '#lib/components/BibliographyMetadataForm.svelte';
+  import ValidationErrorList from '#lib/components/ValidationErrorList.svelte';
   import {
     BibliographyService,
     formatValidationErrorMessage,
     type ValidationIssue,
-  } from '$lib/services/bibliography.service';
+  } from '#lib/services/bibliography.service.js';
   import {
     hayagrivaService,
     HayagrivaStructureError,
-  } from '$lib/services/hayagriva.service';
-  import type { Bibliography } from '$lib/types/bibliography';
-  import { parseAndValidateHayagriva } from '$lib/validators/parse-and-validate';
+  } from '#lib/services/hayagriva.service.js';
+  import type { Bibliography } from '#lib/types/bibliography.js';
+  import { parseAndValidateHayagriva } from '#lib/validators/parse-and-validate.js';
   import {
     CircleAlertIcon,
     ClipboardPasteIcon,
     FileInputIcon,
   } from '@lucide/svelte';
   import { open } from '@tauri-apps/plugin-dialog';
-  import { tauriBackend } from '$lib/services/tauri-backend';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
 
   let newBibliography: Bibliography = $state({
     data: {},

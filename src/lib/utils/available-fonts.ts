@@ -1,4 +1,4 @@
-import type { AppFontSettings } from '$lib/types/app-settings';
+import type { AppFontSettings } from '#lib/types/app-settings.js';
 
 const CSS_GENERICS = new Set([
   'serif',

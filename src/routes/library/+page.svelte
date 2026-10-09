@@ -1,11 +1,11 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import type { Bibliography } from '$lib/types/bibliography';
-  import { formatAuthor } from '$lib/formatters/author';
-  import { formatEntryDateShort } from '$lib/formatters/date-formatter';
-  import { formatFormattableString } from '$lib/formatters/formattable-string';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import type { Bibliography } from '#lib/types/bibliography.js';
+  import { formatAuthor } from '#lib/formatters/author.js';
+  import { formatEntryDateShort } from '#lib/formatters/date-formatter.js';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import { ENTRY_TYPE_NAMES } from '@hayman/hayagriva-schema';
   import { SearchIcon } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -77,8 +77,9 @@
         class="w-full border-0 bg-transparent"
         placeholder="Title, author, key, year, or file…"
         bind:value={search}
-      /></label
-    >
+      />
+    </label>
+
     <select class="select" aria-label="Filter by entry type" bind:value={type}>
       <option value="">All types</option>
       {#each ENTRY_TYPE_NAMES as entryType (entryType)}<option value={entryType}
@@ -99,7 +100,7 @@
         <a
           class="grid gap-1 p-3 hover:bg-accent sm:grid-cols-[minmax(0,1fr)_14rem]"
           href={resolve(
-            `/bibliography/${item.bibliography.metadata.id}/entry/${item.entryId}`,
+            `bibliography/${item.bibliography.metadata.id}/entry/${item.entryId}`,
           )}
         >
           <span class="min-w-0">

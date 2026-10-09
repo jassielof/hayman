@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import BibliographyMetadataForm from '$lib/components/BibliographyMetadataForm.svelte';
+  import BibliographyMetadataForm from '#lib/components/BibliographyMetadataForm.svelte';
   import {
     BibliographyService,
     formatValidationErrorMessage,
-  } from '$lib/services/bibliography.service';
+  } from '#lib/services/bibliography.service.js';
   import { CircleAlertIcon } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
@@ -29,8 +29,7 @@
         params.bibliographyId,
         bibliography,
       );
-
-      goto(resolve(`/bibliography/${bibliography.metadata.id}/`));
+      goto(resolve(`bibliography/${bibliography.metadata.id}/`));
     } catch (err: unknown) {
       errorMessage = formatValidationErrorMessage(err);
       console.error('Error updating bibliography:', err);

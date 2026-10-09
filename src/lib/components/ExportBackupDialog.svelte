@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Bibliography } from '$lib/types/bibliography';
+  import type { Bibliography } from '#lib/types/bibliography.js';
   import {
     exportBibliographiesArchive,
     type BackupArchiveFormat,
-  } from '$lib/utils/export-backup';
+  } from '#lib/utils/export-backup.js';
   import { ArchiveIcon } from '@lucide/svelte';
   import { Dialog } from 'bits-ui';
   import { SvelteSet } from 'svelte/reactivity';

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Bibliography } from '$lib/types/bibliography';
+import type { Bibliography } from '#lib/types/bibliography.js';
 
 const { records } = vi.hoisted(() => ({
   records: new Map<string, Bibliography>(),
@@ -9,7 +9,7 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
-vi.mock('$lib/services/tauri-backend', () => ({
+vi.mock('#lib/services/tauri-backend.js', () => ({
   tauriBackend: {
     list: vi.fn(async () => [...records.values()].map(clone)),
     get: vi.fn(async (id: string) => {
@@ -40,12 +40,12 @@ vi.mock('$lib/services/tauri-backend', () => ({
   },
 }));
 
-import { BibliographyService } from '$lib/services/bibliography.service';
-import { tauriBackend } from '$lib/services/tauri-backend';
+import { BibliographyService } from '#lib/services/bibliography.service.js';
+import { tauriBackend } from '#lib/services/tauri-backend.js';
 import {
   subscribeToMutations,
   type MutationNotification,
-} from '$lib/services/mutation-notifications';
+} from '#lib/services/mutation-notifications.js';
 
 const sampleBibliography = (): Bibliography => ({
   metadata: {

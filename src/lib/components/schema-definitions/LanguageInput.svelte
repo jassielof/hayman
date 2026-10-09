@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LANGUAGE_REGEX } from '$lib/formatters/language';
+  import { LANGUAGE_REGEX } from '#lib/formatters/language.js';
   import { type Language } from '@hayman/hayagriva-schema';
 
   let {

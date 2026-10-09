@@ -1,13 +1,13 @@
 <script lang="ts">
-  import CitationStyleControls from '$lib/components/CitationStyleControls.svelte';
-  import { SettingsService } from '$lib/services/settings.service';
+  import CitationStyleControls from '#lib/components/CitationStyleControls.svelte';
+  import { SettingsService } from '#lib/services/settings.service.js';
   import {
     tauriBackend,
     type RenderedReference,
-  } from '$lib/services/tauri-backend';
-  import { toYaml } from '$lib/services/hayagriva.service';
-  import type { AppSettings } from '$lib/types/app-settings';
-  import { resolvePreviewCitationStyle } from '$lib/utils/citation-style';
+  } from '#lib/services/tauri-backend.js';
+  import { toYaml } from '#lib/services/hayagriva.service.js';
+  import type { AppSettings } from '#lib/types/app-settings.js';
+  import { resolvePreviewCitationStyle } from '#lib/utils/citation-style.js';
   import type { Hayagriva } from '@hayman/hayagriva-schema';
 
   let {

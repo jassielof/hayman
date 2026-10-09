@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { BibliographyEntry, URL } from '@hayman/hayagriva-schema';
-  import { validateWebUrl } from '$lib/utils/identifier-validation';
+  import { validateWebUrl } from '#lib/utils/identifier-validation.js';
   import { BadgeCheckIcon, ExternalLinkIcon } from '@lucide/svelte';
   import DateInput from './DateInput.svelte';
-  import { tauriBackend } from '$lib/services/tauri-backend';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
 
   let {
     value = $bindable(),

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Hayagriva } from '@hayman/hayagriva-schema';
-import { DEFAULT_APP_SETTINGS } from '$lib/types/app-settings';
+import { DEFAULT_APP_SETTINGS } from '#lib/types/app-settings.js';
 
 const { renderTypstMock } = vi.hoisted(() => ({
   renderTypstMock: vi
@@ -10,7 +10,7 @@ const { renderTypstMock } = vi.hoisted(() => ({
     ),
 }));
 
-vi.mock('$lib/services/tauri-backend', () => ({
+vi.mock('#lib/services/tauri-backend.js', () => ({
   tauriBackend: {
     renderTypst: renderTypstMock,
   },
@@ -19,7 +19,7 @@ vi.mock('$lib/services/tauri-backend', () => ({
 import {
   makeSvgResponsive,
   renderEntryCitationSvg,
-} from '$lib/services/typst-preview.service';
+} from '#lib/services/typst-preview.service.js';
 
 const sampleData: Hayagriva = {
   entry1: { type: 'article', title: 'Sample' },

@@ -2,10 +2,10 @@ import {
   DEFAULT_APP_SETTINGS,
   SETTINGS_ROW_ID,
   type AppSettings,
-} from '$lib/types/app-settings';
-import { applyFontSettings } from '$lib/utils/apply-font-settings';
-import { tauriBackend } from '$lib/services/tauri-backend';
-import { ALL_ENTRY_FIELDS } from '$lib/validators/entry-field-visibility';
+} from '#lib/types/app-settings.js';
+import { applyFontSettings } from '#lib/utils/apply-font-settings.js';
+import { tauriBackend } from '#lib/services/tauri-backend.js';
+import { ALL_ENTRY_FIELDS } from '#lib/validators/entry-field-visibility.js';
 
 export class SettingsService {
   static async get(): Promise<AppSettings> {

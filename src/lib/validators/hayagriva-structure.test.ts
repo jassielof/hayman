@@ -3,9 +3,9 @@ import {
   assertAcyclic,
   assertParentDepthWithin,
 } from '@hayman/hayagriva-schema';
-import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
-import { hayagrivaService } from '$lib/services/hayagriva.service';
-import { generateEntryId } from '$lib/utils/entry-id';
+import { parseAndValidateEntry } from '#lib/validators/parse-and-validate.js';
+import { hayagrivaService } from '#lib/services/hayagriva.service.js';
+import { generateEntryId } from '#lib/utils/entry-id.js';
 
 describe('structure validators', () => {
   it('rejects cyclic parent references', () => {

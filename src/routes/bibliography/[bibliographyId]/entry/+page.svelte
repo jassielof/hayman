@@ -1,22 +1,22 @@
 <script lang="ts">
   import { beforeNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import EntryEditor from '$lib/components/EntryEditor.svelte';
-  import ImportEntriesDialog from '$lib/components/ImportEntriesDialog.svelte';
-  import ValidationErrorList from '$lib/components/ValidationErrorList.svelte';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import EntryEditor from '#lib/components/EntryEditor.svelte';
+  import ImportEntriesDialog from '#lib/components/ImportEntriesDialog.svelte';
+  import ValidationErrorList from '#lib/components/ValidationErrorList.svelte';
   import {
     BibliographyService,
     formatValidationErrorMessage,
     type ValidationIssue,
-  } from '$lib/services/bibliography.service';
+  } from '#lib/services/bibliography.service.js';
   import {
     hayagrivaService,
     HayagrivaStructureError,
-  } from '$lib/services/hayagriva.service';
+  } from '#lib/services/hayagriva.service.js';
   import type { TopLevelEntry } from '@hayman/hayagriva-schema';
-  import { generateEntryId } from '$lib/utils/entry-id';
-  import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
+  import { generateEntryId } from '#lib/utils/entry-id.js';
+  import { parseAndValidateEntry } from '#lib/validators/parse-and-validate.js';
   import {
     CircleAlertIcon,
     ClipboardPasteIcon,
@@ -48,7 +48,8 @@
       Object.keys(newEntryData).length > 1,
   );
 
-  beforeNavigate(({ cancel }) => {
+  beforeNavigate(({ cancel, shallow, type }) => {
+    if (shallow && type === 'goto') return;
     if (
       !allowNavigation &&
       dirty &&
@@ -93,7 +94,7 @@
       );
 
       allowNavigation = true;
-      goto(resolve(`/bibliography/${params.bibliographyId}/`));
+      goto(resolve(`bibliography/${params.bibliographyId}/`));
     } catch (err) {
       errorMessage = formatValidationErrorMessage(err);
       console.error('Error saving entry:', err);
@@ -131,7 +132,7 @@
   bibliographyId={params.bibliographyId}
   onImported={() => {
     allowNavigation = true;
-    return goto(resolve(`/bibliography/${params.bibliographyId}/`));
+    return goto(resolve(`bibliography/${params.bibliographyId}/`));
   }}
 />
 
@@ -217,10 +218,8 @@
         class="btn btn-outline"
         disabled={isSubmitting}
         onclick={() => (newEntryId = generateEntryId(newEntryData))}
+        ><SparklesIcon class="size-4" />Generate ID</button
       >
-        <SparklesIcon class="size-4" />
-        Generate ID
-      </button>
     </div>
 
     <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
@@ -236,7 +235,7 @@
       Add
     </button>
     <a
-      href={resolve(`/bibliography/${params.bibliographyId}/`)}
+      href={resolve(`bibliography/${params.bibliographyId}/`)}
       class="btn btn-outline"
     >
       <XIcon class="size-[1.2em]" />

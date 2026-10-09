@@ -1,18 +1,18 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import { SettingsService } from '$lib/services/settings.service';
-  import ConfirmDialog from '$lib/components/ui/confirm-dialog.svelte';
-  import { CUSTOM_CSL_STYLE } from '$lib/utils/citation-style';
-  import { DEFAULT_ENTRY_CITATION_BODY } from '$lib/typst/templates';
+  import { SettingsService } from '#lib/services/settings.service.js';
+  import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
+  import { CUSTOM_CSL_STYLE } from '#lib/utils/citation-style.js';
+  import { DEFAULT_ENTRY_CITATION_BODY } from '#lib/typst/templates.js';
   import {
     formatFontFamilyLabel,
     listAvailableFonts,
-  } from '$lib/utils/available-fonts';
+  } from '#lib/utils/available-fonts.js';
   import {
     DEFAULT_APP_SETTINGS,
     type AppSettings,
-  } from '$lib/types/app-settings';
+  } from '#lib/types/app-settings.js';
   import {
     ArrowLeftIcon,
     CheckIcon,
@@ -26,16 +26,16 @@
     type StorageInfo,
     type TrashItem,
     type HealthReport,
-  } from '$lib/services/tauri-backend';
+  } from '#lib/services/tauri-backend.js';
   import { save } from '@tauri-apps/plugin-dialog';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { formatFormattableString } from '$lib/formatters/formattable-string';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import { setMode, userPrefersMode } from 'mode-watcher';
   import {
     THEME_MODES,
     themeModeLabel,
     type ThemeMode,
-  } from '$lib/utils/theme-mode';
+  } from '#lib/utils/theme-mode.js';
   import {
     ENTRY_TYPE_NAMES,
     type EntryTypeName,
@@ -45,7 +45,7 @@
     DEFAULT_FIELDS_BY_TYPE,
     formatEntryFieldLabel,
     type EntryFieldKey,
-  } from '$lib/validators/entry-field-visibility';
+  } from '#lib/validators/entry-field-visibility.js';
   import { SvelteSet } from 'svelte/reactivity';
 
   let settings = $state<AppSettings>({ ...DEFAULT_APP_SETTINGS });

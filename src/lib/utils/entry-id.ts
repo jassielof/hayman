@@ -1,6 +1,6 @@
-import { formatAuthor } from '$lib/formatters/author';
-import { formatEntryDateShort } from '$lib/formatters/date-formatter';
-import { formatFormattableString } from '$lib/formatters/formattable-string';
+import { formatAuthor } from '#lib/formatters/author.js';
+import { formatEntryDateShort } from '#lib/formatters/date-formatter.js';
+import { formatFormattableString } from '#lib/formatters/formattable-string.js';
 import type { TopLevelEntry } from '@hayman/hayagriva-schema';
 
 function slugify(value: string): string {

@@ -1,20 +1,20 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import Breadcrumbs from '$lib/components/Breadcrumbs.svelte';
-  import { BibliographyService } from '$lib/services/bibliography.service';
-  import { tauriBackend } from '$lib/services/tauri-backend';
-  import type { Bibliography } from '$lib/types/bibliography';
-  import type { BibliographyProject } from '$lib/types/project';
-  import { formatAuthor } from '$lib/formatters/author';
-  import { formatFormattableString } from '$lib/formatters/formattable-string';
+  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+  import { BibliographyService } from '#lib/services/bibliography.service.js';
+  import { tauriBackend } from '#lib/services/tauri-backend.js';
+  import type { Bibliography } from '#lib/types/bibliography.js';
+  import type { BibliographyProject } from '#lib/types/project.js';
+  import { formatAuthor } from '#lib/formatters/author.js';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import {
     DownloadIcon,
     FileTextIcon,
     SearchIcon,
     Settings2Icon,
   } from '@lucide/svelte';
-  import { hayagrivaService } from '$lib/services/hayagriva.service';
+  import { hayagrivaService } from '#lib/services/hayagriva.service.js';
   import type { Hayagriva } from '@hayman/hayagriva-schema';
   import { onMount } from 'svelte';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -210,7 +210,7 @@
         <a
           class="card block p-4 transition hover:border-primary/40 hover:bg-accent/40"
           href={resolve(
-            `/bibliography/${item.bibliography.metadata.id}/entry/${item.entryId}`,
+            `bibliography/${item.bibliography.metadata.id}/entry/${item.entryId}`,
           )}
         >
           <div class="flex items-start gap-3">

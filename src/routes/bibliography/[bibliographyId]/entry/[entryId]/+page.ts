@@ -1,7 +1,7 @@
-import { hayagrivaService } from '$lib/services/hayagriva.service';
+import { hayagrivaService } from '#lib/services/hayagriva.service.js';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { BibliographyService } from '$lib/services/bibliography.service';
+import { BibliographyService } from '#lib/services/bibliography.service.js';
 
 export const ssr = false;
 

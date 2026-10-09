@@ -1,5 +1,5 @@
-import { hayagrivaService } from '$lib/services/hayagriva.service';
-import type { Bibliography } from '$lib/types/bibliography';
+import { hayagrivaService } from '#lib/services/hayagriva.service.js';
+import type { Bibliography } from '#lib/types/bibliography.js';
 import { zipSync } from 'fflate';
 
 export type BackupArchiveFormat = 'zip-yaml' | 'zip-json';

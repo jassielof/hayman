@@ -3,15 +3,15 @@ import {
   BibliographyNotFoundError,
   EntryAlreadyExistsError,
   ReservedBibliographyIdError,
-} from '$lib/errors/bibliography';
-import { formatFormattableString } from '$lib/formatters/formattable-string';
-import { notifyMutation } from '$lib/services/mutation-notifications';
-import { tauriBackend } from '$lib/services/tauri-backend';
-import type { Bibliography } from '$lib/types/bibliography';
+} from '#lib/errors/bibliography.js';
+import { formatFormattableString } from '#lib/formatters/formattable-string.js';
+import { notifyMutation } from '#lib/services/mutation-notifications.js';
+import { tauriBackend } from '#lib/services/tauri-backend.js';
+import type { Bibliography } from '#lib/types/bibliography.js';
 import {
   parseAndValidateEntry,
   parseAndValidateHayagriva,
-} from '$lib/validators/parse-and-validate';
+} from '#lib/validators/parse-and-validate.js';
 import type { Hayagriva, TopLevelEntry } from '@hayman/hayagriva-schema';
 import { error } from '@sveltejs/kit';
 
@@ -71,7 +71,7 @@ export class BibliographyService {
 
   static async getForLoad(id: string) {
     const bibliography = await this.getOrNull(id);
-    if (!bibliography) error(404, { message: 'Bibliography not found' });
+    if (!bibliography) error(404, 'Bibliography not found');
     return bibliography;
   }
 

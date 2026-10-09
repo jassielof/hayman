@@ -1,17 +1,17 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import SettingsBootstrap from '$lib/components/SettingsBootstrap.svelte';
-  import MutationToastHost from '$lib/components/MutationToastHost.svelte';
+  import SettingsBootstrap from '#lib/components/SettingsBootstrap.svelte';
+  import MutationToastHost from '#lib/components/MutationToastHost.svelte';
   import { ModeWatcher, setMode, userPrefersMode } from 'mode-watcher';
   import { MonitorIcon, MoonIcon, SettingsIcon, SunIcon } from '@lucide/svelte';
-  import { nextThemeMode, themeModeLabel } from '$lib/utils/theme-mode';
+  import { nextThemeMode, themeModeLabel } from '#lib/utils/theme-mode.js';
   import './layout.css';
   import './hljs-theme.css';
 
   let { children } = $props();
 
-  const settingsPath = resolve('/settings');
+  const settingsPath = resolve('settings');
   const settingsActive = $derived(page.url.pathname === settingsPath);
 </script>
 

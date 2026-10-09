@@ -1,4 +1,4 @@
-import { BibliographyService } from '$lib/services/bibliography.service';
+import { BibliographyService } from '#lib/services/bibliography.service.js';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 

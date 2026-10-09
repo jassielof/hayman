@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { AffiliatedPeople } from '@hayman/hayagriva-schema';
-  import { AFFILIATED_ROLES } from '$lib/validators/affiliated-roles';
+  import { AFFILIATED_ROLES } from '#lib/validators/affiliated-roles.js';
   import { PlusIcon, XIcon } from '@lucide/svelte';
   import PeopleInput from './PeopleInput.svelte';
 

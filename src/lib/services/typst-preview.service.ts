@@ -1,11 +1,11 @@
-import type { AppFontSettings } from '$lib/types/app-settings';
+import type { AppFontSettings } from '#lib/types/app-settings.js';
 import type { Hayagriva } from '@hayman/hayagriva-schema';
-import { toYaml } from '$lib/services/hayagriva.service';
+import { toYaml } from '#lib/services/hayagriva.service.js';
 import {
   DEFAULT_ENTRY_CITATION_BODY,
   buildEntryCitationTemplate,
-} from '$lib/typst/templates';
-import { tauriBackend } from '$lib/services/tauri-backend';
+} from '#lib/typst/templates.js';
+import { tauriBackend } from '#lib/services/tauri-backend.js';
 
 const RENDER_TIMEOUT_MS = 120_000;
 const MAX_SESSION_CACHE_ENTRIES = 12;

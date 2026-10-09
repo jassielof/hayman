@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { BibliographyMetadata } from '$lib/types/bibliography-metadata';
+  import type { BibliographyMetadata } from '#lib/types/bibliography-metadata.js';
 
   let {
     bibliographyMetadata = $bindable(),

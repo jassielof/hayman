@@ -1,4 +1,4 @@
-import type { AppSettings } from '$lib/types/app-settings';
+import type { AppSettings } from '#lib/types/app-settings.js';
 
 export const CUSTOM_CSL_STYLE = 'custom' as const;
 

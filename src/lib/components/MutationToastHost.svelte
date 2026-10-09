@@ -2,7 +2,7 @@
   import {
     subscribeToMutations,
     type MutationNotification,
-  } from '$lib/services/mutation-notifications';
+  } from '#lib/services/mutation-notifications.js';
   import { RotateCcwIcon, XIcon } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';

@@ -5,7 +5,7 @@ import {
   formatFontFamilyLabel,
   isCssGenericFamily,
   toFontStack,
-} from '$lib/utils/available-fonts';
+} from '#lib/utils/available-fonts.js';
 
 describe('available-fonts', () => {
   it('recognizes CSS generic families', () => {

@@ -1,5 +1,5 @@
-import type { AppFontSettings } from '$lib/types/app-settings';
-import { toFontStack } from '$lib/utils/available-fonts';
+import type { AppFontSettings } from '#lib/types/app-settings.js';
+import { toFontStack } from '#lib/utils/available-fonts.js';
 
 export function applyFontSettings(fonts: AppFontSettings) {
   if (typeof document === 'undefined') return;

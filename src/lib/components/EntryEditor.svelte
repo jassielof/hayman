@@ -2,14 +2,14 @@
   import type { TopLevelEntry } from '@hayman/hayagriva-schema';
   import YAML from 'yaml';
   import EntryForm from './EntryForm.svelte';
-  import { parseAndValidateEntry } from '$lib/validators/parse-and-validate';
+  import { parseAndValidateEntry } from '#lib/validators/parse-and-validate.js';
   import { BracesIcon, ListTreeIcon } from '@lucide/svelte';
-  import { SettingsService } from '$lib/services/settings.service';
+  import { SettingsService } from '#lib/services/settings.service.js';
   import { onMount } from 'svelte';
   import {
     DEFAULT_APP_SETTINGS,
     type AppSettings,
-  } from '$lib/types/app-settings';
+  } from '#lib/types/app-settings.js';
 
   let {
     entryData = $bindable(),
