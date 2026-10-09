@@ -65,6 +65,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
+          # The verified tag selects the source. A branch target avoids GitHub's
+          # extra workflow permission check for tag-only workflow changes.
+          releaseCommitish: ${{ github.event.repository.default_branch }}
           releaseName: Hayman v__VERSION__
           releaseBody: |
             This is a release candidate for Hayman 0.1.0.
@@ -73,4 +76,6 @@ jobs:
           releaseDraft: true
           prerelease: true
           generateReleaseNotes: true
+          # Preserve installers even if release creation or asset uploads fail.
+          uploadWorkflowArtifacts: true
           args: ${{ matrix.args }}
