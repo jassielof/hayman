@@ -21,7 +21,9 @@
     items={[
       { label: 'Home', href: '/' },
       {
-        label: 'Bibliography',
+        label:
+          data.bibliographyMetadata.title?.trim() ||
+          data.bibliographyMetadata.id,
         href: `/bibliography/${params.bibliographyId}/`,
       },
       { label: params.entryId },

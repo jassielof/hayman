@@ -27,6 +27,7 @@ export const load: PageLoad = async ({ params }) => {
     return {
       entry,
       entryYamlData,
+      bibliographyMetadata: bibliography.metadata,
       bibliographyData: bibliography.data,
     };
   } catch (err) {
