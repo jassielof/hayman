@@ -11,7 +11,7 @@ updates:
       interval: monthly
     ignore:
       - dependency-name: typescript
-        update-types: ["version-update:semver-major"]
+        update-types: ['version-update:semver-major']
   - package-ecosystem: cargo
     directory: /src-tauri
     schedule:
