@@ -1,14 +1,15 @@
 version: 2
+
 updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: 'monthly'
+      interval: monthly
   - package-ecosystem: bun
-    directory: '/'
+    directory: /
     schedule:
-      interval: 'monthly'
+      interval: monthly
   - package-ecosystem: cargo
-    directory: '/src-tauri'
+    directory: /src-tauri
     schedule:
-      interval: 'monthly'
+      interval: monthly
