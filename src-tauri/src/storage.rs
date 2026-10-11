@@ -1630,9 +1630,23 @@ pub fn set_settings(app: AppHandle, settings: SettingsPayload) -> Result<()> {
     Ok(())
 }
 
+// Release builds have no parent console on Windows. Without CREATE_NO_WINDOW,
+// launching a console tool creates a visible console even with redirected I/O.
+fn background_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
+    let mut command = Command::new(program);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    command.stdin(Stdio::null());
+    command
+}
+
 #[tauri::command]
 pub fn typst_version() -> Result<String> {
-    let output = Command::new("typst")
+    let output = background_command("typst")
         .arg("--version")
         .output()
         .map_err(|e| format!("Typst is required but could not be started: {e}"))?;
@@ -1686,7 +1700,7 @@ fn render_typst_blocking(
     let output_path = temporary.path().join("preview.svg");
     let diagnostics_path = temporary.path().join("diagnostics.txt");
     let diagnostics = File::create(&diagnostics_path).map_err(|e| e.to_string())?;
-    let mut command = Command::new("typst");
+    let mut command = background_command("typst");
     command.args(["compile", "--diagnostic-format", "short", "--format", "svg"]);
     for (key, value) in inputs {
         command.args(["--input", &format!("{key}={value}")]);
@@ -1827,6 +1841,39 @@ mod tests {
         serialize_yaml, snapshot, validate_settings, validated_external_url,
         verify_catalog_database,
     };
+
+    #[cfg(windows)]
+    #[test]
+    fn background_process_does_not_allocate_a_windows_console() {
+        const PROBE: &str = "HAYMAN_TEST_BACKGROUND_CONSOLE";
+        if std::env::var_os(PROBE).is_some() {
+            #[link(name = "kernel32")]
+            unsafe extern "system" {
+                fn GetConsoleWindow() -> *mut std::ffi::c_void;
+            }
+            // SAFETY: GetConsoleWindow takes no arguments and returns a borrowed
+            // handle; querying it does not change console or process state.
+            assert!(unsafe { GetConsoleWindow() }.is_null());
+            println!("background stdout captured");
+            eprintln!("background stderr captured");
+            return;
+        }
+
+        // Use the test executable as a console tool: no installed Typst is
+        // needed, and the child can directly check whether Windows gave it a console.
+        let output = super::background_command(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "storage::tests::background_process_does_not_allocate_a_windows_console",
+                "--nocapture",
+            ])
+            .env(PROBE, "1")
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{output:?}");
+        assert!(String::from_utf8_lossy(&output.stdout).contains("background stdout captured"));
+        assert!(String::from_utf8_lossy(&output.stderr).contains("background stderr captured"));
+    }
 
     #[test]
     fn database_schema_migrates_legacy_recovery_and_preserves_relational_invariants() {
