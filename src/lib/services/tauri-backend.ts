@@ -140,6 +140,7 @@ export const tauriBackend = {
     invoke<void>('backup_catalog_database', { destination }),
   checkStorageHealth: () => invoke<HealthReport>('check_storage_health'),
   getSettings: () => invoke<AppSettings | null>('get_settings'),
+  listSystemFonts: () => invoke<string[]>('list_system_fonts'),
   setSettings: (settings: AppSettings) =>
     invoke<void>('set_settings', { settings }),
   renderEntryPreview: (

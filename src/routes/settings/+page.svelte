@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { FONT_LICENSES } from '#lib/utils/font-licenses.js';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { SettingsService } from '#lib/services/settings.service.js';
@@ -59,12 +60,16 @@
   let cslFile: FileList | undefined = $state(undefined);
   let defaultKind = $state<'bundled' | 'custom-csl'>('bundled');
   let bundledDefaultStyle = $state(DEFAULT_APP_SETTINGS.citation.defaultStyle);
-  let availableFonts = $state<Record<'sans' | 'serif' | 'mono', string[]>>({
+  let availableFonts = $state<
+    Record<'sans' | 'serif' | 'mono' | 'math', string[]>
+  >({
     sans: [DEFAULT_APP_SETTINGS.fonts.sans],
     serif: [DEFAULT_APP_SETTINGS.fonts.serif],
     mono: [DEFAULT_APP_SETTINGS.fonts.mono],
+    math: [DEFAULT_APP_SETTINGS.fonts.math],
   });
   let fontsLoading = $state(true);
+  let fontDiscoveryError = $state(false);
   let customizeEntryPreviewBody = $state(false);
   let entryPreviewTemplate = $state(DEFAULT_ENTRY_PREVIEW_TEMPLATE);
   let storage = $state<StorageInfo | undefined>();
@@ -219,7 +224,12 @@
 
       fontsLoading = true;
       try {
-        const fonts = await listAvailableFonts({ current: loaded.fonts });
+        const fonts = await listAvailableFonts({
+          current: loaded.fonts,
+          onDiscoveryError: () => {
+            if (!cancelled) fontDiscoveryError = true;
+          },
+        });
         if (!cancelled) availableFonts = fonts;
       } finally {
         if (!cancelled) fontsLoading = false;
@@ -492,12 +502,19 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
       <p class="text-sm text-muted-foreground">
-        System stacks plus app-bundled webfonts (when loaded), used throughout
-        the app and citation previews.
+        Bundled fonts work offline. You can also choose any installed system
+        font; missing characters fall back to your system's fonts. Alegreya uses
+        its matching small-caps face. STIX Two Text pairs with STIX Two Math.
       </p>
 
       {#if fontsLoading}
         <p class="text-sm text-muted-foreground">Loading font options…</p>
+      {/if}
+      {#if fontDiscoveryError}
+        <p role="status" class="text-sm text-muted-foreground">
+          Installed fonts could not be listed. Bundled fonts and system defaults
+          are still available; reopen Settings to retry.
+        </p>
       {/if}
 
       <label class="label" for="font-sans">Sans-serif</label>
@@ -535,6 +552,29 @@
           <option value={font}>{formatFontFamilyLabel(font)}</option>
         {/each}
       </select>
+      <label class="label" for="font-math">Math</label>
+      <select
+        id="font-math"
+        class="select"
+        bind:value={settings.fonts.math}
+        disabled={fontsLoading}
+      >
+        {#each availableFonts.math as font (font)}
+          <option value={font}>{formatFontFamilyLabel(font)}</option>
+        {/each}
+      </select>
+      <details class="mt-3">
+        <summary class="cursor-pointer text-sm">Bundled font licenses</summary>
+        <div class="mt-2 space-y-2 text-sm">
+          {#each FONT_LICENSES as license (license.family)}
+            <details>
+              <summary class="cursor-pointer">{license.family}</summary>
+              <pre
+                class="mt-2 max-h-64 overflow-auto rounded border border-border p-3 text-xs whitespace-pre-wrap">{license.text}</pre>
+            </details>
+          {/each}
+        </div>
+      </details>
     </fieldset>
 
     <fieldset class="fieldset">

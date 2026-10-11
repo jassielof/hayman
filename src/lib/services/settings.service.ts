@@ -37,10 +37,14 @@ export class SettingsService {
     // Legacy executable preview source is not a plain-text citation template.
     delete (citation as typeof citation & { entryPreviewBody?: string })
       .entryPreviewBody;
+    const fonts = { ...DEFAULT_APP_SETTINGS.fonts, ...stored.fonts };
+    // Retire removed webfont identifiers without overwriting local font choices.
+    if (fonts.serif === 'adobe-garamond-pro') fonts.serif = 'alegreya';
+    if (fonts.mono === 'courier-std') fonts.mono = 'google-sans-code';
     return {
       ...DEFAULT_APP_SETTINGS,
       ...stored,
-      fonts: { ...DEFAULT_APP_SETTINGS.fonts, ...stored.fonts },
+      fonts,
       citation,
       editor: migratedEditor,
       library: { ...DEFAULT_APP_SETTINGS.library, ...stored.library },

@@ -1,8 +1,4 @@
-@import url('https://use.typekit.net/nai0eio.css');
-
-@import '@ibm/plex-sans/css/ibm-plex-sans-all';
-@import '@ibm/plex-mono/css/ibm-plex-mono-all';
-@import '@ibm/plex-serif/css/ibm-plex-serif-all';
+@import '../lib/styles/fonts.css';
 
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
@@ -10,10 +6,27 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+math {
+  font-family: var(--font-math);
+}
+
+.font-serif-sc {
+  font-family: var(--font-serif-sc);
+  font-variant-caps: small-caps;
+}
+
+/* Hayagriva emits this CSL presentation attribute. Keep its semantic small-caps
+   formatting while using Alegreya's dedicated face (or the chosen serif). */
+.font-serif [style*='font-variant: small-caps'] {
+  font-family: var(--font-serif-sc);
+}
+
 @theme {
   --font-sans: 'inter-variable', system-ui, sans-serif;
-  --font-mono: 'courier-std', ui-monospace, monospace;
-  --font-serif: 'adobe-garamond-pro', ui-serif, serif;
+  --font-mono: 'google-sans-code', ui-monospace, monospace;
+  --font-serif: 'alegreya', ui-serif, serif;
+  --font-serif-sc: 'alegreya-sc', ui-serif, serif;
+  --font-math: 'stix-two-math', math;
 
   --color-background: oklch(0.985 0.002 155);
   --color-foreground: oklch(0.21 0.02 155);
@@ -220,7 +233,7 @@
   }
 
   .brand-logo {
-    font-family: 'philosopher', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 700;
   }
 

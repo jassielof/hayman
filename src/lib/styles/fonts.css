@@ -1,0 +1,225 @@
+/* Offline families. Unused desktop/static duplicates are not bundled by Vite. */
+@font-face {
+  font-family: 'inter-variable';
+  src: url('../../../assets/fonts/Inter/Inter-VariableFont_opsz,wght.ttf')
+    format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'inter-variable';
+  src: url('../../../assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.ttf')
+    format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya';
+  src: url('../../../assets/fonts/Alegreya/Alegreya-VariableFont_wght.ttf')
+    format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya';
+  src: url('../../../assets/fonts/Alegreya/Alegreya-Italic-VariableFont_wght.ttf')
+    format('truetype');
+  font-weight: 400 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'google-sans-code';
+  src: url('../../../assets/fonts/Google_Sans_Code/GoogleSansCode-VariableFont_MONO,wght.ttf')
+    format('truetype');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'google-sans-code';
+  src: url('../../../assets/fonts/Google_Sans_Code/GoogleSansCode-Italic-VariableFont_MONO,wght.ttf')
+    format('truetype');
+  font-weight: 300 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-Regular.ttf')
+    format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-Italic.ttf')
+    format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-Medium.ttf')
+    format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-MediumItalic.ttf')
+    format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-Bold.ttf')
+    format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-BoldItalic.ttf')
+    format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-ExtraBold.ttf')
+    format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-ExtraBoldItalic.ttf')
+    format('truetype');
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-Black.ttf')
+    format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'alegreya-sc';
+  src: url('../../../assets/fonts/Alegreya_SC/AlegreyaSC-BlackItalic.ttf')
+    format('truetype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-Regular.woff2')
+    format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-Italic.woff2')
+    format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-Medium.woff2')
+    format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-MediumItalic.woff2')
+    format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-SemiBold.woff2')
+    format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-SemiBoldItalic.woff2')
+    format('woff2');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-Bold.woff2')
+    format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoText-BoldItalic.woff2')
+    format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'stix-two-math';
+  src: url('../../../assets/fonts/STIX Two/Web Fonts/TTF/STIXTwoMath-Regular.woff2')
+    format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

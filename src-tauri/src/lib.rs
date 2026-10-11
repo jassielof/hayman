@@ -1,3 +1,4 @@
+mod fonts;
 mod storage;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -31,6 +32,7 @@ pub fn run() {
             storage::rename_bibliography,
             storage::delete_bibliography,
             storage::get_settings,
+            fonts::list_system_fonts,
             storage::set_settings,
             storage::render_entry_preview,
             storage::render_bibliography,

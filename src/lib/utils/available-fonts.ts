@@ -1,4 +1,5 @@
 import type { AppFontSettings } from '#lib/types/app-settings.js';
+import { tauriBackend } from '#lib/services/tauri-backend.js';
 
 const CSS_GENERICS = new Set([
   'serif',
@@ -11,47 +12,31 @@ const CSS_GENERICS = new Set([
   'ui-serif',
   'ui-monospace',
   'ui-rounded',
+  'math',
 ]);
 
-/** CSS generic / system stacks — always safe on every OS. */
 export const SYSTEM_FONT_OPTIONS = {
   sans: ['system-ui', 'ui-sans-serif', 'sans-serif'],
   serif: ['ui-serif', 'serif'],
   mono: ['ui-monospace', 'monospace'],
+  math: ['math'],
 } as const;
 
-/** Webfonts provided by the app's IBM packages and Adobe Fonts kit. */
+/** Always shipped locally, independent of which faces have loaded so far. */
 export const BUNDLED_FONT_OPTIONS = {
-  sans: [
-    'inter-variable',
-    'philosopher',
-    'rosario',
-    'alegreya-sans',
-    'alegreya-sans-sc',
-    'IBM Plex Sans',
-  ],
-  serif: [
-    'adobe-garamond-pro',
-    'merriweather',
-    'alegreya',
-    'alegreya-sc',
-    'IBM Plex Serif',
-  ],
-  mono: ['courier-std', 'source-code-variable', 'IBM Plex Mono'],
+  sans: ['inter-variable'],
+  serif: ['alegreya', 'alegreya-sc', 'stix-two'],
+  mono: ['google-sans-code'],
+  math: ['stix-two-math'],
 } as const;
 
 const FONT_FAMILY_LABELS: Record<string, string> = {
-  'adobe-garamond-pro': 'Adobe Garamond Pro',
-  merriweather: 'Merriweather',
-  philosopher: 'Philosopher',
-  rosario: 'Rosario',
+  'inter-variable': 'Inter',
   alegreya: 'Alegreya',
-  'alegreya-sc': 'Alegreya SC',
-  'alegreya-sans': 'Alegreya Sans',
-  'alegreya-sans-sc': 'Alegreya Sans SC',
-  'inter-variable': 'Inter Variable',
-  'courier-std': 'Courier',
-  'source-code-variable': 'Source Code Variable',
+  'alegreya-sc': 'Alegreya Small Caps',
+  'stix-two': 'STIX Two Text',
+  'stix-two-math': 'STIX Two Math',
+  'google-sans-code': 'Google Sans Code',
 };
 
 export function formatFontFamilyLabel(family: string): string {
@@ -74,71 +59,42 @@ export function toFontStack(family: string, fallback: string): string {
   return `'${escaped}', ${fallback}`;
 }
 
-function normalizeFamilyName(name: string): string {
-  return name.replace(/^['"]+|['"]+$/g, '').trim();
-}
-
-function uniqueSorted(names: Iterable<string>): string[] {
-  return [...new Set([...names].map(normalizeFamilyName).filter(Boolean))].sort(
-    (a, b) => a.localeCompare(b),
-  );
-}
-
-function loadedFamilies(documentRef: Document): Set<string> {
-  const families = new Set<string>();
-  for (const face of documentRef.fonts) {
-    families.add(normalizeFamilyName(face.family));
-  }
-  return families;
-}
-
-function bundledForCategory(
-  category: FontCategory,
-  loaded: Set<string>,
-): string[] {
-  return BUNDLED_FONT_OPTIONS[category].filter((font) => loaded.has(font));
-}
-
 export interface ListAvailableFontsOptions {
-  /** Keep the user's currently saved choices in the lists. */
   current?: Partial<AppFontSettings>;
-  documentRef?: Document;
+  /** Inject discovery for tests and non-native hosts. No font files leave the OS. */
+  discover?: () => Promise<string[]>;
+  onDiscoveryError?: (error: unknown) => void;
 }
 
-/**
- * Font pickers list only:
- * 1. Portable CSS system stacks
- * 2. App-bundled webfonts that are actually loaded
- * 3. The user's current saved choice (if any)
- */
 export async function listAvailableFonts(
   options: ListAvailableFontsOptions = {},
 ): Promise<Record<FontCategory, string[]>> {
-  const documentRef = options.documentRef ?? document;
-  if (typeof documentRef === 'undefined') {
-    return {
-      sans: [...SYSTEM_FONT_OPTIONS.sans],
-      serif: [...SYSTEM_FONT_OPTIONS.serif],
-      mono: [...SYSTEM_FONT_OPTIONS.mono],
-    };
+  let installed: string[] = [];
+  try {
+    installed = await (options.discover ?? tauriBackend.listSystemFonts)();
+  } catch (error) {
+    options.onDiscoveryError?.(error);
   }
-
-  await documentRef.fonts.ready;
-  const loaded = loadedFamilies(documentRef);
-
+  // Do not classify installed families by script or appearance.
   const merge = (category: FontCategory) => {
-    const names = new Set<string>([
+    const names = [
+      ...BUNDLED_FONT_OPTIONS[category],
       ...SYSTEM_FONT_OPTIONS[category],
-      ...bundledForCategory(category, loaded),
-    ]);
-    const current = options.current?.[category];
-    if (current?.trim()) names.add(normalizeFamilyName(current));
-    return uniqueSorted(names);
+      ...installed,
+      options.current?.[category] ?? '',
+    ];
+    const unique = new Map<string, string>();
+    for (const name of names) {
+      const family = name.trim();
+      if (family && !unique.has(family.toLowerCase()))
+        unique.set(family.toLowerCase(), family);
+    }
+    return [...unique.values()].sort((a, b) => a.localeCompare(b));
   };
-
   return {
     sans: merge('sans'),
     serif: merge('serif'),
     mono: merge('mono'),
+    math: merge('math'),
   };
 }

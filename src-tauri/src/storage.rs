@@ -160,6 +160,12 @@ pub struct FontSettings {
     sans: String,
     serif: String,
     mono: String,
+    #[serde(default = "default_math_font")]
+    math: String,
+}
+
+fn default_math_font() -> String {
+    "stix-two-math".into()
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -227,6 +233,7 @@ fn validate_settings(settings: &SettingsPayload) -> Result<()> {
         &settings.fonts.sans,
         &settings.fonts.serif,
         &settings.fonts.mono,
+        &settings.fonts.math,
     ]
     .iter()
     .any(|font| font.trim().is_empty())
@@ -1987,6 +1994,24 @@ mod tests {
     }
 
     #[test]
+    fn legacy_font_settings_gain_math_and_reject_empty_math() {
+        let fonts: FontSettings = serde_json::from_value(serde_json::json!({
+            "sans": "Inter", "serif": "Georgia", "mono": "Consolas"
+        }))
+        .unwrap();
+        assert_eq!(fonts.math, "stix-two-math");
+        let mut settings: SettingsPayload = serde_json::from_value(serde_json::json!({
+            "id": "app", "fonts": fonts, "citation": {},
+            "editor": {"defaultMode": "guided", "visibleFields": [], "fieldsByType": {}},
+            "library": {"density": "comfortable"}
+        }))
+        .unwrap();
+        assert!(validate_settings(&settings).is_ok());
+        settings.fonts.math = " ".into();
+        assert!(validate_settings(&settings).is_err());
+    }
+
+    #[test]
     fn settings_boundary_rejects_unknown_editor_fields() {
         let settings = SettingsPayload {
             id: "app".into(),
@@ -1994,6 +2019,7 @@ mod tests {
                 sans: "Inter".into(),
                 serif: "Georgia".into(),
                 mono: "Consolas".into(),
+                math: "stix-two-math".into(),
             },
             citation: serde_json::json!({ "defaultStyle": "ieee" }),
             editor: EditorSettings {

@@ -29,7 +29,12 @@ describe('SettingsService', () => {
 
   it('persists and merges updates', async () => {
     await SettingsService.update({
-      fonts: { sans: 'Inter', serif: 'Georgia', mono: 'Consolas' },
+      fonts: {
+        sans: 'Inter',
+        serif: 'Georgia',
+        mono: 'Consolas',
+        math: 'stix-two-math',
+      },
       citation: { defaultStyle: 'apa' },
     });
     expect(state.value?.fonts.sans).toBe('Inter');
@@ -93,4 +98,21 @@ describe('SettingsService', () => {
     await SettingsService.update({ library: { density: 'compact' } });
     expect(state.value?.citation).not.toHaveProperty('entryPreviewBody');
   });
+});
+it('migrates removed defaults and missing math without losing local choices', async () => {
+  state.value = {
+    ...structuredClone(DEFAULT_APP_SETTINGS),
+    fonts: {
+      sans: '游ゴシック',
+      serif: 'adobe-garamond-pro',
+      mono: 'courier-std',
+    },
+  } as AppSettings;
+  expect((await SettingsService.get()).fonts).toEqual({
+    ...DEFAULT_APP_SETTINGS.fonts,
+    sans: '游ゴシック',
+  });
+  await SettingsService.update({ library: { density: 'compact' } });
+  expect(state.value?.fonts.math).toBe('stix-two-math');
+  expect(state.value?.fonts.serif).toBe('alegreya');
 });

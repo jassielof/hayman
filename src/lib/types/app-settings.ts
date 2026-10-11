@@ -4,6 +4,7 @@ export interface AppFontSettings {
   sans: string;
   serif: string;
   mono: string;
+  math: string;
 }
 
 export interface AppCitationSettings {
@@ -27,13 +28,14 @@ export interface AppSettings {
   };
 }
 
-/** Adobe Fonts defaults with portable fallbacks applied by `applyFontSettings`. */
+/** Local fonts with system glyph fallbacks; no network access is required. */
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   id: SETTINGS_ROW_ID,
   fonts: {
     sans: 'inter-variable',
-    serif: 'adobe-garamond-pro',
-    mono: 'courier-std',
+    serif: 'alegreya',
+    mono: 'google-sans-code',
+    math: 'stix-two-math',
   },
   citation: {
     defaultStyle: 'ieee',
