@@ -257,6 +257,18 @@ fn validate_settings(settings: &SettingsPayload) -> Result<()> {
 pub struct RenderedReference {
     key: String,
     text: String,
+    html: String,
+    first_field_html: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RenderedBibliography {
+    items: Vec<RenderedReference>,
+    hanging_indent: bool,
+    second_field_align: bool,
+    line_spacing: i16,
+    entry_spacing: i16,
 }
 
 fn directories(app: &AppHandle) -> Result<(PathBuf, PathBuf, PathBuf, PathBuf)> {
@@ -1739,7 +1751,7 @@ pub async fn render_bibliography(
     yaml: String,
     style_name: String,
     custom_csl: Option<String>,
-) -> Result<Vec<RenderedReference>> {
+) -> Result<RenderedBibliography> {
     tauri::async_runtime::spawn_blocking(move || {
         let style_name_clone = style_name.clone();
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -1760,7 +1772,7 @@ fn render_bibliography_blocking(
     yaml: String,
     style_name: String,
     custom_csl: Option<String>,
-) -> Result<Vec<RenderedReference>> {
+) -> Result<RenderedBibliography> {
     use hayagriva::archive::{ArchivedStyle, locales};
     use hayagriva::citationberg::{IndependentStyle, Style};
     use hayagriva::{
@@ -1769,13 +1781,13 @@ fn render_bibliography_blocking(
 
     let trimmed_yaml = yaml.trim();
     if trimmed_yaml.is_empty() {
-        return Ok(Vec::new());
+        return Ok(RenderedBibliography::default());
     }
 
     let library = hayagriva::io::from_yaml_str(trimmed_yaml)
         .map_err(|e| format!("Hayagriva rejected this bibliography: {e}"))?;
     if library.is_empty() {
-        return Ok(Vec::new());
+        return Ok(RenderedBibliography::default());
     }
 
     let style = if let Some(csl) = custom_csl.filter(|value| !value.trim().is_empty()) {
@@ -1810,11 +1822,16 @@ fn render_bibliography_blocking(
     let bibliography = rendered
         .bibliography
         .ok_or("The selected CSL style does not define a bibliography.")?;
-    bibliography
+    let items = bibliography
         .items
         .into_iter()
         .map(|item| {
             let mut text = String::new();
+            let first_field_html = item
+                .first_field
+                .as_ref()
+                .map(|field| safe_hayagriva_html(&hayagriva::ElemChildren(vec![field.clone()])))
+                .transpose()?;
             if let Some(first_field) = item.first_field {
                 first_field
                     .write_buf(&mut text, BufWriteFormat::Plain)
@@ -1827,9 +1844,58 @@ fn render_bibliography_blocking(
             Ok(RenderedReference {
                 key: item.key,
                 text,
+                html: safe_hayagriva_html(&item.content)?,
+                first_field_html,
             })
         })
-        .collect()
+        .collect::<Result<Vec<_>>>()?;
+    Ok(RenderedBibliography {
+        items,
+        hanging_indent: bibliography.hanging_indent,
+        second_field_align: bibliography.second_field_align.is_some(),
+        line_spacing: bibliography.line_spacing.get(),
+        entry_spacing: bibliography.entry_spacing,
+    })
+}
+
+/// Hayagriva's HTML writer preserves CSL formatting, but does not escape text
+/// or link attributes. Escape the tree before writing HTML; bibliography data
+/// and custom CSL must never introduce executable markup into the webview.
+fn safe_hayagriva_html(children: &hayagriva::ElemChildren) -> Result<String> {
+    fn escape(text: &str) -> String {
+        text.replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
+            .replace('"', "&quot;")
+            .replace('\'', "&#39;")
+    }
+    fn prepare(children: &mut hayagriva::ElemChildren) {
+        use hayagriva::ElemChild;
+        for child in &mut children.0 {
+            match child {
+                ElemChild::Text(text) => text.text = escape(&text.text),
+                ElemChild::Elem(element) => prepare(&mut element.children),
+                // Typst markup cannot be executed by an HTML preview.
+                ElemChild::Markup(text) => *text = escape(text),
+                ElemChild::Link { text, url } => {
+                    text.text = escape(&text.text);
+                    if validated_external_url(url).is_ok() {
+                        *url = escape(url);
+                    } else {
+                        *child = ElemChild::Text(text.clone());
+                    }
+                }
+                ElemChild::Transparent { .. } => {}
+            }
+        }
+    }
+    let mut escaped = children.clone();
+    prepare(&mut escaped);
+    let mut html = String::new();
+    escaped
+        .write_buf(&mut html, hayagriva::BufWriteFormat::Html)
+        .map_err(|e| e.to_string())?;
+    Ok(html)
 }
 
 #[cfg(test)]
@@ -1837,9 +1903,9 @@ mod tests {
     use super::{
         DATABASE_SCHEMA_VERSION, EditorSettings, FontSettings, LibrarySettings, Metadata,
         SettingsPayload, atomic_write, digest, initialize_database, panic_message, parse_import,
-        parse_import_content_value, render_bibliography, render_bibliography_blocking, safe_id,
-        serialize_yaml, snapshot, validate_settings, validated_external_url,
-        verify_catalog_database,
+        parse_import_content_value, render_bibliography, render_bibliography_blocking,
+        safe_hayagriva_html, safe_id, serialize_yaml, snapshot, validate_settings,
+        validated_external_url, verify_catalog_database,
     };
 
     #[cfg(windows)]
@@ -2100,10 +2166,92 @@ mod tests {
             None,
         ))
         .unwrap();
-        assert_eq!(references.len(), 1);
-        assert_eq!(references[0].key, "paper");
-        assert!(references[0].text.contains("A useful paper"));
-        assert!(references[0].text.contains("[1]"));
+        assert_eq!(references.items.len(), 1);
+        assert_eq!(references.items[0].key, "paper");
+        assert!(references.items[0].text.contains("A useful paper"));
+        assert!(references.items[0].text.contains("[1]"));
+        assert!(references.second_field_align);
+        assert!(
+            references.items[0]
+                .first_field_html
+                .as_ref()
+                .unwrap()
+                .contains("[1]")
+        );
+        assert!(!references.items[0].html.contains("[1]"));
+    }
+
+    #[test]
+    fn hayagriva_preserves_csl_formatting_and_layout() {
+        let csl = r#"<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0" class="in-text">
+          <info><title>Formatting regression</title><id>https://example.com/style</id><updated>2026-01-01T00:00:00+00:00</updated></info>
+          <citation><layout><text variable="title"/></layout></citation>
+          <bibliography hanging-indent="true" line-spacing="2" entry-spacing="3">
+            <layout><text variable="title" font-style="italic" font-weight="bold" font-variant="small-caps" text-decoration="underline" vertical-align="sup"/></layout>
+          </bibliography>
+        </style>"#;
+        let bibliography = render_bibliography_blocking(
+            "book:\n  type: Book\n  title: 'A & <script>title</script>'\n".into(),
+            "unused".into(),
+            Some(csl.into()),
+        )
+        .unwrap();
+        assert!(bibliography.hanging_indent);
+        assert!(!bibliography.second_field_align);
+        assert_eq!(bibliography.line_spacing, 2);
+        assert_eq!(bibliography.entry_spacing, 3);
+        let item = &bibliography.items[0];
+        assert_eq!(item.text, "A & <script>title</script>");
+        for formatting in [
+            "font-style: italic",
+            "font-weight: bold",
+            "font-variant: small-caps",
+            "text-decoration: underline",
+            "vertical-align: super",
+        ] {
+            assert!(
+                item.html.contains(formatting),
+                "Missing {formatting}: {}",
+                item.html
+            );
+        }
+        assert!(
+            item.html
+                .contains("A &amp; &lt;script&gt;title&lt;/script&gt;")
+        );
+        assert!(!item.html.contains("<script>"));
+    }
+
+    #[test]
+    fn hayagriva_html_escapes_markup_and_link_attributes() {
+        use hayagriva::{ElemChild, ElemChildren, Formatted, Formatting};
+        let text = || Formatted {
+            text: "<img src=x onerror=alert(1)> & \"quoted\"".into(),
+            formatting: Formatting::default(),
+        };
+        let children = ElemChildren(vec![
+            ElemChild::Markup("<script>alert(1)</script>".into()),
+            ElemChild::Link {
+                text: text(),
+                url: "javascript:alert(1)".into(),
+            },
+            ElemChild::Link {
+                text: text(),
+                url: "https://example.com/?q=\" onclick=\"alert(1)&a=2".into(),
+            },
+        ]);
+        let html = safe_hayagriva_html(&children).unwrap();
+        assert!(!html.contains("<script>"));
+        assert!(!html.contains("<img"));
+        assert!(!html.contains("javascript:"));
+        assert!(!html.contains("\" onclick="));
+        assert!(html.contains("&lt;img"));
+        assert!(html.contains("&amp;a=2"));
+        assert_eq!(html.matches("<a ").count(), 1);
+        // Preparing HTML must not mutate data used for plain-text export.
+        assert!(
+            matches!(&children.0[0], ElemChild::Markup(value) if value.starts_with("<script>"))
+        );
     }
 
     #[test]
@@ -2160,11 +2308,13 @@ paper2:
         assert!(
             render_bibliography_blocking("".into(), "ieee".into(), None)
                 .unwrap()
+                .items
                 .is_empty()
         );
         assert!(
             render_bibliography_blocking("   ".into(), "ieee".into(), None)
                 .unwrap()
+                .items
                 .is_empty()
         );
     }

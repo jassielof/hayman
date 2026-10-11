@@ -34,7 +34,19 @@ export type RecoveryItem = {
 };
 
 export type DeleteResult = { recoveryId?: number };
-export type RenderedReference = { key: string; text: string };
+export type RenderedReference = {
+  key: string;
+  text: string;
+  html: string;
+  firstFieldHtml: string | null;
+};
+export type RenderedBibliography = {
+  items: RenderedReference[];
+  hangingIndent: boolean;
+  secondFieldAlign: boolean;
+  lineSpacing: number;
+  entrySpacing: number;
+};
 export type Attachment = {
   id: number;
   bibliographyId: string;
@@ -126,7 +138,7 @@ export const tauriBackend = {
   renderTypst: (mainContent: string, inputs: Record<string, string>) =>
     invoke<string>('render_typst', { mainContent, inputs }),
   renderBibliography: (yaml: string, styleName: string, customCsl?: string) =>
-    invoke<RenderedReference[]>('render_bibliography', {
+    invoke<RenderedBibliography>('render_bibliography', {
       yaml,
       styleName,
       customCsl,

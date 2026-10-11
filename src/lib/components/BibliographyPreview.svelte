@@ -1,9 +1,10 @@
 <script lang="ts">
   import CitationStyleControls from '#lib/components/CitationStyleControls.svelte';
+  import FormattedBibliography from '#lib/components/FormattedBibliography.svelte';
   import { SettingsService } from '#lib/services/settings.service.js';
   import {
     tauriBackend,
-    type RenderedReference,
+    type RenderedBibliography,
   } from '#lib/services/tauri-backend.js';
   import { toYaml } from '#lib/services/hayagriva.service.js';
   import type { AppSettings } from '#lib/types/app-settings.js';
@@ -19,7 +20,7 @@
   let useDefaultStyle = $state(true);
   let overrideKind = $state<'bundled' | 'custom-csl'>('bundled');
   let styleInputDebounced = $state('ieee');
-  let references = $state<RenderedReference[]>();
+  let bibliography = $state<RenderedBibliography>();
   let loading = $state(false);
   let error = $state<string>();
   let lastRenderedStyleKey = $state<string | null>(null);
@@ -50,14 +51,14 @@
       // Record the attempt before invoking native code so a render error does
       // not trigger an automatic retry loop.
       lastRenderedStyleKey = previewStyleKey;
-      references = await tauriBackend.renderBibliography(
+      bibliography = await tauriBackend.renderBibliography(
         toYaml(bibliographyData),
         resolved.typstStyle,
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
       );
     } catch (caught) {
       error = caught instanceof Error ? caught.message : String(caught);
-      references = undefined;
+      bibliography = undefined;
     } finally {
       loading = false;
     }
@@ -102,16 +103,8 @@
       </div>
     {:else if error}
       <div role="alert" class="alert alert-error"><span>{error}</span></div>
-    {:else if references}
-      <ol
-        class="list-none space-y-4 font-serif text-base leading-relaxed text-foreground sm:text-[1.05rem]"
-      >
-        {#each references as reference (reference.key)}
-          <li data-entry-key={reference.key} class="pl-6 -indent-6 break-words">
-            {reference.text}
-          </li>
-        {/each}
-      </ol>
+    {:else if bibliography}
+      <FormattedBibliography {bibliography} />
     {:else}
       <p class="text-sm text-muted-foreground">
         Click “Render preview” to format the reference list with Hayagriva.
