@@ -1,0 +1,11 @@
+# Normalize text in the index and keep LF in every checkout, including Windows.
+* text=auto eol=lf
+
+# Third-party font assets should not count toward repository language statistics.
+assets/fonts/** linguist-vendored
+
+# Font binaries must never undergo line-ending conversion.
+*.ttf -text
+*.otf -text
+*.woff -text
+*.woff2 -text
