@@ -52,7 +52,9 @@
       <PlusIcon class="size-[1.2em]" /> Add {label}
     </button>
   {:else if Array.isArray(value)}
-    {#each value as person, i (`${typeof person === 'string' ? person : person.name}-${i}`)}
+    <!-- Names are editable values, not row identities: keying by name remounts
+         the input on every keystroke and drops focus. -->
+    {#each value, i (i)}
       <PersonInput bind:value={value[i]} remove={() => removePerson(i)} />
     {/each}
 
