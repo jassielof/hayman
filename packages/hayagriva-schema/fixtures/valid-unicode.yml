@@ -1,0 +1,57 @@
+中文研究:
+  type: book
+  title: { value: 中文语言与文献研究, verbatim: true }
+  author: { name: 王, given-name: 小明 }
+  language: zh
+  date: 2026
+日本語:
+  type: book
+  title: { value: 日本語の文献と研究, verbatim: true }
+  author: { name: 山田, given-name: 太郎 }
+  language: ja
+  date: 2026
+한국어:
+  type: book
+  title: { value: 한국어 문헌 연구, verbatim: true }
+  author: { name: 김, given-name: 민수 }
+  language: ko
+  date: 2026
+العربية:
+  type: book
+  title: { value: اللغة العربية والمراجع العلمية, verbatim: true }
+  author: { name: منصور, given-name: ليلى }
+  language: ar
+  date: 2026
+עברית:
+  type: book
+  title: { value: מחקר ביבליוגרפי בעברית, verbatim: true }
+  author: { name: כהן, given-name: דנה }
+  language: he
+  date: 2026
+हिन्दी:
+  type: book
+  title: { value: हिन्दी भाषा और साहित्य का अध्ययन, verbatim: true }
+  author: { name: शर्मा, given-name: आशा }
+  language: hi
+  date: 2026
+Ελληνικά:
+  type: book
+  title: { value: Ελληνική γλώσσα και βιβλιογραφία, verbatim: true }
+  author: { name: Παπαδοπούλου, given-name: Ελένη }
+  language: el
+  date: 2026
+Кириллица:
+  type: book
+  title: { value: Русский язык и научная литература, verbatim: true }
+  author: { name: Иванова, given-name: Анна }
+  language: ru
+  date: 2026
+mixed:
+  type: book
+  title:
+    {
+      value: '中文・日本語・한국어 / العربية / Русский / Café / 𠮷',
+      verbatim: true,
+    }
+  author: { name: 𠮷田, given-name: はな }
+  date: 2026

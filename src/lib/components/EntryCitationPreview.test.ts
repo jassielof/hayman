@@ -93,3 +93,41 @@ it('opens citation source links externally', async () => {
   );
   await Promise.resolve();
 });
+
+it.each([
+  ['中文研究', '王小明', '中文语言与文献研究'],
+  ['日本語', '山田太郎', '日本語の文献と研究'],
+  ['한국어', '김민수', '한국어 문헌 연구'],
+  ['العربية', 'ليلى منصور', 'اللغة العربية والمراجع العلمية'],
+  ['עברית', 'דנה כהן', 'מחקר ביבליוגרפי בעברית'],
+  ['हिन्दी', 'आशा शर्मा', 'हिन्दी भाषा और साहित्य का अध्ययन'],
+  ['Ελληνικά', 'Ελένη Παπαδοπούλου', 'Ελληνική βιβλιογραφία'],
+  ['Кириллица', 'Анна Иванова', 'Русская литература'],
+  ['mixed', '𠮷田はな', '中文・日本語 / العربية / Cafe\u0301 / 𠮷'],
+])('retains %s text in citation and bibliography DOM', (key, author, title) => {
+  component = mount(EntryCitationPreview, {
+    target: document.body,
+    props: {
+      loading: false,
+      preview: {
+        parts: [{ text: 'Reference: ' }, { citation: 0 }],
+        citations: [`<span style="font-style: italic;">${author}</span>`],
+        bibliography: {
+          items: [{ key, text: title, html: title, firstFieldHtml: null }],
+          hangingIndent: false,
+          secondFieldAlign: false,
+          lineSpacing: 1,
+          entrySpacing: 0,
+        },
+      },
+    },
+  });
+  flushSync();
+  expect(
+    document.querySelector('[aria-label="Citation examples"]')?.textContent,
+  ).toContain(author);
+  const item = document.querySelector('[data-entry-key]')!;
+  expect(item.getAttribute('data-entry-key')).toBe(key);
+  expect(item.querySelector('div')?.textContent).toBe(title);
+  expect(document.body.textContent).not.toContain('\uFFFD');
+});

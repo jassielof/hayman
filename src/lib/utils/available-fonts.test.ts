@@ -24,6 +24,20 @@ describe('available-fonts', () => {
     expect(toFontStack('monospace', 'monospace')).toBe('monospace');
   });
 
+  it.each([
+    ['Microsoft YaHei', 'sans-serif'],
+    ['游ゴシック', 'sans-serif'],
+    ['맑은 고딕', 'sans-serif'],
+    ['Noto Naskh Arabic', 'serif'],
+    ['Noto Sans Devanagari', 'sans-serif'],
+    ['Missing Font', 'monospace'],
+  ])(
+    'keeps a generic fallback after the local family %s',
+    (family, fallback) => {
+      expect(toFontStack(family, fallback)).toBe(`'${family}', ${fallback}`);
+    },
+  );
+
   it('lists bundled app fonts explicitly', () => {
     expect(BUNDLED_FONT_OPTIONS.sans).toContain('inter-variable');
     expect(BUNDLED_FONT_OPTIONS.sans).toContain('alegreya-sans-sc');

@@ -2199,6 +2199,81 @@ mod tests {
     }
 
     #[test]
+    fn unicode_references_round_trip_and_render_with_bundled_styles() {
+        let fixture = include_str!("../../packages/hayagriva-schema/fixtures/valid-unicode.yml");
+        let original: serde_json::Value = serde_yaml::from_str(fixture).unwrap();
+        let serialized = super::serialize_yaml(&original).unwrap();
+        let restored: serde_json::Value = serde_yaml::from_str(&serialized).unwrap();
+        assert_eq!(restored, original);
+        assert!(serialized.contains("Cafe\u{0301}"));
+        assert!(serialized.contains('𠮷'));
+        for style in ["ieee", "apa"] {
+            let rendered =
+                render_bibliography_blocking(serialized.clone(), style.into(), None).unwrap();
+            assert_eq!(rendered.items.len(), original.as_object().unwrap().len());
+            for item in rendered.items {
+                let source = &original[&item.key];
+                let title = source["title"]["value"].as_str().unwrap();
+                let author = source["author"]["name"].as_str().unwrap();
+                assert!(
+                    item.text.contains(title),
+                    "{style}/{} lost title: {}",
+                    item.key,
+                    item.text
+                );
+                assert!(
+                    item.html.contains(title),
+                    "{style}/{} lost HTML title: {}",
+                    item.key,
+                    item.html
+                );
+                assert!(
+                    item.text.contains(author),
+                    "{style}/{} lost author: {}",
+                    item.key,
+                    item.text
+                );
+                assert!(!item.html.contains('\u{fffd}'));
+            }
+        }
+    }
+
+    #[test]
+    fn unicode_entry_citations_preserve_names_and_supplements() {
+        let fixture = include_str!("../../packages/hayagriva-schema/fixtures/valid-unicode.yml");
+        let original: serde_json::Value = serde_yaml::from_str(fixture).unwrap();
+        for (key, entry) in original.as_object().unwrap() {
+            let preview = super::render_hayagriva_blocking(
+                fixture.into(),
+                "apa".into(),
+                None,
+                Some(key.clone()),
+                vec![
+                    super::PreviewCitation {
+                        form: super::CitationForm::Author,
+                        supplement: None,
+                    },
+                    super::PreviewCitation {
+                        form: super::CitationForm::Normal,
+                        supplement: Some("第３章・附録／ملحق".into()),
+                    },
+                ],
+            )
+            .unwrap();
+            assert!(
+                preview.citations[0].contains(entry["author"]["name"].as_str().unwrap()),
+                "Lost author for {key}"
+            );
+            assert!(
+                preview.citations[1].contains("第３章・附録／ملحق"),
+                "Lost supplement for {key}: {}",
+                preview.citations[1]
+            );
+            assert_eq!(preview.bibliography.items[0].key, *key);
+        }
+    }
+
+    #[test]
     fn entry_preview_renders_all_forms_and_supplements_in_process() {
         use super::{CitationForm, PreviewCitation, render_entry_preview};
         let forms = [

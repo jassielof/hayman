@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
 import validCompleteYaml from '../fixtures/valid-complete.yml?raw';
+import validUnicodeYaml from '../fixtures/valid-unicode.yml?raw';
 import {
   ENTRY_TYPE_NAMES,
   assertHayagrivaStructure,
@@ -11,6 +12,13 @@ import {
 } from './index.js';
 
 describe('Hayagriva schema contract', () => {
+  it('preserves Unicode keys, names, titles and language tags without normalization', () => {
+    const value = YAML.parse(validUnicodeYaml, { schema: 'core' });
+    expect(hayagrivaBibliographySchema.parse(value)).toEqual(value);
+    expect(() => assertHayagrivaStructure(value)).not.toThrow();
+    expect(value.mixed.title.value).toContain('Cafe\u0301');
+    expect(value.mixed.author.name).toBe('𠮷田');
+  });
   it('accepts the shared complete fixture', () => {
     const value = YAML.parse(validCompleteYaml, { schema: 'core' });
     expect(hayagrivaBibliographySchema.safeParse(value).success).toBe(true);
