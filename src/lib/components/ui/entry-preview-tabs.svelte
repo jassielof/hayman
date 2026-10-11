@@ -1,14 +1,16 @@
 <script lang="ts">
   import CitationStyleControls from '#lib/components/CitationStyleControls.svelte';
-  import TypstPreview from '#lib/components/TypstPreview.svelte';
+  import EntryCitationPreview from '#lib/components/EntryCitationPreview.svelte';
   import { SettingsService } from '#lib/services/settings.service.js';
-  import { renderEntryCitationSvg } from '#lib/services/typst-preview.service.js';
+  import {
+    renderEntryPreview,
+    type EntryPreview,
+    DEFAULT_ENTRY_PREVIEW_TEMPLATE,
+  } from '#lib/services/citation-preview.service.js';
   import type { AppSettings } from '#lib/types/app-settings.js';
   import type { Hayagriva } from '@hayman/hayagriva-schema';
   import { resolvePreviewCitationStyle } from '#lib/utils/citation-style.js';
-  import { isMobileViewport } from '#lib/utils/match-mobile.js';
   import { cn } from '#lib/utils/cn.js';
-  import { DEFAULT_ENTRY_CITATION_BODY } from '#lib/typst/templates.js';
   import { Tabs } from 'bits-ui';
   import hljs from 'highlight.js/lib/core';
   import yaml from 'highlight.js/lib/languages/yaml';
@@ -32,13 +34,13 @@
   let useDefaultStyle = $state(true);
   let overrideKind = $state<'bundled' | 'custom-csl'>('bundled');
   let styleInputDebounced = $state('ieee');
-  let citationSvg = $state<string | undefined>();
+  let citationPreview = $state<EntryPreview | undefined>();
   let citationLoading = $state(false);
   let citationError = $state<string | undefined>();
   let lastRenderedStyleKey = $state<string | null>(null);
   let useEntryBodyOverride = $state(false);
-  let entryPreviewBody = $state(DEFAULT_ENTRY_CITATION_BODY);
-  let entryPreviewBodyDebounced = $state(DEFAULT_ENTRY_CITATION_BODY);
+  let entryPreviewTemplate = $state(DEFAULT_ENTRY_PREVIEW_TEMPLATE);
+  let entryPreviewTemplateDebounced = $state(DEFAULT_ENTRY_PREVIEW_TEMPLATE);
 
   const yamlSource = $derived(entryYamlData.join('\n'));
   const highlightedYaml = $derived(
@@ -52,11 +54,13 @@
           overrideKind,
           style: styleInputDebounced.trim(),
           defaultStyle: settings.citation.defaultStyle,
-          cslName: settings.citation.customCslName ?? '',
-          entryBody: useEntryBodyOverride
-            ? entryPreviewBodyDebounced
-            : (settings.citation.entryPreviewBody ??
-              DEFAULT_ENTRY_CITATION_BODY),
+          csl: settings.citation.customCsl ?? '',
+          entryId,
+          bibliographyData,
+          entryTemplate: useEntryBodyOverride
+            ? entryPreviewTemplateDebounced
+            : (settings.citation.entryPreviewTemplate ??
+              DEFAULT_ENTRY_PREVIEW_TEMPLATE),
         })
       : null,
   );
@@ -72,21 +76,18 @@
         overrideKind,
         bundledStyle: styleInputDebounced,
       });
-      // Record the attempt before invoking Typst so failures remain visible
+      // Record the attempt before invoking Hayagriva so failures remain visible
       // instead of immediately retriggering the same render forever.
       lastRenderedStyleKey = previewStyleKey;
-      citationSvg = await renderEntryCitationSvg(
+      citationPreview = await renderEntryPreview(
         bibliographyData,
         entryId,
-        resolved.typstStyle,
-        resolved.label,
-        loaded.fonts,
+        resolved.styleName,
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
-        isMobileViewport(),
         useEntryBodyOverride
-          ? entryPreviewBodyDebounced
-          : loaded.citation.entryPreviewBody?.trim() ||
-              DEFAULT_ENTRY_CITATION_BODY,
+          ? entryPreviewTemplateDebounced
+          : loaded.citation.entryPreviewTemplate?.trim() ||
+              DEFAULT_ENTRY_PREVIEW_TEMPLATE,
       );
     } catch (err) {
       citationError =
@@ -95,7 +96,7 @@
           : typeof err === 'string'
             ? err
             : 'Failed to render citation preview.';
-      citationSvg = undefined;
+      citationPreview = undefined;
     } finally {
       citationLoading = false;
     }
@@ -116,14 +117,14 @@
   });
 
   $effect(() => {
-    const value = entryPreviewBody;
+    const value = entryPreviewTemplate;
     if (!useEntryBodyOverride) {
-      entryPreviewBodyDebounced = value;
+      entryPreviewTemplateDebounced = value;
       return;
     }
 
     const timer = setTimeout(() => {
-      entryPreviewBodyDebounced = value;
+      entryPreviewTemplateDebounced = value;
     }, 400);
 
     return () => clearTimeout(timer);
@@ -184,15 +185,14 @@
       bind:useDefaultStyle
       bind:overrideKind
       bind:useEntryBodyOverride
-      bind:entryPreviewBody
+      bind:entryPreviewTemplate
       showEntryBodyControls={true}
       onRender={renderCitation}
     />
-    <TypstPreview
-      svg={citationSvg}
+    <EntryCitationPreview
+      preview={citationPreview}
       loading={citationLoading}
       error={citationError}
-      variant="citation"
     />
   </Tabs.Content>
 </Tabs.Root>

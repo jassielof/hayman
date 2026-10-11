@@ -4,7 +4,11 @@
   import { SettingsService } from '#lib/services/settings.service.js';
   import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
   import { CUSTOM_CSL_STYLE } from '#lib/utils/citation-style.js';
-  import { DEFAULT_ENTRY_CITATION_BODY } from '#lib/typst/templates.js';
+  import {
+    DEFAULT_ENTRY_PREVIEW_TEMPLATE,
+    ENTRY_PREVIEW_TEMPLATE_HELP,
+    parsePreviewTemplate,
+  } from '#lib/services/citation-preview.service.js';
   import {
     formatFontFamilyLabel,
     listAvailableFonts,
@@ -62,10 +66,8 @@
   });
   let fontsLoading = $state(true);
   let customizeEntryPreviewBody = $state(false);
-  let entryPreviewBody = $state(DEFAULT_ENTRY_CITATION_BODY);
+  let entryPreviewTemplate = $state(DEFAULT_ENTRY_PREVIEW_TEMPLATE);
   let storage = $state<StorageInfo | undefined>();
-  let typstVersion = $state<string | undefined>();
-  let typstError = $state<string | undefined>();
   let recoveryItems = $state<RecoveryItem[]>([]);
   let restoringId = $state<number | undefined>();
   let clearSnapshotsOpen = $state(false);
@@ -115,10 +117,6 @@
     tauriBackend.storageInfo().then((value) => (storage = value));
     tauriBackend.listRecovery().then((value) => (recoveryItems = value));
     tauriBackend.listEntryTrash().then((value) => (trashItems = value));
-    tauriBackend.typstVersion().then(
-      (value) => (typstVersion = value),
-      (error) => (typstError = String(error)),
-    );
   });
 
   async function restoreSnapshot(item: RecoveryItem) {
@@ -201,10 +199,10 @@
       if (cancelled) return;
       settings = loaded;
       customizeEntryPreviewBody = Boolean(
-        loaded.citation.entryPreviewBody?.trim(),
+        loaded.citation.entryPreviewTemplate?.trim(),
       );
-      entryPreviewBody =
-        loaded.citation.entryPreviewBody || DEFAULT_ENTRY_CITATION_BODY;
+      entryPreviewTemplate =
+        loaded.citation.entryPreviewTemplate || DEFAULT_ENTRY_PREVIEW_TEMPLATE;
       if (
         loaded.citation.defaultStyle === CUSTOM_CSL_STYLE &&
         loaded.citation.customCsl?.trim()
@@ -260,18 +258,21 @@
         defaultKind === 'custom-csl'
           ? CUSTOM_CSL_STYLE
           : bundledDefaultStyle.trim() || 'ieee',
-      entryPreviewBody: customizeEntryPreviewBody
-        ? entryPreviewBody.trim() || DEFAULT_ENTRY_CITATION_BODY
+      entryPreviewTemplate: customizeEntryPreviewBody
+        ? entryPreviewTemplate.trim() || DEFAULT_ENTRY_PREVIEW_TEMPLATE
         : undefined,
     };
 
     if (defaultKind === 'custom-csl' && !citation.customCsl?.trim()) {
-      errorMessage = 'Upload a CSL file or choose a built-in Typst style.';
+      errorMessage = 'Upload a CSL file or choose a bundled Hayagriva style.';
       isSubmitting = false;
       return;
     }
 
     try {
+      parsePreviewTemplate(
+        citation.entryPreviewTemplate ?? DEFAULT_ENTRY_PREVIEW_TEMPLATE,
+      );
       await SettingsService.update({
         fonts: settings.fonts,
         citation,
@@ -398,15 +399,6 @@
           </div>
         {/if}
       </div>
-      {#if typstVersion}
-        <p class="text-sm">
-          Typst prerequisite found: <code>{typstVersion}</code>
-        </p>
-      {:else if typstError}
-        <div class="alert alert-warning text-sm" role="status">
-          {typstError}
-        </div>
-      {/if}
       <details class="rounded-md border border-border bg-card/60 p-3">
         <summary class="cursor-pointer text-sm font-medium"
           >Recovery snapshots ({recoveryItems.length})</summary
@@ -500,8 +492,8 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Fonts</legend>
       <p class="text-sm text-muted-foreground">
-        System stacks plus app-bundled webfonts (when loaded). Typst previews
-        use the compiler’s own font set.
+        System stacks plus app-bundled webfonts (when loaded), used throughout
+        the app and citation previews.
       </p>
 
       {#if fontsLoading}
@@ -612,8 +604,8 @@
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Citation preview default</legend>
       <p class="text-sm text-muted-foreground">
-        Choose one default for previews. Typst built-in styles and an uploaded
-        CSL file are mutually exclusive defaults.
+        Choose one default for previews. Hayagriva bundled styles and an
+        uploaded CSL file are mutually exclusive defaults.
       </p>
 
       <label class="label flex cursor-pointer items-start gap-2 font-normal">
@@ -625,7 +617,7 @@
           onchange={() => (defaultKind = 'bundled')}
         />
         <span>
-          Typst built-in style
+          Hayagriva bundled style
           <span class="block text-xs text-muted-foreground">
             e.g. ieee, apa, chicago-author-date, mla
           </span>
@@ -654,7 +646,7 @@
         <span>
           Uploaded CSL file
           <span class="block text-xs text-muted-foreground">
-            Uses your CSL instead of a Typst bundled style.
+            Uses your CSL instead of a Hayagriva bundled style.
           </span>
         </span>
       </label>
@@ -702,17 +694,20 @@
               bind:checked={customizeEntryPreviewBody}
             />
             <span>
-              Use custom Typst source
+              Use a custom example template
               <span class="block text-xs text-muted-foreground">
                 Replaces the default citation examples in entry previews.
               </span>
             </span>
           </label>
+          <p class="text-xs text-muted-foreground">
+            {ENTRY_PREVIEW_TEMPLATE_HELP}
+          </p>
           {#if customizeEntryPreviewBody}
             <textarea
               class="textarea min-h-52 font-mono text-xs"
-              aria-label="Default entry preview Typst source"
-              bind:value={entryPreviewBody}></textarea>
+              aria-label="Default entry preview template"
+              bind:value={entryPreviewTemplate}></textarea>
           {/if}
         </div>
       </details>

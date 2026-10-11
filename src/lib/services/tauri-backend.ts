@@ -47,6 +47,14 @@ export type RenderedBibliography = {
   lineSpacing: number;
   entrySpacing: number;
 };
+export type PreviewCitation = {
+  form: 'normal' | 'prose' | 'author' | 'year' | 'full';
+  supplement?: string;
+};
+export type RenderedEntryPreview = {
+  citations: string[];
+  bibliography: RenderedBibliography;
+};
 export type Attachment = {
   id: number;
   bibliographyId: string;
@@ -134,9 +142,20 @@ export const tauriBackend = {
   getSettings: () => invoke<AppSettings | null>('get_settings'),
   setSettings: (settings: AppSettings) =>
     invoke<void>('set_settings', { settings }),
-  typstVersion: () => invoke<string>('typst_version'),
-  renderTypst: (mainContent: string, inputs: Record<string, string>) =>
-    invoke<string>('render_typst', { mainContent, inputs }),
+  renderEntryPreview: (
+    yaml: string,
+    entryKey: string,
+    styleName: string,
+    customCsl: string | undefined,
+    citations: PreviewCitation[],
+  ) =>
+    invoke<RenderedEntryPreview>('render_entry_preview', {
+      yaml,
+      entryKey,
+      styleName,
+      customCsl,
+      citations,
+    }),
   renderBibliography: (yaml: string, styleName: string, customCsl?: string) =>
     invoke<RenderedBibliography>('render_bibliography', {
       yaml,

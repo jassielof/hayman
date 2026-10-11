@@ -5,8 +5,8 @@ export const CUSTOM_CSL_STYLE = 'custom' as const;
 export type CitationDefaultKind = 'bundled' | 'custom-csl';
 
 export interface ResolvedCitationStyle {
-  /** Value passed to Typst `#bibliography(..., style: ...)` */
-  typstStyle: string;
+  /** Bundled Hayagriva style name, or the custom-CSL sentinel */
+  styleName: string;
   /** Human-readable label for the UI */
   label: string;
   useCustomCsl: boolean;
@@ -43,7 +43,7 @@ export function resolveSettingsDefaultCitationStyle(
 ): ResolvedCitationStyle {
   if (usesCustomCslDefault(settings)) {
     return {
-      typstStyle: CUSTOM_CSL_STYLE,
+      styleName: CUSTOM_CSL_STYLE,
       label: settings.citation.customCslName ?? 'Custom CSL',
       useCustomCsl: true,
     };
@@ -51,7 +51,7 @@ export function resolveSettingsDefaultCitationStyle(
 
   const style = bundledStyleFromSettings(settings);
   return {
-    typstStyle: style,
+    styleName: style,
     label: style,
     useCustomCsl: false,
   };
@@ -65,7 +65,7 @@ export function resolveCitationStyle(
 
   if (trimmed === CUSTOM_CSL_STYLE && hasCustomCsl(settings)) {
     return {
-      typstStyle: CUSTOM_CSL_STYLE,
+      styleName: CUSTOM_CSL_STYLE,
       label: settings.citation.customCslName ?? 'Custom CSL',
       useCustomCsl: true,
     };
@@ -73,7 +73,7 @@ export function resolveCitationStyle(
 
   const style = trimmed || bundledStyleFromSettings(settings);
   return {
-    typstStyle: style,
+    styleName: style,
     label: style,
     useCustomCsl: false,
   };

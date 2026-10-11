@@ -1,30 +1,13 @@
 <script lang="ts">
-  import {
-    tauriBackend,
-    type RenderedBibliography,
-  } from '#lib/services/tauri-backend.js';
+  import type { RenderedBibliography } from '#lib/services/tauri-backend.js';
+  import { externalPreviewLinks } from '#lib/utils/external-preview-links.js';
 
   let { bibliography }: { bibliography: RenderedBibliography } = $props();
   let linkError = $state<string>();
-
-  function externalLinks(node: HTMLOListElement) {
-    const click = (event: MouseEvent) => {
-      const link =
-        event.target instanceof Element ? event.target.closest('a') : null;
-      if (!link || !node.contains(link)) return;
-      event.preventDefault();
-      linkError = undefined;
-      void tauriBackend.openExternalUrl(link.href).catch((error) => {
-        linkError = String(error);
-      });
-    };
-    node.addEventListener('click', click);
-    return { destroy: () => node.removeEventListener('click', click) };
-  }
 </script>
 
 <ol
-  use:externalLinks
+  use:externalPreviewLinks={(error) => (linkError = error)}
   class="flex list-none flex-col font-serif text-base text-foreground sm:text-[1.05rem]"
   style:line-height={Math.max(1, bibliography.lineSpacing) * 1.35}
   style:gap={`${Math.max(0, bibliography.entrySpacing)}lh`}

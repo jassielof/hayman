@@ -70,7 +70,7 @@ describe('SettingsService', () => {
         defaultStyle: 'custom',
         customCslName: 'ieee.csl',
         customCsl: '<style></style>',
-        entryPreviewBody: '#cite(key)',
+        entryPreviewTemplate: '{{normal}}',
       },
     });
     await SettingsService.clearCustomCsl();
@@ -78,6 +78,19 @@ describe('SettingsService', () => {
     expect(settings.citation.customCslName).toBeUndefined();
     expect(settings.citation.customCsl).toBeUndefined();
     expect(settings.citation.defaultStyle).toBe('ieee');
-    expect(settings.citation.entryPreviewBody).toBe('#cite(key)');
+    expect(settings.citation.entryPreviewTemplate).toBe('{{normal}}');
+  });
+
+  it('drops legacy executable templates without treating them as plain text', async () => {
+    state.value = {
+      ...structuredClone(DEFAULT_APP_SETTINGS),
+      citation: { defaultStyle: 'apa', entryPreviewBody: '#cite(key)' },
+    } as unknown as AppSettings;
+    const settings = await SettingsService.get();
+    expect(settings.citation).not.toHaveProperty('entryPreviewBody');
+    expect(settings.citation.entryPreviewTemplate).toBeUndefined();
+    expect(settings.citation.defaultStyle).toBe('apa');
+    await SettingsService.update({ library: { density: 'compact' } });
+    expect(state.value?.citation).not.toHaveProperty('entryPreviewBody');
   });
 });

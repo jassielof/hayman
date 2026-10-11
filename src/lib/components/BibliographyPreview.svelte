@@ -53,7 +53,7 @@
       lastRenderedStyleKey = previewStyleKey;
       bibliography = await tauriBackend.renderBibliography(
         toYaml(bibliographyData),
-        resolved.typstStyle,
+        resolved.styleName,
         resolved.useCustomCsl ? loaded.citation.customCsl : undefined,
       );
     } catch (caught) {

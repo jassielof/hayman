@@ -4,9 +4,9 @@ A local-first bibliography workspace built strictly around Hayagriva files.
 
 Hayman supports quick editing of a single linked YAML file as well as projects that search and combine several bibliographies without copying their entries. App-only data such as attachment links, trash, and project membership stays out of portable Hayagriva YAML.
 
-## Prerequisites
+## Citation previews
 
-Install Typst to enable citation previews. Editing and validation continue to work without it.
+Citation and bibliography previews run locally using the bundled Hayagriva library; no external compiler is required. Choose a bundled CSL style or upload your own. Customize entry examples in Settings with plain text and citation placeholders such as `{{prose}}`, `{{normal}}`, `{{author}}`, `{{year}}`, `{{full}}`, or `{{normal|pp. 1–5}}`. Existing compiler-source templates are replaced by the default examples.
 
 ## Contributing
 

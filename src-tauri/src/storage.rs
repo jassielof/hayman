@@ -29,11 +29,8 @@ use std::collections::BTreeMap;
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::time::Duration;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
-use wait_timeout::ChildExt;
 
 type Result<T> = std::result::Result<T, String>;
 // Increment only with an additive, upgrade-tested migration; released local
@@ -269,6 +266,28 @@ pub struct RenderedBibliography {
     second_field_align: bool,
     line_spacing: i16,
     entry_spacing: i16,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum CitationForm {
+    Normal,
+    Prose,
+    Author,
+    Year,
+    Full,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct PreviewCitation {
+    form: CitationForm,
+    supplement: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct RenderedEntryPreview {
+    citations: Vec<String>,
+    bibliography: RenderedBibliography,
 }
 
 fn directories(app: &AppHandle) -> Result<(PathBuf, PathBuf, PathBuf, PathBuf)> {
@@ -1642,110 +1661,6 @@ pub fn set_settings(app: AppHandle, settings: SettingsPayload) -> Result<()> {
     Ok(())
 }
 
-// Release builds have no parent console on Windows. Without CREATE_NO_WINDOW,
-// launching a console tool creates a visible console even with redirected I/O.
-fn background_command(program: impl AsRef<std::ffi::OsStr>) -> Command {
-    let mut command = Command::new(program);
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        command.creation_flags(CREATE_NO_WINDOW);
-    }
-    command.stdin(Stdio::null());
-    command
-}
-
-#[tauri::command]
-pub fn typst_version() -> Result<String> {
-    let output = background_command("typst")
-        .arg("--version")
-        .output()
-        .map_err(|e| format!("Typst is required but could not be started: {e}"))?;
-    if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
-    }
-    Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
-}
-
-#[tauri::command]
-pub async fn render_typst(
-    main_content: String,
-    inputs: BTreeMap<String, String>,
-) -> Result<String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            render_typst_blocking(main_content, inputs)
-        }))
-        .unwrap_or_else(|panic_info| {
-            let detail = panic_message(&*panic_info);
-            Err(format!("Typst preview worker failed: {detail}"))
-        })
-    })
-    .await
-    .map_err(|e| format!("Typst preview worker failed: {e}"))?
-}
-
-fn render_typst_blocking(
-    mut main_content: String,
-    mut inputs: BTreeMap<String, String>,
-) -> Result<String> {
-    let temporary = tempfile::tempdir().map_err(|e| e.to_string())?;
-    let yaml = inputs
-        .remove("yaml")
-        .ok_or("Typst preview is missing bibliography data.")?;
-    fs::write(temporary.path().join("bibliography.yml"), yaml).map_err(|e| e.to_string())?;
-    main_content = main_content
-        .replace("bytes(sys.inputs.at(\"yaml\"))", "\"bibliography.yml\"")
-        .replace("read(\"bibliography.yml\")", "\"bibliography.yml\"")
-        .replace("sys.inputs.at(\"yaml\")", "\"bibliography.yml\"");
-    if let Some(csl) = inputs.remove("csl").filter(|value| !value.is_empty()) {
-        fs::write(temporary.path().join("style.csl"), csl).map_err(|e| e.to_string())?;
-        main_content = main_content
-            .replace("bytes(sys.inputs.at(\"csl\"))", "\"style.csl\"")
-            .replace("read(\"style.csl\")", "\"style.csl\"")
-            .replace("sys.inputs.at(\"csl\")", "\"style.csl\"");
-        inputs.insert("csl".into(), "style.csl".into());
-    }
-    fs::write(temporary.path().join("main.typ"), main_content).map_err(|e| e.to_string())?;
-
-    let output_path = temporary.path().join("preview.svg");
-    let diagnostics_path = temporary.path().join("diagnostics.txt");
-    let diagnostics = File::create(&diagnostics_path).map_err(|e| e.to_string())?;
-    let mut command = background_command("typst");
-    command.args(["compile", "--diagnostic-format", "short", "--format", "svg"]);
-    for (key, value) in inputs {
-        command.args(["--input", &format!("{key}={value}")]);
-    }
-    let mut child = command
-        .args(["main.typ", "preview.svg"])
-        .current_dir(temporary.path())
-        .stdout(Stdio::null())
-        .stderr(Stdio::from(diagnostics))
-        .spawn()
-        .map_err(|e| format!("Typst is required but could not be started: {e}"))?;
-    let status = match child
-        .wait_timeout(Duration::from_secs(30))
-        .map_err(|e| e.to_string())?
-    {
-        Some(status) => status,
-        None => {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err("Typst preview timed out after 30 seconds.".into());
-        }
-    };
-    if !status.success() {
-        let diagnostics = fs::read_to_string(diagnostics_path).unwrap_or_default();
-        return Err(if diagnostics.trim().is_empty() {
-            format!("Typst exited with {status}.")
-        } else {
-            diagnostics.trim().to_owned()
-        });
-    }
-    fs::read_to_string(output_path).map_err(|e| format!("Could not read Typst SVG output: {e}"))
-}
-
 #[tauri::command]
 pub async fn render_bibliography(
     yaml: String,
@@ -1773,6 +1688,40 @@ fn render_bibliography_blocking(
     style_name: String,
     custom_csl: Option<String>,
 ) -> Result<RenderedBibliography> {
+    render_hayagriva_blocking(yaml, style_name, custom_csl, None, Vec::new())
+        .map(|preview| preview.bibliography)
+}
+
+#[tauri::command]
+pub async fn render_entry_preview(
+    yaml: String,
+    entry_key: String,
+    style_name: String,
+    custom_csl: Option<String>,
+    citations: Vec<PreviewCitation>,
+) -> Result<RenderedEntryPreview> {
+    tauri::async_runtime::spawn_blocking(move || {
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            render_hayagriva_blocking(yaml, style_name, custom_csl, Some(entry_key), citations)
+        }))
+        .unwrap_or_else(|panic| {
+            Err(format!(
+                "Hayagriva was unable to format this entry: {}",
+                panic_message(&*panic)
+            ))
+        })
+    })
+    .await
+    .map_err(|error| format!("Hayagriva preview worker failed: {error}"))?
+}
+
+fn render_hayagriva_blocking(
+    yaml: String,
+    style_name: String,
+    custom_csl: Option<String>,
+    entry_key: Option<String>,
+    citations: Vec<PreviewCitation>,
+) -> Result<RenderedEntryPreview> {
     use hayagriva::archive::{ArchivedStyle, locales};
     use hayagriva::citationberg::{IndependentStyle, Style};
     use hayagriva::{
@@ -1781,13 +1730,27 @@ fn render_bibliography_blocking(
 
     let trimmed_yaml = yaml.trim();
     if trimmed_yaml.is_empty() {
-        return Ok(RenderedBibliography::default());
+        return if entry_key.is_some() {
+            Err("The preview entry is not present in this bibliography.".into())
+        } else {
+            Ok(RenderedEntryPreview {
+                citations: Vec::new(),
+                bibliography: RenderedBibliography::default(),
+            })
+        };
     }
 
     let library = hayagriva::io::from_yaml_str(trimmed_yaml)
         .map_err(|e| format!("Hayagriva rejected this bibliography: {e}"))?;
     if library.is_empty() {
-        return Ok(RenderedBibliography::default());
+        return if entry_key.is_some() {
+            Err("The preview entry is not present in this bibliography.".into())
+        } else {
+            Ok(RenderedEntryPreview {
+                citations: Vec::new(),
+                bibliography: RenderedBibliography::default(),
+            })
+        };
     }
 
     let style = if let Some(csl) = custom_csl.filter(|value| !value.trim().is_empty()) {
@@ -1811,14 +1774,57 @@ fn render_bibliography_blocking(
     };
     let locales = locales();
     let mut driver = BibliographyDriver::new();
-    for entry in library.iter() {
-        driver.citation(CitationRequest::from_items(
-            vec![CitationItem::with_entry(entry)],
-            &style,
-            &locales,
-        ));
+    if let Some(key) = entry_key {
+        use hayagriva::citationberg::taxonomy::Locator;
+        use hayagriva::{CitePurpose, LocatorPayload, SpecificLocator};
+        let entry = library
+            .get(&key)
+            .ok_or("The preview entry is not present in this bibliography.")?;
+        if citations.len() > 100 {
+            return Err("A preview can contain at most 100 citations.".into());
+        }
+        // Register the selected entry even when the template has no citations.
+        if citations.is_empty() {
+            driver.citation(CitationRequest::from_items(
+                vec![CitationItem::with_entry(entry)],
+                &style,
+                &locales,
+            ));
+        }
+        for citation in &citations {
+            let mut item = CitationItem::with_locator(
+                entry,
+                citation
+                    .supplement
+                    .as_deref()
+                    .filter(|s| !s.is_empty())
+                    .map(|text| SpecificLocator(Locator::Custom, LocatorPayload::Str(text))),
+            );
+            item.purpose = match citation.form {
+                CitationForm::Normal => None,
+                CitationForm::Prose => Some(CitePurpose::Prose),
+                CitationForm::Author => Some(CitePurpose::Author),
+                CitationForm::Year => Some(CitePurpose::Year),
+                CitationForm::Full => Some(CitePurpose::Full),
+            };
+            driver.citation(CitationRequest::from_items(vec![item], &style, &locales));
+        }
+    } else {
+        for entry in library.iter() {
+            driver.citation(CitationRequest::from_items(
+                vec![CitationItem::with_entry(entry)],
+                &style,
+                &locales,
+            ));
+        }
     }
     let rendered = driver.finish(BibliographyRequest::new(&style, None, &locales));
+    let rendered_citations = rendered
+        .citations
+        .iter()
+        .take(citations.len())
+        .map(|citation| safe_hayagriva_html(&citation.citation))
+        .collect::<Result<Vec<_>>>()?;
     let bibliography = rendered
         .bibliography
         .ok_or("The selected CSL style does not define a bibliography.")?;
@@ -1849,12 +1855,15 @@ fn render_bibliography_blocking(
             })
         })
         .collect::<Result<Vec<_>>>()?;
-    Ok(RenderedBibliography {
-        items,
-        hanging_indent: bibliography.hanging_indent,
-        second_field_align: bibliography.second_field_align.is_some(),
-        line_spacing: bibliography.line_spacing.get(),
-        entry_spacing: bibliography.entry_spacing,
+    Ok(RenderedEntryPreview {
+        citations: rendered_citations,
+        bibliography: RenderedBibliography {
+            items,
+            hanging_indent: bibliography.hanging_indent,
+            second_field_align: bibliography.second_field_align.is_some(),
+            line_spacing: bibliography.line_spacing.get(),
+            entry_spacing: bibliography.entry_spacing,
+        },
     })
 }
 
@@ -1907,39 +1916,6 @@ mod tests {
         safe_hayagriva_html, safe_id, serialize_yaml, snapshot, validate_settings,
         validated_external_url, verify_catalog_database,
     };
-
-    #[cfg(windows)]
-    #[test]
-    fn background_process_does_not_allocate_a_windows_console() {
-        const PROBE: &str = "HAYMAN_TEST_BACKGROUND_CONSOLE";
-        if std::env::var_os(PROBE).is_some() {
-            #[link(name = "kernel32")]
-            unsafe extern "system" {
-                fn GetConsoleWindow() -> *mut std::ffi::c_void;
-            }
-            // SAFETY: GetConsoleWindow takes no arguments and returns a borrowed
-            // handle; querying it does not change console or process state.
-            assert!(unsafe { GetConsoleWindow() }.is_null());
-            println!("background stdout captured");
-            eprintln!("background stderr captured");
-            return;
-        }
-
-        // Use the test executable as a console tool: no installed Typst is
-        // needed, and the child can directly check whether Windows gave it a console.
-        let output = super::background_command(std::env::current_exe().unwrap())
-            .args([
-                "--exact",
-                "storage::tests::background_process_does_not_allocate_a_windows_console",
-                "--nocapture",
-            ])
-            .env(PROBE, "1")
-            .output()
-            .unwrap();
-        assert!(output.status.success(), "{output:?}");
-        assert!(String::from_utf8_lossy(&output.stdout).contains("background stdout captured"));
-        assert!(String::from_utf8_lossy(&output.stderr).contains("background stderr captured"));
-    }
 
     #[test]
     fn database_schema_migrates_legacy_recovery_and_preserves_relational_invariants() {
@@ -2220,6 +2196,136 @@ mod tests {
                 .contains("A &amp; &lt;script&gt;title&lt;/script&gt;")
         );
         assert!(!item.html.contains("<script>"));
+    }
+
+    #[test]
+    fn entry_preview_renders_all_forms_and_supplements_in_process() {
+        use super::{CitationForm, PreviewCitation, render_entry_preview};
+        let forms = [
+            CitationForm::Normal,
+            CitationForm::Prose,
+            CitationForm::Author,
+            CitationForm::Year,
+            CitationForm::Full,
+        ];
+        let mut citations: Vec<_> = forms
+            .into_iter()
+            .map(|form| PreviewCitation {
+                form,
+                supplement: None,
+            })
+            .collect();
+        citations.push(PreviewCitation {
+            form: CitationForm::Normal,
+            supplement: Some("pp. 1–5".into()),
+        });
+        let preview = tauri::async_runtime::block_on(render_entry_preview(
+            "selected:\n  type: Book\n  title: Native previews\n  author: Doe, Jane\n  date: 2026\nother:\n  type: Book\n  title: Not selected\n".into(),
+            "selected".into(), "apa".into(), None, citations,
+        )).unwrap();
+        assert_eq!(preview.citations.len(), 6);
+        assert!(
+            preview
+                .citations
+                .iter()
+                .all(|citation| !citation.is_empty())
+        );
+        assert!(preview.citations[0].contains("Doe"));
+        assert!(preview.citations[1].contains("Doe"));
+        assert!(preview.citations[2].contains("Doe"));
+        assert!(!preview.citations[2].contains("2026"));
+        assert!(preview.citations[3].contains("2026"));
+        assert!(!preview.citations[3].contains("Doe"));
+        assert!(preview.citations[4].contains("Native previews"));
+        assert!(preview.citations[5].contains("pp. 1–5"));
+        assert_eq!(preview.bibliography.items.len(), 1);
+        assert_eq!(preview.bibliography.items[0].key, "selected");
+        assert!(
+            preview.bibliography.items[0]
+                .html
+                .contains("font-style: italic")
+        );
+    }
+
+    #[test]
+    fn entry_preview_without_placeholders_still_renders_bibliography() {
+        let preview = super::render_hayagriva_blocking(
+            "book:\n  type: Book\n  title: A book\n".into(),
+            "ieee".into(),
+            None,
+            Some("book".into()),
+            Vec::new(),
+        )
+        .unwrap();
+        assert!(preview.citations.is_empty());
+        assert_eq!(preview.bibliography.items.len(), 1);
+    }
+
+    #[test]
+    fn entry_preview_rejects_missing_entries_invalid_forms_and_excessive_requests() {
+        use super::{CitationForm, PreviewCitation, render_hayagriva_blocking};
+        let yaml = "book:\n  type: Book\n  title: A book\n";
+        for input in [yaml, "", "{}"] {
+            assert!(
+                render_hayagriva_blocking(
+                    input.into(),
+                    "ieee".into(),
+                    None,
+                    Some("missing".into()),
+                    Vec::new()
+                )
+                .unwrap_err()
+                .contains("not present")
+            );
+        }
+        assert!(
+            serde_json::from_str::<PreviewCitation>(r#"{"form":"execute","supplement":null}"#)
+                .is_err()
+        );
+        let citations = vec![
+            PreviewCitation {
+                form: CitationForm::Normal,
+                supplement: None
+            };
+            101
+        ];
+        assert!(
+            render_hayagriva_blocking(
+                yaml.into(),
+                "ieee".into(),
+                None,
+                Some("book".into()),
+                citations
+            )
+            .unwrap_err()
+            .contains("100")
+        );
+    }
+
+    #[test]
+    fn entry_preview_escapes_custom_csl_output_and_literal_supplements() {
+        let csl = r#"<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0" class="in-text">
+          <info><title>Native regression</title><id>https://example.com/style</id><updated>2026-01-01T00:00:00+00:00</updated></info>
+          <citation><layout><text variable="title" font-weight="bold"/><text variable="locator" prefix=", "/></layout></citation>
+          <bibliography><layout><text variable="title" font-style="italic"/></layout></bibliography>
+        </style>"#;
+        let preview = super::render_hayagriva_blocking(
+            "book:\n  type: Book\n  title: '<img src=x>'\n".into(),
+            "custom".into(),
+            Some(csl.into()),
+            Some("book".into()),
+            vec![super::PreviewCitation {
+                form: super::CitationForm::Normal,
+                supplement: Some("<script>alert(1)</script>".into()),
+            }],
+        )
+        .unwrap();
+        let html = &preview.citations[0];
+        assert!(html.contains("font-weight: bold"));
+        assert!(html.contains("&lt;img src=x&gt;"));
+        assert!(html.contains("&lt;script&gt;alert(1)&lt;/script&gt;"));
+        assert!(!html.contains("<script>"));
+        assert!(!html.contains("<img"));
     }
 
     #[test]

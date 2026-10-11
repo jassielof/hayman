@@ -33,11 +33,15 @@ export class SettingsService {
             },
     };
     delete (migratedEditor as { fieldMode?: string }).fieldMode;
+    const citation = { ...DEFAULT_APP_SETTINGS.citation, ...stored.citation };
+    // Legacy executable preview source is not a plain-text citation template.
+    delete (citation as typeof citation & { entryPreviewBody?: string })
+      .entryPreviewBody;
     return {
       ...DEFAULT_APP_SETTINGS,
       ...stored,
       fonts: { ...DEFAULT_APP_SETTINGS.fonts, ...stored.fonts },
-      citation: { ...DEFAULT_APP_SETTINGS.citation, ...stored.citation },
+      citation,
       editor: migratedEditor,
       library: { ...DEFAULT_APP_SETTINGS.library, ...stored.library },
     };
@@ -75,7 +79,7 @@ export class SettingsService {
       id: SETTINGS_ROW_ID,
       citation: {
         defaultStyle: nextDefaultStyle,
-        entryPreviewBody: current.citation.entryPreviewBody,
+        entryPreviewTemplate: current.citation.entryPreviewTemplate,
       },
       editor: current.editor,
       library: current.library,

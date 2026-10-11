@@ -12,13 +12,13 @@ import { DEFAULT_APP_SETTINGS } from '#lib/types/app-settings.js';
 describe('resolveCitationStyle', () => {
   it('uses built-in style name', () => {
     const resolved = resolveCitationStyle('ieee', DEFAULT_APP_SETTINGS);
-    expect(resolved.typstStyle).toBe('ieee');
+    expect(resolved.styleName).toBe('ieee');
     expect(resolved.useCustomCsl).toBe(false);
   });
 
   it('falls back to default when input is empty', () => {
     const resolved = resolveCitationStyle('  ', DEFAULT_APP_SETTINGS);
-    expect(resolved.typstStyle).toBe('ieee');
+    expect(resolved.styleName).toBe('ieee');
   });
 
   it('maps custom style when CSL text exists', () => {
@@ -33,7 +33,7 @@ describe('resolveCitationStyle', () => {
     };
 
     const resolved = resolveCitationStyle(CUSTOM_CSL_STYLE, settings);
-    expect(resolved.typstStyle).toBe('custom');
+    expect(resolved.styleName).toBe('custom');
     expect(resolved.label).toBe('my-style.csl');
     expect(resolved.useCustomCsl).toBe(true);
   });
@@ -43,7 +43,7 @@ describe('resolveCitationStyle', () => {
       CUSTOM_CSL_STYLE,
       DEFAULT_APP_SETTINGS,
     );
-    expect(resolved.typstStyle).toBe(CUSTOM_CSL_STYLE);
+    expect(resolved.styleName).toBe(CUSTOM_CSL_STYLE);
     expect(resolved.useCustomCsl).toBe(false);
   });
 });
@@ -60,7 +60,7 @@ describe('settings default citation style', () => {
     };
 
     expect(usesCustomCslDefault(settings)).toBe(false);
-    expect(resolveSettingsDefaultCitationStyle(settings).typstStyle).toBe(
+    expect(resolveSettingsDefaultCitationStyle(settings).styleName).toBe(
       'ieee',
     );
     expect(describeSettingsDefaultCitation(settings)).toBe('ieee');
@@ -78,7 +78,7 @@ describe('settings default citation style', () => {
 
     expect(usesCustomCslDefault(settings)).toBe(true);
     expect(resolveSettingsDefaultCitationStyle(settings)).toEqual({
-      typstStyle: 'custom',
+      styleName: 'custom',
       label: 'apa.csl',
       useCustomCsl: true,
     });
@@ -109,7 +109,7 @@ describe('resolvePreviewCitationStyle', () => {
       overrideKind: 'bundled',
       bundledStyle: 'ieee',
     });
-    expect(resolved.typstStyle).toBe('ieee');
+    expect(resolved.styleName).toBe('ieee');
     expect(resolved.useCustomCsl).toBe(false);
   });
 
