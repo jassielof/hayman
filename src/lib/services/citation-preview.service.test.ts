@@ -65,6 +65,7 @@ describe('native citation previews', () => {
       second: { type: 'Book', title: 'Second' },
     };
     const native = {
+      language: '',
       citations: ['<span>Author</span>'],
       bibliography: {
         items: [],

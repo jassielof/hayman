@@ -407,7 +407,9 @@
               <div
                 class="font-balanced font-sans text-xl leading-snug font-semibold font-stretch-expanded"
               >
-                {formatFormattableString(entry.title)}
+                <bdi lang={entry.language ?? ''}
+                  >{formatFormattableString(entry.title)}</bdi
+                >
                 {#if duplicateIds.has(id)}
                   <span
                     class="ml-2 rounded-full bg-warning/15 px-2 py-0.5 align-middle font-sans text-[0.65rem] font-semibold tracking-normal text-warning-foreground normal-case"
@@ -417,7 +419,9 @@
               </div>
               {#if entry.author}
                 <div class="text-md font-sans leading-relaxed">
-                  {formatAuthor(entry.author)}
+                  <bdi lang={entry.language ?? ''}
+                    >{formatAuthor(entry.author)}</bdi
+                  >
                 </div>
               {/if}
               {#if entry.date}

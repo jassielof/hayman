@@ -15,13 +15,15 @@
   {#each bibliography.items as reference (reference.key)}
     <li
       data-entry-key={reference.key}
+      lang={reference.language}
+      dir="auto"
       class={[
         'break-words',
         bibliography.secondFieldAlign &&
           'grid grid-cols-[max-content_minmax(0,1fr)] gap-x-3',
         bibliography.hangingIndent &&
           !bibliography.secondFieldAlign &&
-          'pl-6 -indent-6',
+          'ps-6 -indent-6',
       ]}
     >
       <!-- Only backend-produced HTML is accepted here. Its Hayagriva tree is

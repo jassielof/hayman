@@ -28,8 +28,10 @@
         {#each preview.parts as part, index (index)}
           {#if 'text' in part}{part.text}{:else}
             <!-- Only escaped, backend-produced Hayagriva HTML. -->
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-            <span>{@html preview.citations[part.citation]}</span>
+            <bdi lang={preview.language}
+              ><!-- eslint-disable-next-line svelte/no-at-html-tags -->
+              {@html preview.citations[part.citation]}</bdi
+            >
           {/if}
         {/each}
       </div>

@@ -25,6 +25,7 @@ function render(overrides: Partial<RenderedBibliography> = {}) {
         key: 'book',
         text: '[1] A book',
         html: '<span style="font-style: italic;">A book</span>',
+        language: '',
         firstFieldHtml: '[1]',
       },
     ],
@@ -60,11 +61,17 @@ describe('formatted bibliography', () => {
       hangingIndent: true,
       secondFieldAlign: false,
       items: [
-        { key: 'book', text: 'A book', html: 'A book', firstFieldHtml: null },
+        {
+          key: 'book',
+          text: 'A book',
+          html: 'A book',
+          language: '',
+          firstFieldHtml: null,
+        },
       ],
     });
     const item = document.querySelector('li')!;
-    expect(item.classList.contains('pl-6')).toBe(true);
+    expect(item.classList.contains('ps-6')).toBe(true);
     expect(item.classList.contains('-indent-6')).toBe(true);
     expect(item.classList.contains('grid')).toBe(false);
   });
@@ -75,6 +82,7 @@ describe('formatted bibliography', () => {
         {
           key: 'url',
           text: '',
+          language: '',
           firstFieldHtml: null,
           html: '&lt;script&gt;not markup&lt;/script&gt; <a href="https://example.com/?a=1&amp;b=2"><span>Source</span></a>',
         },
@@ -97,6 +105,7 @@ describe('formatted bibliography', () => {
         {
           key: 'url',
           text: '',
+          language: '',
           firstFieldHtml: null,
           html: '<a href="https://example.com/">Source</a>',
         },

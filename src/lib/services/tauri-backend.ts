@@ -36,6 +36,7 @@ export type RecoveryItem = {
 export type DeleteResult = { recoveryId?: number };
 export type RenderedReference = {
   key: string;
+  language: string;
   text: string;
   html: string;
   firstFieldHtml: string | null;
@@ -52,6 +53,7 @@ export type PreviewCitation = {
   supplement?: string;
 };
 export type RenderedEntryPreview = {
+  language: string;
   citations: string[];
   bibliography: RenderedBibliography;
 };

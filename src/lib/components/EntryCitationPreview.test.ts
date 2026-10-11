@@ -24,6 +24,7 @@ it('renders styled native citations, literal custom prose, and the selected bibl
           { citation: 0 },
           { text: '\nEnd.' },
         ],
+        language: '',
         citations: ['<span style="font-style: italic;">Doe</span>'],
         bibliography: {
           items: [
@@ -31,6 +32,7 @@ it('renders styled native citations, literal custom prose, and the selected bibl
               key: 'book',
               text: 'A book',
               html: '<span style="font-weight: bold;">A book</span>',
+              language: '',
               firstFieldHtml: null,
             },
           ],
@@ -75,6 +77,7 @@ it('opens citation source links externally', async () => {
       loading: false,
       preview: {
         parts: [{ citation: 0 }],
+        language: '',
         citations: ['<a href="https://example.com/">Source</a>'],
         bibliography: {
           items: [],
@@ -111,9 +114,18 @@ it.each([
       loading: false,
       preview: {
         parts: [{ text: 'Reference: ' }, { citation: 0 }],
+        language: '',
         citations: [`<span style="font-style: italic;">${author}</span>`],
         bibliography: {
-          items: [{ key, text: title, html: title, firstFieldHtml: null }],
+          items: [
+            {
+              key,
+              text: title,
+              html: title,
+              language: '',
+              firstFieldHtml: null,
+            },
+          ],
           hangingIndent: false,
           secondFieldAlign: false,
           lineSpacing: 1,
@@ -131,3 +143,49 @@ it.each([
   expect(item.querySelector('div')?.textContent).toBe(title);
   expect(document.body.textContent).not.toContain('\uFFFD');
 });
+it.each(['ar', 'he', 'ja', ''])(
+  'isolates citation content with declared language %s, not the interface or template prose',
+  (language) => {
+    document.documentElement.lang = 'en';
+    component = mount(EntryCitationPreview, {
+      target: document.body,
+      props: {
+        loading: false,
+        preview: {
+          language,
+          citations: ['ليلى منصور (2025)'],
+          parts: [{ text: 'Reference: ' }, { citation: 0 }],
+          bibliography: {
+            items: [
+              {
+                key: 'entry',
+                language,
+                text: 'العربية',
+                html: 'العربية',
+                firstFieldHtml: null,
+              },
+            ],
+            hangingIndent: true,
+            secondFieldAlign: false,
+            lineSpacing: 1,
+            entrySpacing: 0,
+          },
+        },
+      },
+    });
+    flushSync();
+    const citation = document.querySelector('bdi')!;
+    expect(citation.getAttribute('lang')).toBe(language);
+    expect(citation.textContent).toBe('ليلى منصور (2025)');
+    const reference = document.querySelector('[data-entry-key]')!;
+    expect(reference.getAttribute('lang')).toBe(language);
+    expect(reference.getAttribute('dir')).toBe('auto');
+    expect(reference.classList.contains('ps-6')).toBe(true);
+    expect(document.documentElement.lang).toBe('en');
+    expect(
+      document
+        .querySelector('[aria-label="Citation examples"]')
+        ?.hasAttribute('lang'),
+    ).toBe(false);
+  },
+);

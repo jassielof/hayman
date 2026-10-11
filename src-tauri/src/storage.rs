@@ -260,6 +260,7 @@ fn validate_settings(settings: &SettingsPayload) -> Result<()> {
 #[serde(rename_all = "camelCase")]
 pub struct RenderedReference {
     key: String,
+    language: String,
     text: String,
     html: String,
     first_field_html: Option<String>,
@@ -293,6 +294,7 @@ pub struct PreviewCitation {
 
 #[derive(Debug, Serialize)]
 pub struct RenderedEntryPreview {
+    language: String,
     citations: Vec<String>,
     bibliography: RenderedBibliography,
 }
@@ -1741,6 +1743,7 @@ fn render_hayagriva_blocking(
             Err("The preview entry is not present in this bibliography.".into())
         } else {
             Ok(RenderedEntryPreview {
+                language: String::new(),
                 citations: Vec::new(),
                 bibliography: RenderedBibliography::default(),
             })
@@ -1754,6 +1757,7 @@ fn render_hayagriva_blocking(
             Err("The preview entry is not present in this bibliography.".into())
         } else {
             Ok(RenderedEntryPreview {
+                language: String::new(),
                 citations: Vec::new(),
                 bibliography: RenderedBibliography::default(),
             })
@@ -1780,6 +1784,13 @@ fn render_hayagriva_blocking(
         }
     };
     let locales = locales();
+    // Content language is not the CSL formatting locale. Never guess from script.
+    let language = entry_key
+        .as_deref()
+        .and_then(|key| library.get(key))
+        .and_then(|entry| entry.language())
+        .map(ToString::to_string)
+        .unwrap_or_default();
     let mut driver = BibliographyDriver::new();
     if let Some(key) = entry_key {
         use hayagriva::citationberg::taxonomy::Locator;
@@ -1855,6 +1866,11 @@ fn render_hayagriva_blocking(
                 .write_buf(&mut text, BufWriteFormat::Plain)
                 .map_err(|e| e.to_string())?;
             Ok(RenderedReference {
+                language: library
+                    .get(&item.key)
+                    .and_then(|entry| entry.language())
+                    .map(ToString::to_string)
+                    .unwrap_or_default(),
                 key: item.key,
                 text,
                 html: safe_hayagriva_html(&item.content)?,
@@ -1863,6 +1879,7 @@ fn render_hayagriva_blocking(
         })
         .collect::<Result<Vec<_>>>()?;
     Ok(RenderedEntryPreview {
+        language,
         citations: rendered_citations,
         bibliography: RenderedBibliography {
             items,
@@ -2009,6 +2026,20 @@ mod tests {
         assert!(validate_settings(&settings).is_ok());
         settings.fonts.math = " ".into();
         assert!(validate_settings(&settings).is_err());
+    }
+
+    #[test]
+    fn undeclared_content_language_stays_unknown() {
+        let preview = super::render_hayagriva_blocking(
+            "book:\n  type: Book\n  title: 日本語\n".into(),
+            "apa".into(),
+            None,
+            Some("book".into()),
+            vec![],
+        )
+        .unwrap();
+        assert_eq!(preview.language, "");
+        assert_eq!(preview.bibliography.items[0].language, "");
     }
 
     #[test]
@@ -2239,6 +2270,10 @@ mod tests {
             assert_eq!(rendered.items.len(), original.as_object().unwrap().len());
             for item in rendered.items {
                 let source = &original[&item.key];
+                assert_eq!(
+                    item.language,
+                    source["language"].as_str().unwrap_or_default()
+                );
                 let title = source["title"]["value"].as_str().unwrap();
                 let author = source["author"]["name"].as_str().unwrap();
                 assert!(
@@ -2296,6 +2331,10 @@ mod tests {
                 preview.citations[1]
             );
             assert_eq!(preview.bibliography.items[0].key, *key);
+            assert_eq!(
+                preview.language,
+                entry["language"].as_str().unwrap_or_default()
+            );
         }
     }
 
