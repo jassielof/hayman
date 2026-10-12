@@ -154,79 +154,83 @@
   onConfirm={confirmSave}
 />
 
-<form
-  bind:this={formElement}
-  onsubmit={handleSubmit}
-  class="mx-auto w-full max-w-5xl p-6"
->
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend text-xl">Edit entry</legend>
-    <p class="text-xs text-muted-foreground" role="status">
-      {dirty ? 'Unsaved changes · Press Ctrl+S to save' : 'No unsaved changes'}
-    </p>
+<main id="main-content" tabindex="-1">
+  <form
+    bind:this={formElement}
+    onsubmit={handleSubmit}
+    class="mx-auto w-full max-w-5xl p-6"
+  >
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-xl"><h1>Edit entry</h1></legend>
+      <p class="text-xs text-muted-foreground" role="status">
+        {dirty
+          ? 'Unsaved changes · Press Ctrl+S to save'
+          : 'No unsaved changes'}
+      </p>
 
-    {#if validationIssues.length > 0}
-      <ValidationErrorList issues={validationIssues} />
-      <div class="divider"></div>
-    {/if}
-
-    {#if errorMessage}
-      <div role="alert" class="alert alert-error">
-        <CircleAlertIcon class="size-5 shrink-0" />
-        <span>{errorMessage}</span>
-      </div>
-      <div class="divider"></div>
-    {/if}
-
-    {#if pasteMessage}
-      <div role="alert" class="alert alert-warning">
-        <CircleAlertIcon class="size-5 shrink-0" />
-        <span>{pasteMessage}</span>
-      </div>
-      <div class="divider"></div>
-    {/if}
-
-    <button
-      class="btn btn-dash btn-info"
-      type="button"
-      onclick={handlePaste}
-      disabled={isSubmitting}
-    >
-      <ClipboardPasteIcon class="size-[1.2em]" />
-      Paste from clipboard
-    </button>
-
-    <label for="entry-id" class="label">ID</label>
-    <input
-      id="entry-id"
-      placeholder="UMLAndPatterns"
-      class="input w-full font-mono"
-      type="text"
-      required
-      disabled={isSubmitting}
-      onblur={() => (newEntryId = newEntryId.trim())}
-      bind:value={newEntryId}
-    />
-
-    <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
-
-    <button
-      class="btn btn-primary mt-4"
-      disabled={isSubmitting || editorInvalid}
-    >
-      {#if isSubmitting}
-        <span class="loading loading-sm loading-spinner"></span>
-      {:else}
-        <SaveIcon class="size-[1.2em]" />
+      {#if validationIssues.length > 0}
+        <ValidationErrorList issues={validationIssues} />
+        <div class="divider"></div>
       {/if}
-      Save changes
-    </button>
-    <a
-      href={resolve(`bibliography/${params.bibliographyId}/`)}
-      class="btn btn-outline"
-    >
-      <XIcon class="size-[1.2em]" />
-      Cancel
-    </a>
-  </fieldset>
-</form>
+
+      {#if errorMessage}
+        <div role="alert" class="alert alert-error">
+          <CircleAlertIcon class="size-5 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+        <div class="divider"></div>
+      {/if}
+
+      {#if pasteMessage}
+        <div role="alert" class="alert alert-warning">
+          <CircleAlertIcon class="size-5 shrink-0" />
+          <span>{pasteMessage}</span>
+        </div>
+        <div class="divider"></div>
+      {/if}
+
+      <button
+        class="btn btn-dash btn-info"
+        type="button"
+        onclick={handlePaste}
+        disabled={isSubmitting}
+      >
+        <ClipboardPasteIcon class="size-[1.2em]" />
+        Paste from clipboard
+      </button>
+
+      <label for="entry-id" class="label">ID</label>
+      <input
+        id="entry-id"
+        placeholder="UMLAndPatterns"
+        class="input w-full font-mono"
+        type="text"
+        required
+        disabled={isSubmitting}
+        onblur={() => (newEntryId = newEntryId.trim())}
+        bind:value={newEntryId}
+      />
+
+      <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
+
+      <button
+        class="btn btn-primary mt-4"
+        disabled={isSubmitting || editorInvalid}
+      >
+        {#if isSubmitting}
+          <span class="loading loading-sm loading-spinner"></span>
+        {:else}
+          <SaveIcon class="size-[1.2em]" />
+        {/if}
+        Save changes
+      </button>
+      <a
+        href={resolve(`bibliography/${params.bibliographyId}/`)}
+        class="btn btn-outline"
+      >
+        <XIcon class="size-[1.2em]" />
+        Cancel
+      </a>
+    </fieldset>
+  </form>
+</main>

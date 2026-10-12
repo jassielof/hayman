@@ -176,94 +176,96 @@
   }
 </script>
 
-<form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
-  <fieldset class="fieldset bg-muted/30">
-    <legend class="fieldset-legend">New Bibliography</legend>
+<main id="main-content" tabindex="-1">
+  <form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
+    <fieldset class="fieldset bg-muted/30">
+      <legend class="fieldset-legend"><h1>New Bibliography</h1></legend>
 
-    {#if validationIssues.length > 0}
-      <ValidationErrorList issues={validationIssues} />
-      <div class="divider"></div>
-    {/if}
+      {#if validationIssues.length > 0}
+        <ValidationErrorList issues={validationIssues} />
+        <div class="divider"></div>
+      {/if}
 
-    {#if errorMessage}
-      <div role="alert" class="alert alert-error">
-        <CircleAlertIcon />
-        <span>{errorMessage}</span>
-      </div>
-      <div class="divider"></div>
-    {/if}
+      {#if errorMessage}
+        <div role="alert" class="alert alert-error">
+          <CircleAlertIcon />
+          <span>{errorMessage}</span>
+        </div>
+        <div class="divider"></div>
+      {/if}
 
-    <label for="hayagriva-file" class="label">
-      Import from a Hayagriva YAML file
-    </label>
+      <label for="hayagriva-file" class="label">
+        Import from a Hayagriva YAML file
+      </label>
 
-    <button
-      type="button"
-      class="btn btn-outline w-full"
-      onclick={handleNativeImport}
-      disabled={isLoading}
-    >
-      <FileInputIcon class="size-4" />
-      Import YAML, BibTeX, or BibLaTeX
-    </button>
-    <p class="text-xs text-muted-foreground">
-      BibTeX and BibLaTeX files are converted by Hayagriva and saved as a new
-      managed YAML bibliography. The source file is never modified.
-    </p>
-
-    <input
-      type="file"
-      class="file-input w-full"
-      onchange={() => {
-        if (!files || files.length === 0) return;
-
-        newBibliography.metadata.id = files[0].name.replace(
-          /\.(yml|yaml)$/i,
-          '',
-        ) as string;
-        newBibliography.metadata.title = newBibliography.metadata.id
-          .replace(/[-_]/g, ' ')
-          .replace(/\b\w/g, (l) => l.toUpperCase());
-      }}
-      id="hayagriva-file"
-      accept="application/yaml,.yaml,.yml"
-      bind:files
-      disabled={isLoading}
-    />
-
-    <div class="flex flex-wrap gap-2">
       <button
         type="button"
-        class="btn btn-outline"
-        onclick={handlePasteImport}
+        class="btn btn-outline w-full"
+        onclick={handleNativeImport}
         disabled={isLoading}
       >
-        <ClipboardPasteIcon class="size-4" />
-        Paste YAML
+        <FileInputIcon class="size-4" />
+        Import YAML, BibTeX, or BibLaTeX
       </button>
-    </div>
+      <p class="text-xs text-muted-foreground">
+        BibTeX and BibLaTeX files are converted by Hayagriva and saved as a new
+        managed YAML bibliography. The source file is never modified.
+      </p>
 
-    {#if isLoading && files}
-      <div class="mt-4 flex items-center gap-2">
-        <span class="loading loading-md loading-spinner"></span>
-        <span>Parsing {files[0].name}...</span>
+      <input
+        type="file"
+        class="file-input w-full"
+        onchange={() => {
+          if (!files || files.length === 0) return;
+
+          newBibliography.metadata.id = files[0].name.replace(
+            /\.(yml|yaml)$/i,
+            '',
+          ) as string;
+          newBibliography.metadata.title = newBibliography.metadata.id
+            .replace(/[-_]/g, ' ')
+            .replace(/\b\w/g, (l) => l.toUpperCase());
+        }}
+        id="hayagriva-file"
+        accept="application/yaml,.yaml,.yml"
+        bind:files
+        disabled={isLoading}
+      />
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="btn btn-outline"
+          onclick={handlePasteImport}
+          disabled={isLoading}
+        >
+          <ClipboardPasteIcon class="size-4" />
+          Paste YAML
+        </button>
       </div>
-    {/if}
 
-    <div class="divider"></div>
-
-    <BibliographyMetadataForm
-      bind:bibliographyMetadata={newBibliography.metadata}
-    />
-
-    <div class="divider"></div>
-
-    <button class="btn btn-primary" disabled={isSubmitting || isLoading}>
-      {#if isSubmitting}
-        <span class="loading loading-sm loading-spinner"></span>
+      {#if isLoading && files}
+        <div class="mt-4 flex items-center gap-2">
+          <span class="loading loading-md loading-spinner"></span>
+          <span>Parsing {files[0].name}...</span>
+        </div>
       {/if}
-      Save
-    </button>
-    <a class="btn btn-error" href={resolve('/')}>Cancel</a>
-  </fieldset>
-</form>
+
+      <div class="divider"></div>
+
+      <BibliographyMetadataForm
+        bind:bibliographyMetadata={newBibliography.metadata}
+      />
+
+      <div class="divider"></div>
+
+      <button class="btn btn-primary" disabled={isSubmitting || isLoading}>
+        {#if isSubmitting}
+          <span class="loading loading-sm loading-spinner"></span>
+        {/if}
+        Save
+      </button>
+      <a class="btn btn-error" href={resolve('/')}>Cancel</a>
+    </fieldset>
+  </form>
+</main>

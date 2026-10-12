@@ -3,6 +3,7 @@
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import EntryPreviewTabs from '#lib/components/ui/entry-preview-tabs.svelte';
   import EntryAttachments from '#lib/components/EntryAttachments.svelte';
+  import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import { CheckIcon, ClipboardIcon, PencilIcon } from '@lucide/svelte';
   import type { PageProps } from './$types';
 
@@ -16,7 +17,7 @@
   }
 </script>
 
-<main class="container mx-auto max-w-5xl p-4">
+<main id="main-content" tabindex="-1" class="container mx-auto max-w-5xl p-4">
   <Breadcrumbs
     items={[
       { label: 'Home', href: '/' },
@@ -29,6 +30,10 @@
       { label: params.entryId },
     ]}
   />
+
+  <h1 class="mb-4 text-2xl font-bold">
+    {formatFormattableString(data.entry.title) || params.entryId}
+  </h1>
 
   <div class="mb-4 flex flex-wrap justify-end gap-2">
     <button

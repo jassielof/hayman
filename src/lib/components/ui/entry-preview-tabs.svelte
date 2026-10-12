@@ -145,6 +145,7 @@
 
 <Tabs.Root bind:value={tab} class="w-full">
   <Tabs.List
+    aria-label="Entry preview"
     class="inline-flex h-10 w-full flex-wrap items-center justify-center gap-1 rounded-md bg-muted p-1 text-muted-foreground sm:w-auto"
   >
     <Tabs.Trigger

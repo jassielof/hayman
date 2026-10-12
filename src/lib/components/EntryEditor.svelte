@@ -18,6 +18,7 @@
     entryData: TopLevelEntry;
     invalid?: boolean;
   } = $props();
+  const uid = $props.id();
   let mode = $state<'guided' | 'yaml'>('guided');
   let source = $state('');
   let sourceError = $state<string | undefined>();
@@ -66,6 +67,7 @@
   <div
     class="inline-flex rounded-md bg-card p-1 shadow-xs"
     aria-label="Entry editor mode"
+    role="group"
   >
     <button
       type="button"
@@ -100,9 +102,13 @@
       class="textarea min-h-[32rem] font-mono text-sm leading-relaxed"
       value={source}
       spellcheck="false"
+      aria-invalid={invalid}
+      aria-describedby={sourceError ? `${uid}-source-error` : undefined}
       oninput={(event) => updateFromYaml(event.currentTarget.value)}></textarea>
     {#if sourceError}
-      <div class="alert alert-error" role="alert">{sourceError}</div>
+      <div id={`${uid}-source-error`} class="alert alert-error" role="alert">
+        {sourceError}
+      </div>
       <p class="text-xs text-muted-foreground">
         Fix the YAML before returning to the guided form or saving.
       </p>

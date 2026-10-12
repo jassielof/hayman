@@ -12,7 +12,7 @@
 .code-block .hljs-template-variable,
 .code-block .hljs-type,
 .code-block .hljs-variable.language_ {
-  color: #d73a49;
+  color: #c72b3b;
 }
 
 .code-block .hljs-title,
@@ -43,20 +43,20 @@
 
 .code-block .hljs-built_in,
 .code-block .hljs-symbol {
-  color: #e36209;
+  color: #a84705;
 }
 
 .code-block .hljs-comment,
 .code-block .hljs-code,
 .code-block .hljs-formula {
-  color: #6a737d;
+  color: #59636e;
 }
 
 .code-block .hljs-name,
 .code-block .hljs-quote,
 .code-block .hljs-selector-tag,
 .code-block .hljs-selector-pseudo {
-  color: #22863a;
+  color: #1b7431;
 }
 
 .code-block .hljs-subst {
@@ -83,7 +83,7 @@
 }
 
 .code-block .hljs-addition {
-  color: #22863a;
+  color: #1b7431;
   background-color: #f0fff4;
 }
 
@@ -156,7 +156,7 @@
 }
 
 .dark .code-block .hljs-section {
-  color: #1f6feb;
+  color: #79c0ff;
   font-weight: bold;
 }
 

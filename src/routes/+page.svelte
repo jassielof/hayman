@@ -105,8 +105,12 @@
         type="button"
         class="btn btn-outline"
         aria-label="Export backup of bibliographies"
-        onclick={() => (exportOpen = true)}
-        ><ArchiveIcon class="size-[1.2em]" />Export backup</button
+        onclick={(event) => {
+          // WebKit does not focus clicked buttons. Remember this opener before
+          // mounting the modal so Escape/Cancel can restore focus to it.
+          event.currentTarget.focus({ preventScroll: true });
+          exportOpen = true;
+        }}><ArchiveIcon class="size-[1.2em]" />Export backup</button
       >
     {/if}
     <button
@@ -144,7 +148,12 @@
   onConfirm={confirmDelete}
 />
 
-<main class="container mx-auto mt-8 max-w-5xl p-4">
+<main
+  id="main-content"
+  tabindex="-1"
+  class="container mx-auto mt-8 max-w-5xl p-4"
+>
+  <h1 class="mb-6 text-2xl font-bold">Bibliographies</h1>
   {#if desktopError}
     <div class="alert alert-error mb-4" role="alert">{desktopError}</div>
   {/if}
@@ -168,7 +177,7 @@
     <section class="mb-8" aria-labelledby="projects-heading">
       <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 id="projects-heading" class="text-xl font-bold">Projects</h1>
+          <h2 id="projects-heading" class="text-xl font-bold">Projects</h2>
           <p class="text-sm text-muted-foreground">
             Work across several Hayagriva files without duplicating them.
           </p>
@@ -235,7 +244,7 @@
               <LibraryIcon class="size-6 shrink-0" aria-hidden="true" />
             </div>
             <div class="min-w-0">
-              <h6 class="truncate font-bold">{bib.metadata.title}</h6>
+              <h3 class="truncate font-bold">{bib.metadata.title}</h3>
               {#if bib.metadata.storageKind}
                 <p
                   class="truncate text-xs font-medium text-primary"
@@ -300,7 +309,10 @@
               <button
                 class="btn btn-sm btn-destructive"
                 aria-label={`Delete bibliography ${bib.metadata.title}`}
-                onclick={() => requestDelete(bib)}
+                onclick={(event) => {
+                  event.currentTarget.focus({ preventScroll: true });
+                  requestDelete(bib);
+                }}
               >
                 <TrashIcon class="size-4" />
                 <span>Delete</span>

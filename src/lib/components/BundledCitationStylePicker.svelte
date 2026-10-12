@@ -19,6 +19,7 @@
   let open = $state(false);
   let query = $state('');
   let inputValue = $state('');
+  let portalTarget = $state<HTMLElement>();
   const selected = $derived(findBundledCitationStyle(styles, value));
   const filtered = $derived(filterBundledCitationStyles(styles, query));
   const items = $derived(
@@ -42,12 +43,15 @@
     }
   }
   onMount(() => {
+    // Keep the popup in its owning landmark for screen-reader navigation.
+    portalTarget = document.getElementById(id)?.closest('main') ?? undefined;
     void load();
   });
 </script>
 
 <div class="space-y-2">
-  <label class="label" for={id}>Bundled citation style</label>
+  <label id={`${id}-label`} class="label" for={id}>Bundled citation style</label
+  >
   <Combobox.Root
     type="single"
     value={selected?.id ?? ''}
@@ -72,6 +76,7 @@
           ? 'Loading bundled styles…'
           : 'Search names or aliases…'}
         aria-describedby={`${id}-help`}
+        aria-controls={open ? `${id}-listbox` : undefined}
         aria-invalid={!loading && !error && !valid}
         oninput={(event) => {
           query = event.currentTarget.value;
@@ -92,9 +97,11 @@
         aria-label="Show bundled citation styles">▾</Combobox.Trigger
       >
     </div>
-    <Combobox.Portal>
+    <Combobox.Portal to={portalTarget}>
       <!-- Keep option scrolling inside the portal from moving the document. -->
       <Combobox.Content
+        id={`${id}-listbox`}
+        aria-labelledby={`${id}-label`}
         class="z-50 max-h-80 w-(--bits-combobox-anchor-width) min-w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-xl"
         strategy="fixed"
         sideOffset={6}

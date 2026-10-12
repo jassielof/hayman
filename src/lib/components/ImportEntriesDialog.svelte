@@ -12,7 +12,7 @@
     PlusIcon,
     XIcon,
   } from '@lucide/svelte';
-  import { tick } from 'svelte';
+  import { Dialog } from 'bits-ui';
 
   type ImportRow = {
     key: string;
@@ -40,11 +40,9 @@
   let message = $state<string | undefined>();
   let busy = $state(false);
   let files: FileList | undefined = $state(undefined);
-  let dialogElement: HTMLDivElement | undefined = $state(undefined);
 
   $effect(() => {
     if (!open) return;
-    void tick().then(() => dialogElement?.focus());
     BibliographyService.get(bibliographyId).then(
       (bibliography) => (existing = bibliography.data),
       (error) => (message = String(error)),
@@ -180,34 +178,27 @@
   }
 </script>
 
-{#if open}
-  <div
-    class="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4"
-    role="presentation"
-    onclick={(event) => {
-      if (event.target === event.currentTarget && !busy) open = false;
-    }}
-  >
-    <div
-      bind:this={dialogElement}
-      tabindex="-1"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="import-entries-title"
-      class="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-xl"
-      onkeydown={(event) => {
-        if (event.key === 'Escape' && !busy) open = false;
+<Dialog.Root bind:open>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-50 bg-black/45" />
+    <Dialog.Content
+      class="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-xl"
+      onEscapeKeydown={(event) => {
+        if (busy) event.preventDefault();
+      }}
+      onInteractOutside={(event) => {
+        if (busy) event.preventDefault();
       }}
     >
-      <header class="flex items-start justify-between gap-4">
+      <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 id="import-entries-title" class="text-xl font-semibold">
+          <Dialog.Title class="text-xl font-semibold">
             Import references
-          </h2>
-          <p class="text-sm text-muted-foreground">
+          </Dialog.Title>
+          <Dialog.Description class="text-sm text-muted-foreground">
             Add any number of Hayagriva YAML and BibTeX/BibLaTeX sources, then
             choose what to import.
-          </p>
+          </Dialog.Description>
         </div>
         <button
           type="button"
@@ -218,7 +209,7 @@
         >
           <XIcon class="size-5" />
         </button>
-      </header>
+      </div>
 
       <div
         class="mt-5 grid gap-3 rounded-lg border border-border bg-muted/30 p-4"
@@ -292,8 +283,7 @@
             <tbody class="divide-y divide-border">
               {#each rows as row, index (`${row.originalKey}-${index}`)}
                 <tr
-                  class:bg-warning={row.duplicate}
-                  class:text-warning-foreground={row.duplicate}
+                  class={row.duplicate ? 'bg-warning/10 text-warning-text' : ''}
                 >
                   <td class="p-3 align-top">
                     <input
@@ -327,9 +317,7 @@
                         : ''}
                     </p>
                     {#if row.duplicate}
-                      <p
-                        class="mt-1 text-xs font-medium text-warning-foreground"
-                      >
+                      <p class="mt-1 text-xs font-medium text-warning-text">
                         Possible duplicate; review before importing.
                       </p>
                     {/if}
@@ -363,6 +351,6 @@
           Import {rows.filter((row) => row.selected).length || ''} selected
         </button>
       </footer>
-    </div>
-  </div>
-{/if}
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>

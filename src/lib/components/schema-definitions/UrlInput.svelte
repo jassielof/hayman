@@ -62,7 +62,7 @@
   <legend class="fieldset-legend"> {label} </legend>
 
   <label class="label" for="{uid}-entry-url">{label}</label>
-  <div class="flex gap-2">
+  <div class="flex flex-wrap gap-2">
     <input
       bind:value={urlValue}
       id="{uid}-entry-url"

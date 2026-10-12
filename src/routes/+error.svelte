@@ -7,7 +7,12 @@
   const catImageUrl = $derived(`https://http.cat/${status}.jpg`);
 </script>
 
-<main class="flex flex-col" style="min-height: calc(100vh - 4rem);">
+<main
+  id="main-content"
+  tabindex="-1"
+  class="flex flex-col"
+  style="min-height: calc(100vh - 4rem);"
+>
   <section class="flex flex-1 items-center justify-center p-4">
     <div class="card max-w-lg">
       <div class="card-body items-center text-center">

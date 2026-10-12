@@ -118,7 +118,7 @@
   }
 </script>
 
-<main class="mx-auto w-full max-w-6xl p-6">
+<main id="main-content" tabindex="-1" class="mx-auto w-full max-w-6xl p-6">
   <Breadcrumbs
     items={[
       { label: 'Home', href: '/' },
@@ -221,7 +221,7 @@
                   {formatFormattableString(item.entry.title) || item.entryId}
                 </h2>
                 {#if duplicateKeys.has(item.entryId)}<span
-                    class="rounded-full bg-warning/15 px-2 py-0.5 text-xs text-warning-foreground"
+                    class="rounded-full bg-warning/15 px-2 py-0.5 text-xs text-warning-text"
                     >Repeated key</span
                   >{/if}
               </div>

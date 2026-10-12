@@ -27,7 +27,11 @@
   });
 </script>
 
-<main class="mx-auto flex w-full max-w-5xl flex-col p-4">
+<main
+  id="main-content"
+  tabindex="-1"
+  class="mx-auto flex w-full max-w-5xl flex-col p-4"
+>
   {#if bibliographyQueryLoading}
     <div
       class="flex min-h-[60vh] items-center justify-center"

@@ -136,110 +136,115 @@
   }}
 />
 
-<form
-  bind:this={formElement}
-  onsubmit={handleSubmit}
-  class="mx-auto w-full max-w-5xl p-6"
->
-  <Breadcrumbs
-    items={[
-      { label: 'Home', href: '/' },
-      {
-        label: 'Bibliography',
-        href: `/bibliography/${params.bibliographyId}/`,
-      },
-      { label: 'New entry' },
-    ]}
-  />
+<main id="main-content" tabindex="-1">
+  <form
+    bind:this={formElement}
+    onsubmit={handleSubmit}
+    class="mx-auto w-full max-w-5xl p-6"
+  >
+    <Breadcrumbs
+      items={[
+        { label: 'Home', href: '/' },
+        {
+          label: 'Bibliography',
+          href: `/bibliography/${params.bibliographyId}/`,
+        },
+        { label: 'New entry' },
+      ]}
+    />
 
-  <fieldset class="fieldset">
-    <legend class="fieldset-legend text-xl">New entry</legend>
-    <p class="text-xs text-muted-foreground" role="status">
-      {dirty ? 'Unsaved entry · Press Ctrl+S to save' : 'No unsaved changes'}
-    </p>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend text-xl"><h1>New entry</h1></legend>
+      <p class="text-xs text-muted-foreground" role="status">
+        {dirty ? 'Unsaved entry · Press Ctrl+S to save' : 'No unsaved changes'}
+      </p>
 
-    {#if validationIssues.length > 0}
-      <ValidationErrorList issues={validationIssues} />
-      <div class="divider"></div>
-    {/if}
-
-    {#if errorMessage}
-      <div role="alert" class="alert alert-error">
-        <CircleAlertIcon class="size-5 shrink-0" />
-        <span>{errorMessage}</span>
-      </div>
-      <div class="divider"></div>
-    {/if}
-
-    {#if pasteMessage}
-      <div role="alert" class="alert alert-warning">
-        <CircleAlertIcon class="size-5 shrink-0" />
-        <span>{pasteMessage}</span>
-      </div>
-      <div class="divider"></div>
-    {/if}
-
-    <button
-      class="btn btn-dash"
-      type="button"
-      onclick={handlePaste}
-      disabled={isSubmitting}
-    >
-      <ClipboardPasteIcon class="size-[1.2em]" />
-      Paste one Hayagriva entry
-    </button>
-
-    <button
-      class="btn btn-outline"
-      type="button"
-      onclick={() => (importDialogOpen = true)}
-      disabled={isSubmitting}
-    >
-      <ImportIcon class="size-[1.2em]" />
-      Import several references
-    </button>
-
-    <div class="divider"></div>
-
-    <label for="entry-id" class="label">ID</label>
-    <div class="flex flex-wrap gap-2">
-      <input
-        id="entry-id"
-        placeholder="UMLAndPatterns"
-        class="input min-w-0 flex-1 font-mono"
-        type="text"
-        required
-        disabled={isSubmitting}
-        onblur={() => (newEntryId = newEntryId.trim())}
-        bind:value={newEntryId}
-      />
-      <button
-        type="button"
-        class="btn btn-outline"
-        disabled={isSubmitting}
-        onclick={() => (newEntryId = generateEntryId(newEntryData))}
-        ><SparklesIcon class="size-4" />Generate ID</button
-      >
-    </div>
-
-    <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
-
-    <div class="divider"></div>
-
-    <button class="btn btn-primary" disabled={isSubmitting || editorInvalid}>
-      {#if isSubmitting}
-        <span class="loading loading-sm loading-spinner"></span>
-      {:else}
-        <SaveIcon class="size-[1.2em]" />
+      {#if validationIssues.length > 0}
+        <ValidationErrorList issues={validationIssues} />
+        <div class="divider"></div>
       {/if}
-      Add
-    </button>
-    <a
-      href={resolve(`bibliography/${params.bibliographyId}/`)}
-      class="btn btn-outline"
-    >
-      <XIcon class="size-[1.2em]" />
-      Cancel
-    </a>
-  </fieldset>
-</form>
+
+      {#if errorMessage}
+        <div role="alert" class="alert alert-error">
+          <CircleAlertIcon class="size-5 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+        <div class="divider"></div>
+      {/if}
+
+      {#if pasteMessage}
+        <div role="alert" class="alert alert-warning">
+          <CircleAlertIcon class="size-5 shrink-0" />
+          <span>{pasteMessage}</span>
+        </div>
+        <div class="divider"></div>
+      {/if}
+
+      <button
+        class="btn btn-dash"
+        type="button"
+        onclick={handlePaste}
+        disabled={isSubmitting}
+      >
+        <ClipboardPasteIcon class="size-[1.2em]" />
+        Paste one Hayagriva entry
+      </button>
+
+      <button
+        class="btn btn-outline"
+        type="button"
+        onclick={(event) => {
+          event.currentTarget.focus({ preventScroll: true });
+          importDialogOpen = true;
+        }}
+        disabled={isSubmitting}
+      >
+        <ImportIcon class="size-[1.2em]" />
+        Import several references
+      </button>
+
+      <div class="divider"></div>
+
+      <label for="entry-id" class="label">ID</label>
+      <div class="flex flex-wrap gap-2">
+        <input
+          id="entry-id"
+          placeholder="UMLAndPatterns"
+          class="input min-w-0 flex-1 font-mono"
+          type="text"
+          required
+          disabled={isSubmitting}
+          onblur={() => (newEntryId = newEntryId.trim())}
+          bind:value={newEntryId}
+        />
+        <button
+          type="button"
+          class="btn btn-outline"
+          disabled={isSubmitting}
+          onclick={() => (newEntryId = generateEntryId(newEntryData))}
+          ><SparklesIcon class="size-4" />Generate ID</button
+        >
+      </div>
+
+      <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
+
+      <div class="divider"></div>
+
+      <button class="btn btn-primary" disabled={isSubmitting || editorInvalid}>
+        {#if isSubmitting}
+          <span class="loading loading-sm loading-spinner"></span>
+        {:else}
+          <SaveIcon class="size-[1.2em]" />
+        {/if}
+        Add
+      </button>
+      <a
+        href={resolve(`bibliography/${params.bibliographyId}/`)}
+        class="btn btn-outline"
+      >
+        <XIcon class="size-[1.2em]" />
+        Cancel
+      </a>
+    </fieldset>
+  </form>
+</main>

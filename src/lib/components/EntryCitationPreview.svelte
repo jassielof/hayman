@@ -43,7 +43,7 @@
       aria-label="Entry bibliography"
       class="space-y-3 border-t border-border pt-4"
     >
-      <h3 class="text-sm font-medium">Bibliography</h3>
+      <h2 class="text-sm font-medium">Bibliography</h2>
       <FormattedBibliography bibliography={preview.bibliography} />
     </section>
   {:else}

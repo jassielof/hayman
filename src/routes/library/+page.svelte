@@ -55,7 +55,7 @@
   );
 </script>
 
-<main class="mx-auto w-full max-w-6xl p-6">
+<main id="main-content" tabindex="-1" class="mx-auto w-full max-w-6xl p-6">
   <Breadcrumbs
     items={[{ label: 'Home', href: '/' }, { label: 'All references' }]}
   />
@@ -76,6 +76,7 @@
       ><SearchIcon class="size-4" /><input
         class="w-full border-0 bg-transparent"
         placeholder="Title, author, key, year, or file…"
+        aria-label="Search all references"
         bind:value={search}
       />
     </label>

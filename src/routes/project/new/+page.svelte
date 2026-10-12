@@ -64,7 +64,7 @@
   }
 </script>
 
-<main class="mx-auto w-full max-w-3xl p-6">
+<main id="main-content" tabindex="-1" class="mx-auto w-full max-w-3xl p-6">
   <Breadcrumbs
     items={[{ label: 'Home', href: '/' }, { label: 'New project' }]}
   />

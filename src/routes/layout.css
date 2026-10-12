@@ -21,7 +21,8 @@ math {
   font-family: var(--font-serif-sc);
 }
 
-@theme {
+/* Keep the semantic palette available for contrast checks and native themes. */
+@theme static {
   --font-sans: 'inter-variable', system-ui, sans-serif;
   --font-mono: 'google-sans-code', ui-monospace, monospace;
   --font-serif: 'alegreya', ui-serif, serif;
@@ -35,18 +36,19 @@ math {
   --color-muted: oklch(0.96 0.01 155);
   --color-muted-foreground: oklch(0.45 0.02 155);
   --color-border: oklch(0.9 0.01 155);
-  --color-input: oklch(0.9 0.01 155);
-  --color-primary: oklch(0.55 0.14 160);
+  --color-input: oklch(0.6 0.02 155);
+  --color-primary: oklch(0.48 0.13 160);
   --color-primary-foreground: oklch(0.99 0.01 160);
   --color-secondary: oklch(0.94 0.02 155);
   --color-secondary-foreground: oklch(0.28 0.03 155);
   --color-accent: oklch(0.94 0.03 160);
   --color-accent-foreground: oklch(0.28 0.03 155);
-  --color-destructive: oklch(0.55 0.2 25);
+  --color-destructive: oklch(0.51 0.19 25);
   --color-destructive-foreground: oklch(0.99 0.01 25);
   --color-warning: oklch(0.72 0.15 75);
   --color-warning-foreground: oklch(0.28 0.05 75);
-  --color-ring: oklch(0.55 0.14 160);
+  --color-warning-text: oklch(0.38 0.07 75);
+  --color-ring: oklch(0.48 0.13 160);
   --radius-sm: 0.5rem;
   --radius-md: 0.625rem;
   --radius-lg: 0.875rem;
@@ -60,21 +62,26 @@ math {
   --color-muted: oklch(0.26 0.015 155);
   --color-muted-foreground: oklch(0.7 0.02 155);
   --color-border: oklch(0.32 0.015 155);
-  --color-input: oklch(0.32 0.015 155);
+  --color-input: oklch(0.58 0.02 155);
   --color-primary: oklch(0.68 0.14 160);
   --color-primary-foreground: oklch(0.18 0.03 160);
   --color-secondary: oklch(0.28 0.02 155);
   --color-secondary-foreground: oklch(0.92 0.01 155);
   --color-accent: oklch(0.3 0.03 160);
   --color-accent-foreground: oklch(0.92 0.01 155);
-  --color-destructive: oklch(0.62 0.2 25);
-  --color-destructive-foreground: oklch(0.98 0.01 25);
+  --color-destructive: oklch(0.75 0.14 25);
+  --color-destructive-foreground: oklch(0.18 0.03 25);
   --color-warning: oklch(0.78 0.14 75);
-  --color-warning-foreground: oklch(0.95 0.03 75);
+  --color-warning-foreground: oklch(0.22 0.04 75);
+  --color-warning-text: oklch(0.82 0.12 75);
   --color-ring: oklch(0.68 0.14 160);
 }
 
 @layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
   *,
   *::before,
   *::after {
@@ -107,6 +114,16 @@ math {
 }
 
 @layer components {
+  .skip-link {
+    @apply sr-only;
+  }
+
+  .skip-link:focus {
+    @apply fixed top-2 left-2 z-[100] h-auto w-auto overflow-visible rounded-md bg-card px-4 py-2 text-foreground shadow-lg;
+    clip: auto;
+    margin: 0;
+    white-space: normal;
+  }
   .btn {
     @apply inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md border border-transparent px-4 text-sm font-semibold whitespace-nowrap;
     @apply shadow-xs transition-[color,background-color,box-shadow,transform,border-color] duration-150;
@@ -173,7 +190,7 @@ math {
   .select,
   .file-input {
     @apply min-h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-xs;
-    @apply transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground hover:border-foreground/25 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none;
+    @apply transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground hover:border-primary focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:outline-none;
   }
 
   .input-sm {
@@ -189,7 +206,7 @@ math {
   }
 
   .fieldset {
-    @apply space-y-3 rounded-lg border border-border bg-card/50 p-4;
+    @apply min-w-0 space-y-3 rounded-lg border border-border bg-card/50 p-4;
   }
 
   .fieldset-legend {
@@ -209,7 +226,7 @@ math {
   }
 
   .alert-warning {
-    @apply border-warning/30 bg-warning/10 text-warning-foreground;
+    @apply border-warning/30 bg-warning/10 text-warning-text;
   }
 
   .alert-success {

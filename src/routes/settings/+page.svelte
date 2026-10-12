@@ -317,7 +317,7 @@
   }
 </script>
 
-<main class="mx-auto max-w-2xl p-6">
+<main id="main-content" tabindex="-1" class="mx-auto max-w-2xl p-6">
   <h1 class="mb-4 text-2xl font-bold">Settings</h1>
 
   <form class="space-y-6" onsubmit={handleSubmit}>
@@ -400,7 +400,7 @@
             <p
               class={health.problems.length === 0
                 ? 'text-primary'
-                : 'text-warning-foreground'}
+                : 'text-warning-text'}
             >
               {health.problems.length === 0
                 ? 'Everything looks healthy.'
@@ -426,7 +426,10 @@
             <button
               type="button"
               class="btn btn-sm btn-error btn-outline"
-              onclick={() => (clearSnapshotsOpen = true)}
+              onclick={(event) => {
+                event.currentTarget.focus({ preventScroll: true });
+                clearSnapshotsOpen = true;
+              }}
             >
               <Trash2Icon class="size-4" /> Clear all snapshots
             </button>

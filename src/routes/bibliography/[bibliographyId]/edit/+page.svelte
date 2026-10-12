@@ -39,30 +39,32 @@
   }
 </script>
 
-<form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
-  <fieldset class="fieldset bg-muted/30">
-    <legend class="fieldset-legend"> Edit Bibliography </legend>
+<main id="main-content" tabindex="-1">
+  <form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
+    <fieldset class="fieldset bg-muted/30">
+      <legend class="fieldset-legend"><h1>Edit Bibliography</h1></legend>
 
-    {#if errorMessage}
-      <div role="alert" class="alert alert-error">
-        <CircleAlertIcon />
-        <span>{errorMessage}</span>
-      </div>
-      <div class="divider"></div>
-    {/if}
-
-    <BibliographyMetadataForm
-      bind:bibliographyMetadata={bibliography.metadata}
-    />
-
-    <div class="divider"></div>
-
-    <button class="btn btn-primary" disabled={isSubmitting}>
-      {#if isSubmitting}
-        <span class="loading loading-sm loading-spinner"></span>
+      {#if errorMessage}
+        <div role="alert" class="alert alert-error">
+          <CircleAlertIcon />
+          <span>{errorMessage}</span>
+        </div>
+        <div class="divider"></div>
       {/if}
-      Save
-    </button>
-    <a class="btn btn-error" href={resolve('/')}> Cancel </a>
-  </fieldset>
-</form>
+
+      <BibliographyMetadataForm
+        bind:bibliographyMetadata={bibliography.metadata}
+      />
+
+      <div class="divider"></div>
+
+      <button class="btn btn-primary" disabled={isSubmitting}>
+        {#if isSubmitting}
+          <span class="loading loading-sm loading-spinner"></span>
+        {/if}
+        Save
+      </button>
+      <a class="btn btn-error" href={resolve('/')}> Cancel </a>
+    </fieldset>
+  </form>
+</main>

@@ -334,8 +334,10 @@
             <button
               type="button"
               class="btn btn-sm btn-destructive"
-              onclick={() => (bulkDeleteOpen = true)}
-              ><TrashIcon class="size-4" />Delete selected</button
+              onclick={(event) => {
+                event.currentTarget.focus({ preventScroll: true });
+                bulkDeleteOpen = true;
+              }}><TrashIcon class="size-4" />Delete selected</button
             >
           </div>
         {/if}
@@ -412,7 +414,7 @@
                 >
                 {#if duplicateIds.has(id)}
                   <span
-                    class="ml-2 rounded-full bg-warning/15 px-2 py-0.5 align-middle font-sans text-[0.65rem] font-semibold tracking-normal text-warning-foreground normal-case"
+                    class="ml-2 rounded-full bg-warning/15 px-2 py-0.5 align-middle font-sans text-xs font-semibold tracking-normal text-warning-text normal-case"
                     >Possible duplicate</span
                   >
                 {/if}
@@ -451,7 +453,10 @@
               <button
                 type="button"
                 class="btn btn-sm btn-destructive"
-                onclick={() => requestDelete(id)}
+                onclick={(event) => {
+                  event.currentTarget.focus({ preventScroll: true });
+                  requestDelete(id);
+                }}
               >
                 <TrashIcon class="size-4" />
                 <span class="hidden sm:inline">Delete</span>

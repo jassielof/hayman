@@ -19,13 +19,16 @@
 <SettingsBootstrap />
 <MutationToastHost />
 
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
 <header class="navbar">
   <a href={resolve('/')} class="brand-logo btn btn-ghost text-xl">Hayman</a>
   <div class="ml-auto flex items-center gap-1">
     {#if settingsActive}
       <span
         class="btn btn-ghost btn-square cursor-default bg-accent"
-        aria-label="Settings"
+        role="img"
+        aria-label="Settings (current page)"
         aria-current="page"
       >
         <SettingsIcon class="size-5" />
