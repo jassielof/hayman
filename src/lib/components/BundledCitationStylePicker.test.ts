@@ -119,6 +119,59 @@ it('supports mouse selection by full style name', async () => {
   expect(chosen()).toBe('american-psychological-association');
 });
 
+it.each(['mouse', 'touch', 'keyboard'])(
+  'anchors the portaled list to the viewport when opened with %s',
+  async (method) => {
+    // A long catalog reproduces the initial selected-option scroll in browsers.
+    // JSDOM has no layout: assert the fixed-position boundary that prevents that
+    // scroll from moving the document, rather than pretending to test scrollY.
+    vi.mocked(listBundledCitationStyles).mockResolvedValue([
+      ...Array.from({ length: 50 }, (_, index) => ({
+        id: `style-${index}`,
+        title: `Style ${index}`,
+        names: [`style-${index}`],
+      })),
+      ...styles,
+    ]);
+    await render();
+    const trigger = document.querySelector<HTMLButtonElement>(
+      '[aria-label="Show bundled citation styles"]',
+    )!;
+    if (method === 'keyboard') {
+      trigger.focus();
+      trigger.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    } else {
+      trigger.dispatchEvent(
+        new PointerEvent(method === 'touch' ? 'pointerup' : 'pointerdown', {
+          pointerType: method,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    }
+    flushSync();
+    await tick();
+    flushSync();
+    expect(input().getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(input());
+    const list = document.querySelector<HTMLElement>('[role="listbox"]')!;
+    expect(
+      list.closest<HTMLElement>('[data-bits-floating-content-wrapper]')!.style
+        .position,
+    ).toBe('fixed');
+    expect(list.contains(document.querySelector('[data-selected]'))).toBe(true);
+    await key('Escape');
+    expect(input().getAttribute('aria-expanded')).toBe('false');
+    expect(chosen()).toBe('ieee');
+  },
+);
+
 it('flags an invalid legacy selection instead of silently changing it', async () => {
   await render('apaaa');
   expect(chosen()).toBe('apaaa');

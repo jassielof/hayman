@@ -93,8 +93,10 @@
       >
     </div>
     <Combobox.Portal>
+      <!-- Keep option scrolling inside the portal from moving the document. -->
       <Combobox.Content
         class="z-50 max-h-80 w-(--bits-combobox-anchor-width) min-w-64 overflow-y-auto rounded-lg border border-border bg-card p-1.5 shadow-xl"
+        strategy="fixed"
         sideOffset={6}
       >
         <Combobox.Viewport>
