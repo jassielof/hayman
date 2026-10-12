@@ -233,7 +233,7 @@ math {
   }
 
   .brand-logo {
-    font-family: var(--font-sans);
+    font-family: 'philosopher', ui-serif, serif;
     font-weight: 700;
   }
 

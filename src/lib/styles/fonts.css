@@ -1,5 +1,14 @@
 /* Offline families. Unused desktop/static duplicates are not bundled by Vite. */
 @font-face {
+  font-family: 'philosopher';
+  src: url('../../../assets/fonts/Philosopher/Philosopher-Bold.ttf')
+    format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'inter-variable';
   src: url('../../../assets/fonts/Inter/Inter-VariableFont_opsz,wght.ttf')
     format('truetype');

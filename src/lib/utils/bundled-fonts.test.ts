@@ -35,9 +35,31 @@ it('ships every advertised family locally, including italic faces and small caps
 });
 
 it('ships readable open font licenses for every family set', () => {
-  expect(FONT_LICENSES).toHaveLength(5);
+  expect(FONT_LICENSES).toHaveLength(6);
   for (const license of FONT_LICENSES) {
     expect(license.text).toContain('SIL OPEN FONT LICENSE');
     expect(license.text).toContain('Copyright');
   }
+});
+
+it('keeps the branding in bundled Philosopher independently of UI font preferences', () => {
+  const css = readFileSync(
+    new URL('../styles/fonts.css', import.meta.url),
+    'utf8',
+  );
+  const brandFace = [...css.matchAll(/@font-face\s*\{([^}]+)\}/g)]
+    .map((match) => match[1])
+    .find((face) => face.includes("font-family: 'philosopher';"));
+  expect(brandFace).toContain('Philosopher/Philosopher-Bold.ttf');
+  expect(brandFace).toContain('font-weight: 700;');
+  const layout = readFileSync(
+    new URL('../../routes/layout.css', import.meta.url),
+    'utf8',
+  );
+  const brandRule = layout.match(/\.brand-logo\s*\{([^}]+)\}/)?.[1];
+  expect(brandRule).toContain("font-family: 'philosopher', ui-serif, serif;");
+  expect(brandRule).toContain('font-weight: 700;');
+  expect(
+    FONT_LICENSES.some((license) => license.family === 'Philosopher'),
+  ).toBe(true);
 });
