@@ -40,6 +40,10 @@ export default defineConfig(
     languageOptions: { globals: globals.node },
   },
   {
+    files: ['tests/**/*.ts'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+  {
     files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
 
     languageOptions: {

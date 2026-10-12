@@ -16,14 +16,17 @@
     "format": "prettier --write .",
     "lint": "prettier --check . && eslint .",
     "test": "vitest run",
+    "test:a11y": "playwright test",
     "test:watch": "vitest",
     "version:check": "bun run scripts/check-version.ts",
     "tauri": "tauri"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/compat": "^2.1.1",
     "@eslint/js": "^10.0.1",
     "@internationalized/date": "^3.12.4",
+    "@playwright/test": "^1.64.0",
     "@sveltejs/adapter-static": "^4.0.0",
     "@sveltejs/kit": "^3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
