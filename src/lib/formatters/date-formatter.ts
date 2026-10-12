@@ -6,18 +6,20 @@ export { DATE_REGEX };
 // digit years, unlike the previous exact `\d{4}` check).
 const YEAR_ONLY_REGEX = /^[+-~]?\d{4,}$/;
 
-export function dateFormatter(date: HayagrivaDate) {
+export function dateFormatter(
+  date: HayagrivaDate,
+  locales?: Intl.LocalesArgument,
+) {
   if (typeof date === 'number' || YEAR_ONLY_REGEX.test(date)) return `${date}`;
 
-  // Year and month ("YYYY-MM"). Formatted in UTC to match how the date
-  // string was parsed - new Date("2020-12-01") is UTC midnight, and without
-  // pinning the formatter to UTC too, users behind UTC (e.g. the Americas)
-  // would see it rendered as the previous day/month.
+  // Year and month ("YYYY-MM"). Both parsing and formatting use UTC so a
+  // user's timezone cannot shift a calendar date to the previous day/month.
   if (/^\d{4}-(0[1-9]|1[0-2])$/.test(date)) {
-    const d = new Date(`${date}-01`);
+    const d = calendarDate(date);
     return isNaN(d.getTime())
       ? date
-      : new Intl.DateTimeFormat(undefined, {
+      : new Intl.DateTimeFormat(locales, {
+          calendar: 'gregory',
           year: 'numeric',
           month: 'long',
           timeZone: 'UTC',
@@ -26,10 +28,11 @@ export function dateFormatter(date: HayagrivaDate) {
 
   // Full date ("YYYY-MM-DD")
   if (/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date)) {
-    const d = new Date(date);
+    const d = calendarDate(date);
     return isNaN(d.getTime())
       ? date
-      : new Intl.DateTimeFormat(undefined, {
+      : new Intl.DateTimeFormat(locales, {
+          calendar: 'gregory',
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -41,14 +44,30 @@ export function dateFormatter(date: HayagrivaDate) {
   return `${date}`;
 }
 
+// Dates are Gregorian calendar values, not instants. Never allow JS's date
+// rollover (February 31 -> March) or its special handling of years 0–99.
+function calendarDate(source: string): Date {
+  const [year, month, day = 1] = source.split('-').map(Number);
+  if (year < 1) return new Date(NaN); // Preserve BCE/year-zero notation verbatim.
+  const result = new Date(0);
+  result.setUTCFullYear(year, month - 1, day);
+  if (
+    result.getUTCFullYear() !== year ||
+    result.getUTCMonth() !== month - 1 ||
+    result.getUTCDate() !== day
+  )
+    return new Date(NaN);
+  return result;
+}
+
 /**
- * Formats a date as a compact string for space-constrained UI (list rows),
- * e.g. "2020-12-25" or "2020". Unlike `dateFormatter`, this does not localize.
+ * Stable source representation for sorting, searching and duplicate detection.
+ * Display text should use `dateFormatter`; never localize persistence keys.
  */
 export function formatEntryDateShort(
   date: HayagrivaDate | undefined | null,
 ): string {
-  if (!date) return '';
+  if (date === undefined || date === null) return '';
   if (typeof date === 'number') return date.toString();
   return date.split('T')[0];
 }

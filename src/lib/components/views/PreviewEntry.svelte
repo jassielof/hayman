@@ -16,6 +16,7 @@
   } = $props();
 
   const clamp = (n: number) => Math.min(6, Math.max(1, n));
+  const dateLanguage = new Intl.DateTimeFormat().resolvedOptions().locale;
   const titleLevel = $derived(clamp(baseHeadingLevel));
   const sectionLevel = $derived(clamp(baseHeadingLevel + 2));
   const subSectionLevel = $derived(clamp(baseHeadingLevel + 3));
@@ -44,8 +45,11 @@
         {entry.type}
       </li>
     {/if}
-    {#if entry.date}
-      <li><strong>Date:</strong> {dateFormatter(entry.date)}</li>
+    {#if entry.date !== undefined}
+      <li>
+        <strong>Date:</strong>
+        <span lang={dateLanguage}>{dateFormatter(entry.date)}</span>
+      </li>
     {/if}
     {#if entry.language}
       <li>
@@ -238,8 +242,14 @@
         <a href={entry.url.value} target="_blank" rel="noopener noreferrer">
           {entry.url.value}
         </a>
-        {#if entry.url.date}
-          <p><em>(Accessed on: {entry.url.date})</em></p>
+        {#if entry.url.date !== undefined}
+          <p>
+            <em
+              >(Accessed on: <span lang={dateLanguage}
+                >{dateFormatter(entry.url.date)}</span
+              >)</em
+            >
+          </p>
         {/if}
       {:else}
         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->

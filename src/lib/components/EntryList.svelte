@@ -2,7 +2,10 @@
   import { resolve } from '$app/paths';
   import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
   import { formatAuthor } from '#lib/formatters/author.js';
-  import { formatEntryDateShort } from '#lib/formatters/date-formatter.js';
+  import {
+    dateFormatter,
+    formatEntryDateShort,
+  } from '#lib/formatters/date-formatter.js';
   import { formatEntryType } from '#lib/formatters/entry-type-formatter.js';
   import { formatFormattableString } from '#lib/formatters/formattable-string.js';
   import { BibliographyService } from '#lib/services/bibliography.service.js';
@@ -36,6 +39,7 @@
   } = $props();
 
   type SortKey = 'id' | 'title' | 'type' | 'date';
+  const dateLanguage = new Intl.DateTimeFormat().resolvedOptions().locale;
 
   const sortOptions: { value: SortKey; label: string }[] = [
     { value: 'id', label: 'ID' },
@@ -426,10 +430,14 @@
                   >
                 </div>
               {/if}
-              {#if entry.date}
+              {#if entry.date !== undefined}
                 <div class="flex items-center gap-1.5 text-xs">
                   <CalendarIcon class="size-4 shrink-0" aria-hidden="true" />
-                  {formatEntryDateShort(entry.date)}
+                  <span
+                    lang={dateLanguage}
+                    title={formatEntryDateShort(entry.date)}
+                    >{dateFormatter(entry.date)}</span
+                  >
                 </div>
               {/if}
             </div>
