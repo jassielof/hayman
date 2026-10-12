@@ -42,6 +42,23 @@ it('ships readable open font licenses for every family set', () => {
   }
 });
 
+it('imports license text from source assets, not Vite public assets', () => {
+  const source = readFileSync(
+    new URL('./font-licenses.ts', import.meta.url),
+    'utf8',
+  );
+  const imports = [...source.matchAll(/from '([^']+\?raw)'/g)];
+  expect(imports).toHaveLength(FONT_LICENSES.length);
+  for (const [, specifier] of imports) {
+    expect(specifier).not.toMatch(/(?:^|\/)static\//);
+    const file = new URL(
+      specifier.replace(/\?raw$/, ''),
+      new URL('./font-licenses.ts', import.meta.url),
+    );
+    expect(readFileSync(file, 'utf8')).toContain('SIL OPEN FONT LICENSE');
+  }
+});
+
 it('keeps the branding in bundled Philosopher independently of UI font preferences', () => {
   const css = readFileSync(
     new URL('../styles/fonts.css', import.meta.url),

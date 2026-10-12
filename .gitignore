@@ -29,5 +29,5 @@ vite.config.ts.timestamp-*
 # Editors
 .idea
 
-# Personal font-download receipt; redistribution licenses live in static/licenses.
+# Personal font-download receipt; redistribution licenses live in src/lib/licenses.
 /assets/fonts/STIX Two/Readme.txt

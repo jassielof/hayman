@@ -1,8 +1,8 @@
-import inter from '../../../static/licenses/fonts/Inter.txt?raw';
-import alegreya from '../../../static/licenses/fonts/Alegreya.txt?raw';
-import smallCaps from '../../../static/licenses/fonts/Alegreya_SC.txt?raw';
-import code from '../../../static/licenses/fonts/Google_Sans_Code.txt?raw';
-import stix from '../../../static/licenses/fonts/STIX Two.txt?raw';
+import inter from '../licenses/fonts/Inter.txt?raw';
+import alegreya from '../licenses/fonts/Alegreya.txt?raw';
+import smallCaps from '../licenses/fonts/Alegreya_SC.txt?raw';
+import code from '../licenses/fonts/Google_Sans_Code.txt?raw';
+import stix from '../licenses/fonts/STIX Two.txt?raw';
 import philosopher from '../../../assets/fonts/Philosopher/OFL.txt?raw';
 
 /** Readable in the installed app, without opening a browser or using a network. */
