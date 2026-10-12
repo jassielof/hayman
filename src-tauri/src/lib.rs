@@ -1,3 +1,4 @@
+mod citation_styles;
 mod fonts;
 mod storage;
 
@@ -33,6 +34,7 @@ pub fn run() {
             storage::delete_bibliography,
             storage::get_settings,
             fonts::list_system_fonts,
+            citation_styles::list_bundled_citation_styles,
             storage::set_settings,
             storage::render_entry_preview,
             storage::render_bibliography,

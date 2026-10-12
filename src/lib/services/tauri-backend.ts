@@ -34,6 +34,11 @@ export type RecoveryItem = {
 };
 
 export type DeleteResult = { recoveryId?: number };
+export type BundledCitationStyle = {
+  id: string;
+  title: string;
+  names: string[];
+};
 export type RenderedReference = {
   key: string;
   language: string;
@@ -143,6 +148,8 @@ export const tauriBackend = {
   checkStorageHealth: () => invoke<HealthReport>('check_storage_health'),
   getSettings: () => invoke<AppSettings | null>('get_settings'),
   listSystemFonts: () => invoke<string[]>('list_system_fonts'),
+  listBundledCitationStyles: () =>
+    invoke<BundledCitationStyle[]>('list_bundled_citation_styles'),
   setSettings: (settings: AppSettings) =>
     invoke<void>('set_settings', { settings }),
   renderEntryPreview: (

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BundledCitationStylePicker from '#lib/components/BundledCitationStylePicker.svelte';
   import { FONT_LICENSES } from '#lib/utils/font-licenses.js';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -60,6 +61,7 @@
   let cslFile: FileList | undefined = $state(undefined);
   let defaultKind = $state<'bundled' | 'custom-csl'>('bundled');
   let bundledDefaultStyle = $state(DEFAULT_APP_SETTINGS.citation.defaultStyle);
+  let bundledStyleValid = $state(false);
   let availableFonts = $state<
     Record<'sans' | 'serif' | 'mono' | 'math', string[]>
   >({
@@ -275,6 +277,12 @@
 
     if (defaultKind === 'custom-csl' && !citation.customCsl?.trim()) {
       errorMessage = 'Upload a CSL file or choose a bundled Hayagriva style.';
+      isSubmitting = false;
+      return;
+    }
+
+    if (defaultKind === 'bundled' && !bundledStyleValid) {
+      errorMessage = 'Choose a valid bundled Hayagriva style from the list.';
       isSubmitting = false;
       return;
     }
@@ -659,17 +667,16 @@
         <span>
           Hayagriva bundled style
           <span class="block text-xs text-muted-foreground">
-            e.g. ieee, apa, chicago-author-date, mla
+            Search the styles included with this version of Hayagriva.
           </span>
         </span>
       </label>
 
       {#if defaultKind === 'bundled'}
-        <input
+        <BundledCitationStylePicker
           id="default-style"
-          class="input font-mono"
-          placeholder="ieee"
           bind:value={bundledDefaultStyle}
+          bind:valid={bundledStyleValid}
         />
       {/if}
 

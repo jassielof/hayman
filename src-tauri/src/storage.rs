@@ -243,6 +243,15 @@ fn validate_settings(settings: &SettingsPayload) -> Result<()> {
     if !settings.citation.is_object() {
         return Err("Citation settings must be an object.".into());
     }
+    if let Some(style) = settings.citation.get("defaultStyle") {
+        match style.as_str() {
+            Some("custom") => {}
+            Some(name) if hayagriva::archive::ArchivedStyle::by_name(name.trim()).is_some() => {}
+            _ => {
+                return Err("Choose a valid bundled Hayagriva style or a custom CSL style.".into());
+            }
+        }
+    }
     for field in settings
         .editor
         .visible_fields
@@ -2064,6 +2073,35 @@ mod tests {
         };
 
         assert!(validate_settings(&settings).is_err());
+    }
+
+    #[test]
+    fn settings_boundary_validates_bundled_style_names_and_aliases() {
+        let mut settings: SettingsPayload = serde_json::from_value(serde_json::json!({
+            "id": "app", "fonts": {"sans": "Inter", "serif": "Alegreya", "mono": "Consolas"},
+            "citation": {},
+            "editor": {"defaultMode": "guided", "visibleFields": [], "fieldsByType": {}},
+            "library": {"density": "comfortable"}
+        }))
+        .unwrap();
+        for name in [
+            "ieee",
+            "apa",
+            "american-psychological-association",
+            "mla",
+            "custom",
+        ] {
+            settings.citation = serde_json::json!({"defaultStyle": name});
+            assert!(validate_settings(&settings).is_ok(), "Rejected {name}");
+        }
+        for value in [
+            serde_json::json!("apaaa"),
+            serde_json::json!(""),
+            serde_json::json!(42),
+        ] {
+            settings.citation = serde_json::json!({"defaultStyle": value});
+            assert!(validate_settings(&settings).is_err());
+        }
     }
 
     #[test]

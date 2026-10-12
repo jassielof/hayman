@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BundledCitationStylePicker from './BundledCitationStylePicker.svelte';
   import { SettingsService } from '#lib/services/settings.service.js';
   import { onMount } from 'svelte';
   import type { AppSettings } from '#lib/types/app-settings.js';
@@ -33,6 +34,7 @@
     entryPreviewTemplate?: string;
     onRender?: () => void;
   } = $props();
+  let bundledStyleValid = $state(false);
 
   onMount(() => {
     SettingsService.get().then((loaded) => {
@@ -121,11 +123,10 @@
       </label>
 
       {#if overrideKind === 'bundled'}
-        <input
+        <BundledCitationStylePicker
           id="citation-style-input"
-          class="input font-mono"
-          placeholder="ieee, apa, chicago-author-date, mla"
           bind:value={styleInput}
+          bind:valid={bundledStyleValid}
         />
       {/if}
 
@@ -202,6 +203,9 @@
   <button
     type="button"
     class="btn btn-outline btn-sm"
+    disabled={!useDefaultStyle &&
+      overrideKind === 'bundled' &&
+      !bundledStyleValid}
     onclick={() => onRender?.()}
   >
     <RefreshCwIcon class="size-4" />
