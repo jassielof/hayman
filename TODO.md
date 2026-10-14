@@ -9,4 +9,4 @@
 - [x] Add a quick tools section for offline Bib(La)TeX → Hayagriva conversion, YAML copy/save and selective import review.
 - [x] Add explicit, consent-based DOI (Crossref), ISBN (Open Library) and arXiv metadata lookup. Validate responses with Hayagriva and stage them for review; never auto-save or enable general webview networking.
   - [x] Import Zotero/other local-manager Bib(La)TeX exports through Quick tools. Original databases, attachment files and annotations are not read or modified.
-- [ ] Improve the entry form's UI, the UX is somewhat fine, but the many nested fields aren't the best, if possible to use a stablished and tested design system fitting for forms.
+- [ ] Improve the entry form's UI after reviewing [the detailed entry-editor proposal](docs/entry-editor-proposal.md). Keep existing Bits UI/native controls, flatten nested presentation, preserve populated fields and configurable profiles, and add regression tests before changing the workflow. Implementation is intentionally pending the user's design review.
