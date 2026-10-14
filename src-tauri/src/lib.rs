@@ -1,5 +1,6 @@
 mod citation_styles;
 mod fonts;
+mod linked_yaml;
 mod storage;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

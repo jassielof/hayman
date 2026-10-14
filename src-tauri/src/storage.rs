@@ -10,8 +10,8 @@
 //! Attachments are links and must never be deleted when unlinked. File writes
 //! must keep the official Hayagriva validation, expected-hash conflict check,
 //! recovery snapshot, and same-directory atomic replacement together.
-//! Serialization is semantic and canonical, so YAML comments, anchors, quote
-//! choices, and hand formatting are not promised to round-trip.
+//! Managed serialization is canonical. Linked saves patch the existing YAML
+//! tree, retain comments/order, and refuse an edit if other data would change.
 //!
 //! Keep future organization features (collections and saved searches) in app
 //! metadata. Duplicate merging must show an explicit field diff and choose one
@@ -494,6 +494,19 @@ fn serialize_yaml(data: &Value) -> Result<String> {
     Ok(content)
 }
 
+fn serialize_for_save(metadata: &Metadata, disk: &[u8], data: &Value) -> Result<String> {
+    // Validate the requested data with Hayagriva before any mutation or snapshot.
+    let canonical = serialize_yaml(data)?;
+    if metadata.storage_kind != "linked" {
+        return Ok(canonical);
+    }
+    let source = std::str::from_utf8(disk).map_err(|e| e.to_string())?;
+    let original = parse_yaml(source)?;
+    let edited = crate::linked_yaml::update(source, &original, data)?;
+    parse_yaml(&edited)?;
+    Ok(edited)
+}
+
 fn parse_import(content: &str, extension: &str) -> Result<Value> {
     match extension {
         "yml" | "yaml" => parse_yaml(content),
@@ -962,7 +975,7 @@ pub fn insert_entries(
         return Err("The bibliography changed outside Hayman. Reload before importing so those changes are not overwritten.".into());
     }
 
-    let mut data = parse_yaml(&String::from_utf8(disk).map_err(|e| e.to_string())?)?;
+    let mut data = parse_yaml(std::str::from_utf8(&disk).map_err(|e| e.to_string())?)?;
     let existing = data
         .as_object_mut()
         .ok_or("The current bibliography is not a mapping.")?;
@@ -973,7 +986,7 @@ pub fn insert_entries(
         existing.insert(key.clone(), entry.clone());
     }
 
-    let content = serialize_yaml(&data)?;
+    let content = serialize_for_save(&current, &disk, &data)?;
     let (_, _, recovery, _) = directories(&app)?;
     let saved = snapshot(&db, &recovery, &current, "before-batch-import")?;
     atomic_write(path, content.as_bytes())?;
@@ -1003,10 +1016,12 @@ pub fn save_bibliography(
     if digest(&disk) != expected_hash {
         return Err("The bibliography changed outside Hayman. Reload before saving so those changes are not overwritten.".into());
     }
-    let content = serialize_yaml(&bibliography.data)?;
+    let content = serialize_for_save(&current, &disk, &bibliography.data)?;
     let (_, _, recovery, _) = directories(&app)?;
     let saved = snapshot(&db, &recovery, &current, "before-save")?;
-    atomic_write(Path::new(&current.file_path), content.as_bytes())?;
+    if content.as_bytes() != disk {
+        atomic_write(Path::new(&current.file_path), content.as_bytes())?;
+    }
     let new_hash = digest(content.as_bytes());
     if let Err(error) = db.execute(
     "UPDATE bibliographies SET title=?2,description=?3,content_hash=?4,updated_at=?5 WHERE id=?1",
@@ -1034,7 +1049,8 @@ pub fn rename_bibliography(
     let mut db = db(&app)?;
     let current = metadata(&db, &old_id)?;
     let _lock = bibliography_lock(&app, Path::new(&current.file_path))?;
-    if digest(&fs::read(&current.file_path).map_err(|e| e.to_string())?) != expected_hash {
+    let disk = fs::read(&current.file_path).map_err(|e| e.to_string())?;
+    if digest(&disk) != expected_hash {
         return Err("The bibliography changed outside Hayman. Reload before renaming it.".into());
     }
     if old_id != *new_id {
@@ -1049,7 +1065,7 @@ pub fn rename_bibliography(
             return Err(format!("Bibliography '{new_id}' already exists."));
         }
     }
-    let content = serialize_yaml(&bibliography.data)?;
+    let content = serialize_for_save(&current, &disk, &bibliography.data)?;
     let (_, _, recovery, _) = directories(&app)?;
     let saved = snapshot(&db, &recovery, &current, "before-rename")?;
     let old_path = PathBuf::from(&current.file_path);
@@ -1061,7 +1077,9 @@ pub fn rename_bibliography(
     if new_path != old_path && new_path.exists() {
         return Err("A managed bibliography file with the new ID already exists.".into());
     }
-    atomic_write(&new_path, content.as_bytes())?;
+    if new_path != old_path || content.as_bytes() != disk {
+        atomic_write(&new_path, content.as_bytes())?;
+    }
     let tx = db.transaction().map_err(|e| e.to_string())?;
     if let Err(error) = tx.execute(
         "UPDATE bibliographies SET id=?2,title=?3,description=?4,file_path=?5,content_hash=?6,updated_at=?7 WHERE id=?1",

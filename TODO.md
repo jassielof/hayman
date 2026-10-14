@@ -1,6 +1,6 @@
 # TODOs
 
-- [ ] Conserve comments from locally linked YAML files. If the user modifies a local YAML file, the comments shouldn't be lost, or the YAML Schema shouldn't be removed, sorting shouldn't happen, it should be reliable and not modify the file.
+- [x] Preserve linked YAML comments, schema directives and ordering while editing. No-op/metadata-only saves retain source bytes and do not rewrite the file. Unsupported layouts fail safely rather than falling back to lossy serialization. Comments on removed/replaced nodes are retained at the end of the file.
 - [ ] Split the bibliography management into 3 sections:
   - [ ] Projects: These only link to other bibliographies. (links to many YAML files); locally-linked YAML files; and global (Hayman-managed).
   - [ ] Locally-linked bibliographies: These are just links to YAML files that are not managed by Hayman. For example, YAML files on the user's repositories or in their local file system.
