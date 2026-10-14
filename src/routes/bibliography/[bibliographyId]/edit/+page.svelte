@@ -42,7 +42,9 @@
 <main id="main-content" tabindex="-1">
   <form class="mx-auto max-w-md p-6" onsubmit={handleSubmit}>
     <fieldset class="fieldset bg-muted/30">
-      <legend class="fieldset-legend"><h1>Edit Bibliography</h1></legend>
+      <legend class="fieldset-legend"
+        ><h1 class="sr-only">Edit Bibliography</h1></legend
+      >
 
       {#if errorMessage}
         <div role="alert" class="alert alert-error">

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
   import ImportEntriesDialog from '#lib/components/ImportEntriesDialog.svelte';
   import { tauriBackend } from '#lib/services/tauri-backend.js';
   import { hayagrivaService, toYaml } from '#lib/services/hayagriva.service.js';
@@ -96,10 +95,7 @@
 </script>
 
 <main id="main-content" tabindex="-1" class="mx-auto max-w-5xl space-y-6 p-6">
-  <Breadcrumbs
-    items={[{ label: 'Home', href: '/' }, { label: 'Quick tools' }]}
-  />
-  <h1 class="text-2xl font-bold">Quick tools</h1>
+  <h1 class="sr-only">Quick tools</h1>
   <p class="text-sm text-muted-foreground">
     Convert and inspect references without creating a bibliography. Nothing is
     saved until you review and confirm an import.

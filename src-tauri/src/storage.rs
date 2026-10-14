@@ -36,7 +36,10 @@ type Result<T> = std::result::Result<T, String>;
 
 #[tauri::command]
 pub fn home_directory(app: AppHandle) -> Result<String> {
-    app.path().home_dir().map(|path| path.to_string_lossy().into_owned()).map_err(|error| error.to_string())
+    app.path()
+        .home_dir()
+        .map(|path| path.to_string_lossy().into_owned())
+        .map_err(|error| error.to_string())
 }
 // Increment only with an additive, upgrade-tested migration; released local
 // catalogs are user data and do not have a cloud copy to repair from.
@@ -837,6 +840,21 @@ pub fn list_bibliographies(app: AppHandle) -> Result<Vec<Bibliography>> {
         .query_map([], row_metadata)
         .map_err(|e| e.to_string())?
         .map(|m| m.map_err(|e| e.to_string()).and_then(read))
+        .collect()
+}
+
+/// Navigation reads catalog metadata only. Expanding a file reads its entries
+/// separately, so a persistent sidebar does not parse every YAML file on mount.
+#[tauri::command]
+pub fn list_bibliography_metadata(app: AppHandle) -> Result<Vec<Metadata>> {
+    let db = db(&app)?;
+    let mut statement = db
+        .prepare(&format!("{SELECT} ORDER BY title COLLATE NOCASE,id"))
+        .map_err(|e| e.to_string())?;
+    statement
+        .query_map([], row_metadata)
+        .map_err(|e| e.to_string())?
+        .map(|row| row.map_err(|e| e.to_string()))
         .collect()
 }
 

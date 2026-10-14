@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import BibliographyPreview from '#lib/components/BibliographyPreview.svelte';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+
   import EntryList from '#lib/components/EntryList.svelte';
   import { BibliographyService } from '#lib/services/bibliography.service.js';
   import { tauriBackend } from '#lib/services/tauri-backend.js';
@@ -48,16 +48,9 @@
       <a class="btn btn-primary" href={resolve('/')}>Back to home</a>
     </div>
   {:else}
-    <Breadcrumbs
-      items={[
-        { label: 'Home', href: '/' },
-        { label: bibliography.metadata.title },
-      ]}
-    />
-
     <div class="flex flex-col gap-2 md:flex-row">
       <div class="mb-2 flex-auto">
-        <h1 class="truncate text-2xl font-bold">
+        <h1 class="sr-only">
           {bibliography.metadata.title}
         </h1>
         {#if bibliography.metadata.description}

@@ -2,7 +2,7 @@
   import FilePath from '#lib/components/FilePath.svelte';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+
   import { BibliographyService } from '#lib/services/bibliography.service.js';
   import { tauriBackend } from '#lib/services/tauri-backend.js';
   import type { Bibliography } from '#lib/types/bibliography.js';
@@ -66,15 +66,12 @@
 </script>
 
 <main id="main-content" tabindex="-1" class="mx-auto w-full max-w-3xl p-6">
-  <Breadcrumbs
-    items={[{ label: 'Home', href: '/' }, { label: 'New project' }]}
-  />
   <form class="card" onsubmit={submit}>
     <div class="card-body space-y-5">
       <div>
         <div class="flex items-center gap-2">
           <FolderPlusIcon class="size-6 text-primary" />
-          <h1 class="text-2xl font-bold">New bibliography project</h1>
+          <h1 class="sr-only">New bibliography project</h1>
         </div>
         <p class="mt-1 text-sm text-muted-foreground">
           Group several Hayagriva files without copying or modifying their

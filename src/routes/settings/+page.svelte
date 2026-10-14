@@ -321,7 +321,7 @@
 </script>
 
 <main id="main-content" tabindex="-1" class="mx-auto max-w-2xl p-6">
-  <h1 class="mb-4 text-2xl font-bold">Settings</h1>
+  <h1 class="sr-only">Settings</h1>
 
   <form class="space-y-6" onsubmit={handleSubmit}>
     <fieldset class="fieldset">

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+
   import { BibliographyService } from '#lib/services/bibliography.service.js';
   import type { Bibliography } from '#lib/types/bibliography.js';
   import { formatAuthor } from '#lib/formatters/author.js';
@@ -56,14 +56,11 @@
 </script>
 
 <main id="main-content" tabindex="-1" class="mx-auto w-full max-w-6xl p-6">
-  <Breadcrumbs
-    items={[{ label: 'Home', href: '/' }, { label: 'All references' }]}
-  />
   <header class="mb-5">
     <p class="text-xs font-semibold tracking-wider text-primary uppercase">
       Local library
     </p>
-    <h1 class="text-3xl font-bold">All references</h1>
+    <h1 class="sr-only">All references</h1>
     <p class="mt-1 text-sm text-muted-foreground">
       Search across every managed and linked Hayagriva file.
     </p>

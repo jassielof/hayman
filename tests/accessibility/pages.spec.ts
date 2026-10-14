@@ -23,8 +23,9 @@ for (const theme of THEMES) {
     for (const route of routes) {
       test(`WCAG AA ${route}`, async ({ page }) => {
         await page.goto(route);
+        await expect(page.locator('main h1').first()).toBeAttached();
         await expect(
-          page.locator('h1, form > fieldset > legend').first(),
+          page.locator('header [aria-current="page"]').first(),
         ).toBeVisible();
         if (theme === 'dark')
           await expect(page.locator('html')).toHaveClass(/dark/);
@@ -73,7 +74,10 @@ for (const theme of THEMES) {
       ).toBeVisible();
       const authors = page.getByRole('group', { name: 'Author', exact: true });
       await authors
-        .getByRole('checkbox', { name: 'Detailed', exact: true })
+        .getByRole('checkbox', {
+          name: 'Separate family and given names',
+          exact: true,
+        })
         .first()
         .check();
       await expect(

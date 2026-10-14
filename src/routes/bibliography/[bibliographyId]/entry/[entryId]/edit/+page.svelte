@@ -23,6 +23,7 @@
   } from '@lucide/svelte';
   import type { PageProps } from './$types';
   import { tick } from 'svelte';
+  import { revealAndFocus } from '#lib/utils/focus-entry-field.js';
 
   let { data, params }: PageProps = $props();
   // svelte-ignore state_referenced_locally
@@ -158,10 +159,13 @@
   <form
     bind:this={formElement}
     onsubmit={handleSubmit}
-    class="mx-auto w-full max-w-5xl p-6"
+    oninvalidcapture={(event) => revealAndFocus(event.target as HTMLElement)}
+    class="entry-editor-page mx-auto w-full max-w-4xl p-4 sm:p-6"
   >
     <fieldset class="fieldset">
-      <legend class="fieldset-legend text-xl"><h1>Edit entry</h1></legend>
+      <legend class="fieldset-legend text-xl"
+        ><h1 class="sr-only">Edit entry</h1></legend
+      >
       <p class="text-xs text-muted-foreground" role="status">
         {dirty
           ? 'Unsaved changes · Press Ctrl+S to save'
@@ -169,7 +173,7 @@
       </p>
 
       {#if validationIssues.length > 0}
-        <ValidationErrorList issues={validationIssues} />
+        <ValidationErrorList issues={validationIssues} navigable />
         <div class="divider"></div>
       {/if}
 
@@ -213,24 +217,28 @@
 
       <EntryEditor bind:entryData={newEntryData} bind:invalid={editorInvalid} />
 
-      <button
-        class="btn btn-primary mt-4"
-        disabled={isSubmitting || editorInvalid}
+      <div
+        class="sticky bottom-0 z-10 mt-6 flex flex-wrap items-center gap-3 border-t border-border bg-background py-3"
       >
-        {#if isSubmitting}
-          <span class="loading loading-sm loading-spinner"></span>
-        {:else}
-          <SaveIcon class="size-[1.2em]" />
-        {/if}
-        Save changes
-      </button>
-      <a
-        href={resolve(`bibliography/${params.bibliographyId}/`)}
-        class="btn btn-outline"
-      >
-        <XIcon class="size-[1.2em]" />
-        Cancel
-      </a>
+        <button
+          class="btn btn-primary"
+          disabled={isSubmitting || editorInvalid}
+        >
+          {#if isSubmitting}
+            <span class="loading loading-sm loading-spinner"></span>
+          {:else}
+            <SaveIcon class="size-[1.2em]" />
+          {/if}
+          Save changes
+        </button>
+        <a
+          href={resolve(`bibliography/${params.bibliographyId}/`)}
+          class="btn btn-outline"
+        >
+          <XIcon class="size-[1.2em]" />
+          Cancel
+        </a>
+      </div>
     </fieldset>
   </form>
 </main>

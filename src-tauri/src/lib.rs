@@ -26,6 +26,7 @@ pub fn run() {
             storage::backup_catalog_database,
             storage::check_storage_health,
             storage::list_bibliographies,
+            storage::list_bibliography_metadata,
             storage::get_bibliography,
             storage::create_managed_bibliography,
             storage::link_bibliography,

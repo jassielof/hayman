@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+
   import EntryPreviewTabs from '#lib/components/ui/entry-preview-tabs.svelte';
   import EntryAttachments from '#lib/components/EntryAttachments.svelte';
   import { formatFormattableString } from '#lib/formatters/formattable-string.js';
@@ -18,20 +18,7 @@
 </script>
 
 <main id="main-content" tabindex="-1" class="container mx-auto max-w-5xl p-4">
-  <Breadcrumbs
-    items={[
-      { label: 'Home', href: '/' },
-      {
-        label:
-          data.bibliographyMetadata.title?.trim() ||
-          data.bibliographyMetadata.id,
-        href: `/bibliography/${params.bibliographyId}/`,
-      },
-      { label: params.entryId },
-    ]}
-  />
-
-  <h1 class="mb-4 text-2xl font-bold">
+  <h1 class="sr-only">
     {formatFormattableString(data.entry.title) || params.entryId}
   </h1>
 

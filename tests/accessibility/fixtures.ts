@@ -77,6 +77,8 @@ export const test = base.extend({
                 return null;
               case 'list_bibliographies':
                 return [bibliography];
+              case 'list_bibliography_metadata':
+                return [bibliography.metadata];
               case 'get_bibliography':
                 return bibliography;
               case 'list_projects':

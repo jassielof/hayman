@@ -168,7 +168,7 @@
   tabindex="-1"
   class="container mx-auto mt-8 max-w-5xl p-4"
 >
-  <h1 class="mb-6 text-2xl font-bold">Bibliographies</h1>
+  <h1 class="sr-only">Bibliographies</h1>
   {#if desktopError}
     <div class="alert alert-error mb-4" role="alert">{desktopError}</div>
   {/if}

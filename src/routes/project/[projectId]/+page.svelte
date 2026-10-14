@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
+
   import { BibliographyService } from '#lib/services/bibliography.service.js';
   import { tauriBackend } from '#lib/services/tauri-backend.js';
   import type { Bibliography } from '#lib/types/bibliography.js';
@@ -119,12 +119,6 @@
 </script>
 
 <main id="main-content" tabindex="-1" class="mx-auto w-full max-w-6xl p-6">
-  <Breadcrumbs
-    items={[
-      { label: 'Home', href: '/' },
-      { label: project?.title ?? 'Project' },
-    ]}
-  />
   {#if errorMessage}
     <div class="alert alert-error" role="alert">{errorMessage}</div>
   {:else if !project}
@@ -137,7 +131,7 @@
         <p class="text-xs font-semibold tracking-wider text-primary uppercase">
           Bibliography project
         </p>
-        <h1 class="text-3xl font-bold">{project.title}</h1>
+        <h1 class="sr-only">{project.title}</h1>
         {#if project.description}<p class="mt-1 text-muted-foreground">
             {project.description}
           </p>{/if}

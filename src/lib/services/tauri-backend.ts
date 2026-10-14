@@ -1,4 +1,5 @@
 import type { Bibliography } from '#lib/types/bibliography.js';
+import type { BibliographyMetadata } from '#lib/types/bibliography-metadata.js';
 import { invoke } from '@tauri-apps/api/core';
 import type { AppSettings } from '#lib/types/app-settings.js';
 import type { BibliographyProject } from '#lib/types/project.js';
@@ -98,6 +99,8 @@ export const tauriBackend = {
   // Native process identity, never guessed from a stored path's username.
   homeDirectory: () => (homeDirectory ??= invoke<string>('home_directory')),
   list: () => invoke<Bibliography[]>('list_bibliographies'),
+  listMetadata: () =>
+    invoke<BibliographyMetadata[]>('list_bibliography_metadata'),
   get: (id: string) => invoke<Bibliography>('get_bibliography', { id }),
   createManaged: (bibliography: Bibliography) =>
     changed(
