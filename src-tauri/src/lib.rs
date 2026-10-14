@@ -1,6 +1,7 @@
 mod citation_styles;
 mod fonts;
 mod linked_yaml;
+mod online_lookup;
 mod storage;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -29,6 +30,7 @@ pub fn run() {
             storage::link_bibliography,
             storage::import_bibliography_file,
             storage::parse_import_content,
+            online_lookup::lookup_identifier,
             storage::insert_entries,
             storage::save_bibliography,
             storage::rename_bibliography,

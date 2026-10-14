@@ -27,10 +27,12 @@
     open = $bindable(false),
     bibliographyId,
     onImported,
+    initialSource = '',
   }: {
     open?: boolean;
     bibliographyId: string;
     onImported?: () => void | Promise<void>;
+    initialSource?: string;
   } = $props();
 
   let source = $state('');
@@ -43,6 +45,7 @@
 
   $effect(() => {
     if (!open) return;
+    source = initialSource;
     BibliographyService.get(bibliographyId).then(
       (bibliography) => (existing = bibliography.data),
       (error) => (message = String(error)),

@@ -72,7 +72,7 @@ pub struct ImportResult {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParsedImport {
-    data: Value,
+    pub(crate) data: Value,
     source_format: String,
 }
 

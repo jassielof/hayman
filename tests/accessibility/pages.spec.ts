@@ -4,6 +4,7 @@ const routes = [
   '/',
   '/settings',
   '/library',
+  '/tools',
   '/bibliography/new',
   '/project/new',
   '/project/demo',

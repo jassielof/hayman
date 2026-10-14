@@ -112,6 +112,7 @@ export const test = base.extend({
                   bibliography: rendered,
                 };
               case 'parse_import_content':
+              case 'lookup_identifier':
                 return { data: bibliography.data, sourceFormat: 'yaml' };
               default:
                 throw new Error(`Unmocked accessibility-test IPC: ${command}`);

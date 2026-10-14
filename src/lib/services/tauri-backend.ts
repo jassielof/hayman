@@ -130,6 +130,16 @@ export const tauriBackend = {
     invoke<ImportResult>('import_bibliography_file', { path }),
   parseImportContent: (content: string, format: 'auto' | 'yaml' | 'biblatex') =>
     invoke<ParsedImport>('parse_import_content', { content, format }),
+  lookupIdentifier: (
+    kind: 'doi' | 'isbn' | 'arxiv',
+    identifier: string,
+    allowNetwork: boolean,
+  ) =>
+    invoke<ParsedImport>('lookup_identifier', {
+      kind,
+      identifier,
+      allowNetwork,
+    }),
   insertEntries: (
     bibliographyId: string,
     entries: Bibliography['data'],

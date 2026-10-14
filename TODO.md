@@ -6,7 +6,7 @@
   - [ ] Locally-linked bibliographies: These are just links to YAML files that are not managed by Hayman. For example, YAML files on the user's repositories or in their local file system.
   - [ ] Hayman-managed bibliographies: These are the lowest priority on usage, as they are managed and stored by Hayman, the user can still manage them, but their location is within Hayman's data folder. These might be useful for quick bibliographies or ones that the user doesn't want to manage themselves, such as using the web app for normal Typst but using local Hayman for bibliographies, or just testing how a citation or bibliogrphy would look like.
 - [ ] Add a place to view all existing entries across all bibliographies (local and global)
-- [ ] Add a quick tools section to convert Bib(La)TeX to Hayagriva.
-- [ ] Add bibliography fetching from entry identifiers (DOI, ISBN, arXiv, etc.) (this needs to be implemented and grant network access).
-  - [ ] It should be possible to get the bibliography from Zotero or other local sources, the user's Zotero could be imported into Hayman (via Hayagriva's BibLaTeX to Hayagriva converter).
+- [x] Add a quick tools section for offline Bib(La)TeX → Hayagriva conversion, YAML copy/save and selective import review.
+- [x] Add explicit, consent-based DOI (Crossref), ISBN (Open Library) and arXiv metadata lookup. Validate responses with Hayagriva and stage them for review; never auto-save or enable general webview networking.
+  - [x] Import Zotero/other local-manager Bib(La)TeX exports through Quick tools. Original databases, attachment files and annotations are not read or modified.
 - [ ] Improve the entry form's UI, the UX is somewhat fine, but the many nested fields aren't the best, if possible to use a stablished and tested design system fitting for forms.
