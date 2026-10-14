@@ -143,6 +143,20 @@ math {
 }
 
 @layer components {
+  .sidebar-link {
+    @apply block min-w-0 rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent focus-visible:bg-accent;
+  }
+  /* Field-group composition, with semantic grouping but only one visual layer. */
+  .entry-form .fieldset,
+  .entry-editor-page > .fieldset {
+    @apply min-w-0 rounded-none border-0 bg-transparent p-0 shadow-none;
+  }
+  .entry-form input,
+  .entry-form select,
+  .entry-form textarea,
+  .entry-form summary {
+    scroll-margin-top: 6rem;
+  }
   .skip-link {
     @apply sr-only;
   }

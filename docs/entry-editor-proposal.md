@@ -1,6 +1,6 @@
 # Entry editor: proposed final TODO
 
-Status: proposal for review, not an implemented redesign. The existing guided/YAML editor and configured field profiles remain unchanged until approved.
+Status: approved and implemented. The guided/YAML editor and configured field profiles are retained, with flatter sections, non-destructive options, searchable field discovery and validation focus. The tests below cover the workflow; an installed screen-reader smoke test remains a manual release check.
 
 ## What is making the current form feel complicated
 

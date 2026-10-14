@@ -62,13 +62,9 @@
 </script>
 
 <div
-  class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-2"
+  class="my-5 flex flex-wrap items-center justify-between gap-3 border-y border-border py-3"
 >
-  <div
-    class="inline-flex rounded-md bg-card p-1 shadow-xs"
-    aria-label="Entry editor mode"
-    role="group"
-  >
+  <div class="inline-flex gap-1" aria-label="Entry editor mode" role="group">
     <button
       type="button"
       class="btn btn-sm {mode === 'guided' ? 'btn-primary' : 'btn-ghost'}"

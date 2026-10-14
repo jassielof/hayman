@@ -29,13 +29,12 @@
 
   let checkMessage = $state<string | undefined>();
 
-  $effect(() => {
-    if (dateValue) {
-      value = { value: urlValue!, date: dateValue };
-    } else {
-      value = urlValue;
-    }
-  });
+  function updateUrl(text: string, date: BibliographyEntry['date']) {
+    value =
+      typeof value === 'object' || date !== undefined
+        ? { ...(typeof value === 'object' ? value : {}), value: text, date }
+        : text || undefined;
+  }
 
   function checkFormat() {
     checkMessage = validateWebUrl(urlValue ?? '').message;
@@ -64,7 +63,8 @@
   <label class="label" for="{uid}-entry-url">{label}</label>
   <div class="flex flex-wrap gap-2">
     <input
-      bind:value={urlValue}
+      value={urlValue ?? ''}
+      oninput={(event) => updateUrl(event.currentTarget.value, dateValue)}
       id="{uid}-entry-url"
       type="url"
       class="input min-w-0 flex-1"
@@ -94,5 +94,7 @@
     <p class="text-xs text-muted-foreground" role="status">{checkMessage}</p>
   {/if}
 
-  <DateInput bind:value={dateValue} />
+  <DateInput
+    bind:value={() => dateValue, (date) => updateUrl(urlValue ?? '', date)}
+  />
 </fieldset>

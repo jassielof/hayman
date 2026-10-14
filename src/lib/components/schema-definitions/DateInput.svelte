@@ -13,19 +13,20 @@
   } = $props();
 
   const uid = $props.id();
-
-  $effect(() => {
-    if (typeof value === 'string' && /^-?\d+$/.test(value)) {
-      value = parseInt(value);
-    }
-  });
 </script>
 
 <label class="label" for="{uid}-entry-date">{label}</label>
 <input
   pattern={DATE_REGEX.source}
   title="Date must match the format: YYYY, YYYY-MM, or YYYY-MM-DD."
-  bind:value
+  value={value ?? ''}
+  oninput={(event) => {
+    const text = event.currentTarget.value;
+    value =
+      typeof value === 'number' && /^-?\d+$/.test(text)
+        ? Number(text)
+        : text || undefined;
+  }}
   id="{uid}-entry-date"
   type="text"
   class="input w-full"

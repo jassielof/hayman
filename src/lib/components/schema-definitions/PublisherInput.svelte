@@ -18,6 +18,20 @@
   let publisherName = $state('');
   let publisherLocation: undefined | string = $state(undefined);
 
+  function updatePublisher(event: Event, field: 'name' | 'location') {
+    const text = (event.currentTarget as HTMLInputElement).value;
+    const name = field === 'name' ? text : publisherName;
+    const location = field === 'location' ? text : publisherLocation;
+    // Editor mounting/disclosure never rewrites a structured publisher.
+    if (typeof value === 'object' || location)
+      value = {
+        ...(typeof value === 'object' ? value : {}),
+        name,
+        location: location || undefined,
+      };
+    else value = name || undefined;
+  }
+
   $effect(() => {
     if (typeof value === 'string') {
       publisherName = value;
@@ -30,19 +44,6 @@
       publisherLocation = undefined;
     }
   });
-
-  $effect(() => {
-    if (!publisherName) {
-      value = undefined;
-    } else if (!publisherLocation) {
-      value = publisherName;
-    } else {
-      value = {
-        name: publisherName,
-        location: publisherLocation,
-      };
-    }
-  });
 </script>
 
 <fieldset class="fieldset">
@@ -52,7 +53,8 @@
     type="text"
     id="{uid}-publisher-name"
     class="input w-full"
-    bind:value={publisherName}
+    value={publisherName}
+    oninput={(event) => updatePublisher(event, 'name')}
     {placeholder}
     required={publisherLocation ? true : false}
   />
@@ -63,7 +65,8 @@
     type="text"
     id="{uid}-publisher-location"
     class="input w-full"
-    bind:value={publisherLocation}
+    value={publisherLocation ?? ''}
+    oninput={(event) => updatePublisher(event, 'location')}
     placeholder={locationPlaceholder}
   />
 </fieldset>

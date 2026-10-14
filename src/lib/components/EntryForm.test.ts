@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { flushSync, mount, unmount } from 'svelte';
+import { flushSync, mount, unmount, tick } from 'svelte';
 import type { Author, BibliographyEntry } from '@hayman/hayagriva-schema';
 import EntryFormHarness from './__tests__/EntryFormHarness.svelte';
 
@@ -23,9 +23,18 @@ function render(entry: BibliographyEntry) {
 function inputs(label: string, root: ParentNode = document.body) {
   return [...root.querySelectorAll('label')]
     .filter((element) => element.textContent?.trim() === label)
-    .map(
-      (element) => document.getElementById(element.htmlFor) as HTMLInputElement,
-    );
+    .map((element) => {
+      const input = document.getElementById(
+        element.htmlFor,
+      ) as HTMLInputElement;
+      // Focus regressions exercise editable controls, including disclosed details.
+      let parent = input.parentElement;
+      while (parent) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+        parent = parent.parentElement;
+      }
+      return input;
+    });
 }
 
 function type(
@@ -88,6 +97,53 @@ function people(field: (typeof personFields)[number]) {
 }
 
 describe('entry form focus and bound data', () => {
+  it('reveals a session field and its section even when the type profile omits it', async () => {
+    render({ type: 'misc' });
+    expect(inputs('Archive Location')).toHaveLength(0);
+    window.dispatchEvent(
+      new CustomEvent('hayman-focus-field', { detail: 'archive-location' }),
+    );
+    await tick();
+    const input = inputs('Archive Location')[0];
+    expect(input).toBeDefined();
+    await expect.poll(() => document.activeElement === input).toBe(true);
+    expect(entry()).toEqual({ type: 'misc' });
+  });
+  it('does not rewrite dates, publisher objects or URL objects when mounting or editing an unrelated title', () => {
+    const original: BibliographyEntry = {
+      type: 'book',
+      title: 'Original',
+      date: '2024',
+      publisher: { name: 'Press' },
+      url: { value: 'https://example.org', date: 0 },
+    };
+    render(original);
+    expect(entry()).toEqual(original);
+    type(inputs('Title')[0], ' revised');
+    expect(entry()).toEqual({ ...original, title: 'Original revised' });
+  });
+
+  it('synchronizes URL dates and publisher edits only when explicitly changed', () => {
+    render({
+      type: 'book',
+      publisher: { name: 'Press' },
+      url: { value: 'https://example.org', date: '2024' },
+    });
+    type(inputs('Publisher')[0], ' revised');
+    expect(entry().publisher).toEqual({ name: 'Press revised' });
+    const accessed = inputs('Date')[1];
+    accessed.value = '2024-02';
+    accessed.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    expect(entry().url).toEqual({
+      value: 'https://example.org',
+      date: '2024-02',
+    });
+    accessed.value = '';
+    accessed.dispatchEvent(new Event('input', { bubbles: true }));
+    flushSync();
+    expect(entry().url).toEqual({ value: 'https://example.org' });
+  });
   it.each(['author', 'editor', 'affiliated'] as const)(
     'keeps focus while typing a full name in a multi-person %s field',
     (field) => {
@@ -115,7 +171,15 @@ describe('entry form focus and bound data', () => {
     (label) => {
       render({ type: 'Book' });
       if (label === 'Names') {
-        click('Affiliated');
+        const toggle = [...document.querySelectorAll('label')]
+          .find(
+            (label) =>
+              label.textContent?.replace(/\s+/g, ' ').trim() ===
+              'Show unused fields',
+          )!
+          .querySelector<HTMLInputElement>('input')!;
+        toggle.click();
+        flushSync();
         click('Add Affiliated Person');
       } else {
         click(`Add ${label}`);
@@ -231,5 +295,51 @@ describe('entry form focus and bound data', () => {
       'zbl-extra': '123789',
       mr: '456',
     });
+  });
+
+  it('retains structured title options, including explicit false, when editing only the title', () => {
+    const title = { value: 'Research', short: 'R', verbatim: false };
+    render({ type: 'book', title });
+    expect(entry().title).toEqual(title);
+    type(inputs('Title')[0], ' updated');
+    expect(entry().title).toEqual({ ...title, value: 'Research updated' });
+  });
+
+  it('switching name editors does not discard a structured person or literal name', () => {
+    const person = {
+      name: '田中',
+      'given-name': '花子',
+      prefix: 'Dr.',
+      alias: '',
+    };
+    render({ type: 'book', author: person });
+    const toggle = document.querySelector<HTMLInputElement>(
+      '.person-row input[type="checkbox"]',
+    )!;
+    toggle.click();
+    flushSync();
+    expect(entry().author).toEqual(person);
+    toggle.click();
+    flushSync();
+    type(inputs('Family Name')[0], '先生');
+    expect(entry().author).toEqual({ ...person, name: '田中先生' });
+  });
+
+  it('refuses to discard additional parents when switching to single-parent mode', () => {
+    const parents = [
+      { type: 'book' as const, title: 'One' },
+      { type: 'book' as const, title: 'Two' },
+    ];
+    render({ type: 'chapter', parent: parents });
+    const select = document.querySelector<HTMLSelectElement>(
+      'select[id$="-parent-type"]',
+    )!;
+    select.value = 'single';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    expect(entry().parent).toEqual(parents);
+    expect(document.querySelector('[role="alert"]')?.textContent).toContain(
+      'Remove extra parents',
+    );
   });
 });

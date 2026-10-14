@@ -2,7 +2,10 @@
   import type { ValidationIssue } from '#lib/services/bibliography.service.js';
   import { CircleAlertIcon } from '@lucide/svelte';
 
-  let { issues }: { issues: ValidationIssue[] } = $props();
+  let {
+    issues,
+    navigable = false,
+  }: { issues: ValidationIssue[]; navigable?: boolean } = $props();
 </script>
 
 {#if issues.length > 0}
@@ -19,7 +22,18 @@
         {#each issues as issue (issue.path + issue.message)}
           <li>
             {#if issue.path !== '(root)'}
-              <span class="font-mono">{issue.path}</span>:
+              {#if navigable}
+                <button
+                  type="button"
+                  class="font-mono underline underline-offset-4"
+                  onclick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent('hayman-focus-field', {
+                        detail: issue.path,
+                      }),
+                    )}>{issue.path}</button
+                >
+              {:else}<span class="font-mono">{issue.path}</span>{/if}:
             {/if}
             {issue.message}
           </li>

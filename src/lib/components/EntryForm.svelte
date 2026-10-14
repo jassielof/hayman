@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
+  import { onMount, tick } from 'svelte';
+  import EntryFieldPicker from './EntryFieldPicker.svelte';
+  import { focusEntryField } from '#lib/utils/focus-entry-field.js';
   import FormSection from '#lib/components/ui/form-section.svelte';
   import EntryTypeInput from '#lib/components/schema-definitions/EntryTypeInput.svelte';
   import FormattableStringInput from '#lib/components/schema-definitions/FormattableStringInput.svelte';
@@ -6,9 +10,9 @@
   import type { BibliographyEntry } from '@hayman/hayagriva-schema';
   import {
     ALL_ENTRY_FIELDS,
-    formatEntryFieldLabel,
     isFieldVisible,
     isSectionRelevant,
+    getSuggestedFields,
     type EntryFieldKey,
   } from '#lib/validators/entry-field-visibility.js';
   import { MAX_PARENT_DEPTH } from '@hayman/hayagriva-schema';
@@ -34,16 +38,20 @@
     entryData = $bindable(),
     parentDepth = 0,
     editorSettings = DEFAULT_APP_SETTINGS.editor,
+    fieldPath = '',
   }: {
     entryData: BibliographyEntry;
     parentDepth?: number;
     editorSettings?: AppSettings['editor'];
+    fieldPath?: string;
   } = $props();
 
   const uid = $props.id();
 
   let parentType: 'none' | 'single' | 'list' = $state('none');
   let showAllFields = $state(false);
+  let root: HTMLDivElement;
+  let parentMessage = $state('');
   const sessionFields = new SvelteSet<EntryFieldKey>();
 
   const entryTitle = $derived(
@@ -67,14 +75,36 @@
         showAllFields,
         entryData,
         [...editorSettings.visibleFields, ...sessionFields],
-        editorSettings.fieldsByType,
+        {
+          ...editorSettings.fieldsByType,
+          [(entryData.type ?? 'misc').toLowerCase()]: [
+            ...getSuggestedFields(
+              entryData.type,
+              editorSettings.visibleFields,
+              editorSettings.fieldsByType,
+            ),
+            ...sessionFields,
+          ],
+        },
       ),
   );
-  const completedFieldCount = $derived(
-    Object.values(entryData).filter(
-      (value) => value !== undefined && value !== '',
-    ).length,
-  );
+  async function addField(field: EntryFieldKey) {
+    sessionFields.add(field);
+    await tick();
+    focusEntryField(root, `${fieldPath}${field}`);
+  }
+  onMount(() => {
+    if (parentDepth !== 0) return;
+    const listener = async (event: Event) => {
+      const path = String((event as CustomEvent).detail);
+      const field = path.split('.')[0] as EntryFieldKey;
+      if (ALL_ENTRY_FIELDS.includes(field)) sessionFields.add(field);
+      await tick();
+      focusEntryField(root, path);
+    };
+    window.addEventListener('hayman-focus-field', listener);
+    return () => window.removeEventListener('hayman-focus-field', listener);
+  });
 
   $effect(() => {
     if (entryData.parent === undefined || entryData.parent === null) {
@@ -89,15 +119,29 @@
   function handleParentTypeChange(e: Event) {
     const target = e.target as HTMLSelectElement;
     const newType = target.value;
+    parentMessage = '';
 
     switch (newType) {
       case 'none':
+        if (
+          entryData.parent &&
+          !window.confirm('Remove this entry’s parent publication data?')
+        ) {
+          target.value = parentType;
+          return;
+        }
         entryData.parent = undefined;
         break;
       case 'single':
-        if (!entryData.parent || Array.isArray(entryData.parent)) {
-          entryData.parent = { type: 'Misc' };
+        if (Array.isArray(entryData.parent) && entryData.parent.length > 1) {
+          parentMessage =
+            'Remove extra parents before switching to a single parent.';
+          target.value = parentType;
+          return;
         }
+        entryData.parent = Array.isArray(entryData.parent)
+          ? (entryData.parent[0] ?? { type: 'Misc' })
+          : (entryData.parent ?? { type: 'Misc' });
         break;
       case 'list':
         if (!Array.isArray(entryData.parent)) {
@@ -120,318 +164,386 @@
   }
 </script>
 
-{#if parentDepth === 0}
-  <section
-    class="sticky top-2 z-10 mb-4 rounded-lg border border-border bg-card/95 p-3 shadow-sm backdrop-blur"
-  >
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 class="font-semibold">Entry details</h2>
-        <p class="text-xs text-muted-foreground">
-          {completedFieldCount} populated {completedFieldCount === 1
-            ? 'field'
-            : 'fields'} · Suggested fields adapt to the entry type.
-        </p>
+<div
+  class="entry-form"
+  data-entry-form={fieldPath}
+  bind:this={root}
+  onfocusin={(event) => {
+    // Pin only the focused field, not every unused field revealed for inspection.
+    const host = (event.target as HTMLElement).closest<HTMLElement>(
+      '[data-entry-field]',
+    );
+    const field = host?.dataset.entryField
+      ?.slice(fieldPath.length)
+      .split('.')[0] as EntryFieldKey;
+    if (ALL_ENTRY_FIELDS.includes(field)) sessionFields.add(field);
+  }}
+>
+  {#if parentDepth === 0}
+    <div class="mb-5 space-y-3">
+      <p class="text-sm text-muted-foreground">
+        Your configured fields follow the reference type. Populated fields are
+        always retained.
+      </p>
+      <div class="flex flex-wrap items-center gap-4 text-sm">
+        <label class="flex items-center gap-2"
+          ><input type="checkbox" bind:checked={showAllFields} />Show unused
+          fields</label
+        >
+        <a
+          class="text-primary underline underline-offset-4"
+          href={resolve('/settings')}>Configure field defaults</a
+        >
       </div>
-      <div
-        class="inline-flex rounded-md border border-border bg-muted p-1"
-        aria-label="Field visibility"
-      >
-        <button
-          type="button"
-          class="rounded px-3 py-1.5 text-xs font-medium"
-          class:bg-card={!showAllFields}
-          class:shadow-sm={!showAllFields}
-          aria-pressed={!showAllFields}
-          onclick={() => (showAllFields = false)}>Focused</button
-        >
-        <button
-          type="button"
-          class="rounded px-3 py-1.5 text-xs font-medium"
-          class:bg-card={showAllFields}
-          class:shadow-sm={showAllFields}
-          aria-pressed={showAllFields}
-          onclick={() => (showAllFields = true)}>All Hayagriva fields</button
-        >
+      <EntryFieldPicker
+        fields={ALL_ENTRY_FIELDS.filter((field) => !visible(field))}
+        onSelect={addField}
+      />
+    </div>
+  {/if}
+
+  <FormSection title="Reference" open={true}>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div data-entry-field={`${fieldPath}type`}>
+        <EntryTypeInput bind:value={entryData.type!} />
+      </div>
+      <div data-entry-field={`${fieldPath}date`}>
+        <DateInput bind:value={entryData.date} />
       </div>
     </div>
-    <details class="mt-3 border-t border-border pt-3">
-      <summary
-        class="inline-flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-primary"
-      >
-        <PlusIcon class="size-4" /> Add a field
-      </summary>
-      <div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {#each ALL_ENTRY_FIELDS.filter((field) => !visible(field)) as field (field)}
-          <button
-            type="button"
-            class="btn btn-outline btn-sm justify-start"
-            onclick={() => sessionFields.add(field)}
-          >
-            <PlusIcon class="size-3.5" />
-            {formatEntryFieldLabel(field)}
-          </button>
-        {:else}
-          <p class="text-sm text-muted-foreground">All fields are visible.</p>
-        {/each}
-      </div>
-    </details>
-  </section>
-{/if}
 
-<FormSection title="Core" open={true}>
-  <EntryTypeInput bind:value={entryData.type!} />
-
-  <FormattableStringInput
-    label="Title"
-    placeholder="UML & Patterns"
-    shortPlaceholder="UML"
-    bind:value={entryData.title}
-  />
-
-  <DateInput bind:value={entryData.date} />
-
-  {#if visible('chapter')}
-    <NumericOrStringInput
-      label="Chapter"
-      placeholder="3"
-      bind:value={entryData.chapter}
-    />
-  {/if}
-</FormSection>
-
-<FormSection title="Parent reference" open={sectionOpen('parent')}>
-  <label for="{uid}-parent-type" class="label">Parent type</label>
-  <select
-    id="{uid}-parent-type"
-    class="select w-full"
-    value={parentType}
-    onchange={handleParentTypeChange}
-  >
-    <option value="none">None</option>
-    <option value="single">Single parent</option>
-    <option value="list">List of parents</option>
-  </select>
-
-  {#if parentType === 'single' && entryData.parent && !Array.isArray(entryData.parent)}
-    <h3 class="mt-2 text-sm text-muted-foreground">
-      Parent of <span class="font-semibold italic">{entryTitle}</span>
-    </h3>
-    {#if parentDepth >= MAX_PARENT_DEPTH}
-      <p class="text-sm text-warning">
-        Parent nesting is too deep to edit further here ({MAX_PARENT_DEPTH} levels
-        max).
-      </p>
-    {:else}
-      <EntryForm
-        bind:entryData={entryData.parent}
-        parentDepth={parentDepth + 1}
-        {editorSettings}
+    <div data-entry-field={`${fieldPath}title`}>
+      <FormattableStringInput
+        label="Title"
+        placeholder="UML & Patterns"
+        shortPlaceholder="UML"
+        bind:value={entryData.title}
       />
-    {/if}
-  {/if}
+    </div>
 
-  {#if parentType === 'list' && Array.isArray(entryData.parent)}
-    {#each entryData.parent as parentEntry, i (parentEntry)}
-      <div class="mt-4 flex items-start gap-2">
-        <div class="min-w-0 flex-1">
-          <h3 class="text-sm text-muted-foreground">
-            Parent #{i + 1} of
-            <span class="font-semibold italic">{entryTitle}</span>
-          </h3>
-        </div>
+    {#if visible('chapter')}
+      <div data-entry-field={fieldPath + 'chapter'}>
+        <NumericOrStringInput
+          label="Chapter"
+          placeholder="3"
+          bind:value={entryData.chapter}
+        />
+      </div>
+    {/if}
+  </FormSection>
+
+  {#snippet parentEditor()}
+    <FormSection title="Parent publication" open={!!entryData.parent}>
+      <p class="text-sm text-muted-foreground">
+        The journal, book or other publication containing this reference.
+      </p>
+      <label for="{uid}-parent-type" class="label">Parent type</label>
+      <select
+        id="{uid}-parent-type"
+        class="select w-full"
+        value={parentType}
+        onchange={handleParentTypeChange}
+      >
+        <option value="none">None</option>
+        <option value="single">Single parent</option>
+        <option value="list">List of parents</option>
+      </select>
+      {#if parentMessage}<p role="alert" class="text-sm text-destructive">
+          {parentMessage}
+        </p>{/if}
+
+      {#if parentType === 'single' && entryData.parent && !Array.isArray(entryData.parent)}
+        <h3 class="mt-2 text-sm text-muted-foreground">
+          Parent of <span class="font-semibold italic">{entryTitle}</span>
+        </h3>
+        {#if parentDepth >= MAX_PARENT_DEPTH}
+          <p class="text-sm text-warning">
+            Parent nesting is too deep to edit further here ({MAX_PARENT_DEPTH} levels
+            max).
+          </p>
+        {:else}
+          <details
+            open={!entryData.parent.title}
+            class="border-l-2 border-border pl-3"
+          >
+            <summary class="cursor-pointer py-2 text-sm font-medium"
+              >Edit parent: {formatFormattableString(entryData.parent.title) ||
+                'Untitled'} · {entryData.parent.type}</summary
+            >
+            <EntryForm
+              bind:entryData={entryData.parent}
+              parentDepth={parentDepth + 1}
+              {editorSettings}
+              fieldPath={`${fieldPath}parent.`}
+            />
+          </details>
+        {/if}
+      {/if}
+
+      {#if parentType === 'list' && Array.isArray(entryData.parent)}
+        {#each entryData.parent as parentEntry, i (parentEntry)}
+          <div class="mt-4 flex items-start gap-2">
+            <div class="min-w-0 flex-1">
+              <h3 class="text-sm text-muted-foreground">
+                Parent #{i + 1} of
+                <span class="font-semibold italic">{entryTitle}</span>
+              </h3>
+            </div>
+            <button
+              type="button"
+              class="btn btn-circle btn-outline btn-sm btn-error"
+              aria-label={`Remove parent ${i + 1}`}
+              onclick={() => removeParent(i)}
+            >
+              <XIcon class="h-4 w-4" />
+            </button>
+          </div>
+
+          {#if parentDepth >= MAX_PARENT_DEPTH}
+            <p class="text-sm text-warning">
+              Parent nesting is too deep to edit further here ({MAX_PARENT_DEPTH}
+              levels max).
+            </p>
+          {:else}
+            <details
+              open={!parentEntry.title}
+              class="border-l-2 border-border pl-3"
+            >
+              <summary class="cursor-pointer py-2 text-sm font-medium"
+                >Edit parent {i + 1}: {formatFormattableString(
+                  parentEntry.title,
+                ) || 'Untitled'} · {parentEntry.type}</summary
+              >
+              <EntryForm
+                bind:entryData={entryData.parent[i]}
+                parentDepth={parentDepth + 1}
+                {editorSettings}
+                fieldPath={`${fieldPath}parent.${i}.`}
+              />
+            </details>
+          {/if}
+        {/each}
+
         <button
           type="button"
-          class="btn btn-circle btn-outline btn-sm btn-error"
-          aria-label={`Remove parent ${i + 1}`}
-          onclick={() => removeParent(i)}
+          class="btn btn-outline btn-secondary"
+          onclick={addParent}
         >
-          <XIcon class="h-4 w-4" />
+          <PlusIcon class="size-4" />Add parent
         </button>
-      </div>
-
-      {#if parentDepth >= MAX_PARENT_DEPTH}
-        <p class="text-sm text-warning">
-          Parent nesting is too deep to edit further here ({MAX_PARENT_DEPTH}
-          levels max).
-        </p>
-      {:else}
-        <EntryForm
-          bind:entryData={entryData.parent[i]}
-          parentDepth={parentDepth + 1}
-          {editorSettings}
-        />
       {/if}
-    {/each}
+    </FormSection>
+  {/snippet}
 
-    <button
-      type="button"
-      class="btn btn-outline btn-secondary"
-      onclick={addParent}
-    >
-      Add parent
-    </button>
+  {#if sectionOpen('people')}
+    <FormSection title="People" open={sectionOpen('people')}>
+      {#if visible('author')}
+        <div data-entry-field={fieldPath + 'author'}>
+          <PeopleInput label="Author" bind:value={entryData.author} />
+        </div>
+      {/if}
+      {#if visible('editor')}
+        <div data-entry-field={fieldPath + 'editor'}>
+          <PeopleInput label="Editor" bind:value={entryData.editor} />
+        </div>
+      {/if}
+      {#if visible('affiliated')}
+        <div data-entry-field={fieldPath + 'affiliated'}>
+          <AffiliatedListInput
+            bind:value={entryData.affiliated}
+            fieldPath={`${fieldPath}affiliated`}
+          />
+        </div>
+      {/if}
+    </FormSection>
   {/if}
-</FormSection>
 
-{#if sectionOpen('people')}
-  <FormSection title="People" open={sectionOpen('people')}>
-    {#if visible('author')}
-      <PeopleInput label="Author" bind:value={entryData.author} />
-    {/if}
-    {#if visible('editor')}
-      <PeopleInput label="Editor" bind:value={entryData.editor} />
-    {/if}
-    {#if visible('affiliated')}
-      <AffiliatedListInput bind:value={entryData.affiliated} />
-    {/if}
-  </FormSection>
-{/if}
+  {#if sectionOpen('publication')}
+    <FormSection title="Publication" open={sectionOpen('publication')}>
+      {#if visible('publisher')}
+        <div data-entry-field={fieldPath + 'publisher'}>
+          <PublisherInput bind:value={entryData.publisher} />
+        </div>
+      {/if}
+      {#if visible('issue')}
+        <div data-entry-field={fieldPath + 'issue'}>
+          <NumericOrStringInput
+            label="Issue"
+            placeholder="5"
+            bind:value={entryData.issue}
+          />
+        </div>
+      {/if}
+      {#if visible('volume')}
+        <div data-entry-field={fieldPath + 'volume'}>
+          <NumericOrStringInput
+            label="Volume"
+            placeholder="10"
+            bind:value={entryData.volume}
+          />
+        </div>
+      {/if}
+      {#if visible('edition')}
+        <div data-entry-field={fieldPath + 'edition'}>
+          <NumericOrStringInput
+            label="Edition"
+            placeholder="2nd"
+            bind:value={entryData.edition}
+          />
+        </div>
+      {/if}
+      {#if visible('page-range')}
+        <div data-entry-field={fieldPath + 'page-range'}>
+          <NumericOrStringInput
+            label="Page range"
+            placeholder="1-10"
+            bind:value={entryData['page-range']}
+          />
+        </div>
+      {/if}
+      {#if visible('volume-total')}
+        <div data-entry-field={fieldPath + 'volume-total'}>
+          <IntegerInput
+            bind:value={entryData['volume-total']}
+            label="Volume total"
+            naturalSet={true}
+            placeholder="0"
+          />
+        </div>
+      {/if}
+      {#if visible('page-total')}
+        <div data-entry-field={fieldPath + 'page-total'}>
+          <IntegerInput
+            bind:value={entryData['page-total']}
+            label="Page total"
+            naturalSet={true}
+            placeholder="0"
+          />
+        </div>
+      {/if}
+      {#if visible('genre')}
+        <div data-entry-field={fieldPath + 'genre'}>
+          <FormattableStringInput
+            label="Genre"
+            placeholder="Doctoral dissertation"
+            bind:value={entryData.genre}
+          />
+        </div>
+      {/if}
+      {#if visible('organization')}
+        <div data-entry-field={fieldPath + 'organization'}>
+          <FormattableStringInput
+            label="Organization"
+            placeholder="ACM"
+            bind:value={entryData.organization}
+          />
+        </div>
+      {/if}
+      {#if visible('location')}
+        <div data-entry-field={fieldPath + 'location'}>
+          <FormattableStringInput
+            label="Location"
+            placeholder="New York, NY"
+            bind:value={entryData.location}
+          />
+        </div>
+      {/if}
+    </FormSection>
+  {/if}
 
-{#if sectionOpen('publication')}
-  <FormSection title="Publication" open={sectionOpen('publication')}>
-    {#if visible('publisher')}
-      <PublisherInput bind:value={entryData.publisher} />
-    {/if}
-    {#if visible('issue')}
-      <NumericOrStringInput
-        label="Issue"
-        placeholder="5"
-        bind:value={entryData.issue}
-      />
-    {/if}
-    {#if visible('volume')}
-      <NumericOrStringInput
-        label="Volume"
-        placeholder="10"
-        bind:value={entryData.volume}
-      />
-    {/if}
-    {#if visible('edition')}
-      <NumericOrStringInput
-        label="Edition"
-        placeholder="2nd"
-        bind:value={entryData.edition}
-      />
-    {/if}
-    {#if visible('page-range')}
-      <NumericOrStringInput
-        label="Page range"
-        placeholder="1-10"
-        bind:value={entryData['page-range']}
-      />
-    {/if}
-    {#if visible('volume-total')}
-      <IntegerInput
-        bind:value={entryData['volume-total']}
-        label="Volume total"
-        naturalSet={true}
-        placeholder="0"
-      />
-    {/if}
-    {#if visible('page-total')}
-      <IntegerInput
-        bind:value={entryData['page-total']}
-        label="Page total"
-        naturalSet={true}
-        placeholder="0"
-      />
-    {/if}
-    {#if visible('genre')}
-      <FormattableStringInput
-        label="Genre"
-        placeholder="Doctoral dissertation"
-        bind:value={entryData.genre}
-      />
-    {/if}
-    {#if visible('organization')}
-      <FormattableStringInput
-        label="Organization"
-        placeholder="ACM"
-        bind:value={entryData.organization}
-      />
-    {/if}
-    {#if visible('location')}
-      <FormattableStringInput
-        label="Location"
-        placeholder="New York, NY"
-        bind:value={entryData.location}
-      />
-    {/if}
-  </FormSection>
-{/if}
+  {#if sectionOpen('media')}
+    <FormSection title="Links & media" open={sectionOpen('media')}>
+      {#if visible('time-range')}
+        <div data-entry-field={fieldPath + 'time-range'}>
+          <TimestampRangeInput
+            bind:value={entryData['time-range']}
+            label="Time range"
+          />
+        </div>
+      {/if}
+      {#if visible('runtime')}
+        <div data-entry-field={fieldPath + 'runtime'}>
+          <TimestampInput bind:value={entryData.runtime} label="Runtime" />
+        </div>
+      {/if}
+      {#if visible('url')}
+        <div data-entry-field={fieldPath + 'url'}>
+          <UrlInput bind:value={entryData.url} />
+        </div>
+      {/if}
+    </FormSection>
+  {/if}
 
-{#if sectionOpen('media')}
-  <FormSection title="Media & links" open={sectionOpen('media')}>
-    {#if visible('time-range')}
-      <TimestampRangeInput
-        bind:value={entryData['time-range']}
-        label="Time range"
-      />
-    {/if}
-    {#if visible('runtime')}
-      <TimestampInput bind:value={entryData.runtime} label="Runtime" />
-    {/if}
-    {#if visible('url')}
-      <UrlInput bind:value={entryData.url} />
-    {/if}
-  </FormSection>
-{/if}
+  {#if sectionOpen('identifiers')}
+    <FormSection title="Identifiers" open={sectionOpen('identifiers')}>
+      {#if visible('serial-number')}
+        <div data-entry-field={fieldPath + 'serial-number'}>
+          <SerialNumberInput bind:value={entryData['serial-number']} />
+        </div>
+      {/if}
+      {#if visible('language')}
+        <div data-entry-field={fieldPath + 'language'}>
+          <LanguageInput bind:value={entryData.language} />
+        </div>
+      {/if}
+    </FormSection>
+  {/if}
 
-{#if sectionOpen('identifiers')}
-  <FormSection title="Identifiers" open={sectionOpen('identifiers')}>
-    {#if visible('serial-number')}
-      <SerialNumberInput bind:value={entryData['serial-number']} />
-    {/if}
-    {#if visible('language')}
-      <LanguageInput bind:value={entryData.language} />
-    {/if}
-  </FormSection>
-{/if}
+  {#if sectionOpen('archive')}
+    <FormSection title="Archive" open={sectionOpen('archive')}>
+      {#if visible('call-number')}
+        <div data-entry-field={fieldPath + 'call-number'}>
+          <FormattableStringInput
+            label="Call Number"
+            placeholder="QA76.76.D47 G66 2005"
+            bind:value={entryData['call-number']}
+          />
+        </div>
+      {/if}
+      {#if visible('archive')}
+        <div data-entry-field={fieldPath + 'archive'}>
+          <FormattableStringInput
+            label="Archive"
+            placeholder="Library of Congress"
+            bind:value={entryData.archive}
+          />
+        </div>
+      {/if}
+      {#if visible('archive-location')}
+        <div data-entry-field={fieldPath + 'archive-location'}>
+          <FormattableStringInput
+            label="Archive Location"
+            placeholder="Box 12, Folder 3"
+            bind:value={entryData['archive-location']}
+          />
+        </div>
+      {/if}
+    </FormSection>
+  {/if}
 
-{#if sectionOpen('archive')}
-  <FormSection title="Archive" open={sectionOpen('archive')}>
-    {#if visible('call-number')}
-      <FormattableStringInput
-        label="Call Number"
-        placeholder="QA76.76.D47 G66 2005"
-        bind:value={entryData['call-number']}
-      />
-    {/if}
-    {#if visible('archive')}
-      <FormattableStringInput
-        label="Archive"
-        placeholder="Library of Congress"
-        bind:value={entryData.archive}
-      />
-    {/if}
-    {#if visible('archive-location')}
-      <FormattableStringInput
-        label="Archive Location"
-        placeholder="Box 12, Folder 3"
-        bind:value={entryData['archive-location']}
-      />
-    {/if}
-  </FormSection>
-{/if}
-
-{#if sectionOpen('notes')}
-  <FormSection title="Notes" open={sectionOpen('notes')}>
-    {#if visible('abstract')}
-      <FormattableStringInput
-        label="Abstract"
-        placeholder="This article compares..."
-        bind:value={entryData.abstract}
-        multiline={true}
-      />
-    {/if}
-    {#if visible('note')}
-      <FormattableStringInput
-        label="Note"
-        placeholder="See also related work in appendix."
-        bind:value={entryData.note}
-        multiline={true}
-      />
-    {/if}
-  </FormSection>
-{/if}
+  {#if sectionOpen('notes')}
+    <FormSection title="Notes" open={sectionOpen('notes')}>
+      {#if visible('abstract')}
+        <div data-entry-field={fieldPath + 'abstract'}>
+          <FormattableStringInput
+            label="Abstract"
+            placeholder="This article compares..."
+            bind:value={entryData.abstract}
+            multiline={true}
+          />
+        </div>
+      {/if}
+      {#if visible('note')}
+        <div data-entry-field={fieldPath + 'note'}>
+          <FormattableStringInput
+            label="Note"
+            placeholder="See also related work in appendix."
+            bind:value={entryData.note}
+            multiline={true}
+          />
+        </div>
+      {/if}
+    </FormSection>
+  {/if}
+  {@render parentEditor()}
+</div>

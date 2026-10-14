@@ -15,19 +15,22 @@
   } = $props();
 </script>
 
-<details {open} class={cn('fieldset', className)}>
+<details
+  {open}
+  class={cn('form-section border-t border-border py-5', className)}
+>
   <summary
-    class="fieldset-legend cursor-pointer select-none marker:content-none"
+    class="cursor-pointer text-base font-semibold select-none marker:content-none"
   >
     <span class="inline-flex items-center gap-2">
       <span
         class="inline-block size-0 border-y-4 border-r-0 border-l-[6px] border-y-transparent border-l-current transition-transform [[open]>&]:rotate-90"
         aria-hidden="true"
       ></span>
-      {title}
+      <span role="heading" aria-level="2">{title}</span>
     </span>
   </summary>
-  <div class="mt-3 space-y-3">
+  <div class="mt-4 space-y-4">
     {@render children?.()}
   </div>
 </details>
