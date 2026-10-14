@@ -86,6 +86,7 @@ export type HealthReport = {
 };
 
 const changes = new EventTarget();
+let homeDirectory: Promise<string> | undefined;
 
 async function changed<T>(operation: Promise<T>): Promise<T> {
   const result = await operation;
@@ -94,6 +95,8 @@ async function changed<T>(operation: Promise<T>): Promise<T> {
 }
 
 export const tauriBackend = {
+  // Native process identity, never guessed from a stored path's username.
+  homeDirectory: () => (homeDirectory ??= invoke<string>('home_directory')),
   list: () => invoke<Bibliography[]>('list_bibliographies'),
   get: (id: string) => invoke<Bibliography>('get_bibliography', { id }),
   createManaged: (bibliography: Bibliography) =>

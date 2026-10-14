@@ -71,6 +71,8 @@ export const test = base.extend({
         __TAURI_INTERNALS__: {
           invoke: async (command: string, args?: { citations?: unknown[] }) => {
             switch (command) {
+              case 'home_directory':
+                return 'C:/Users/Researcher';
               case 'get_settings':
                 return null;
               case 'list_bibliographies':

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilePath from '#lib/components/FilePath.svelte';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import Breadcrumbs from '#lib/components/Breadcrumbs.svelte';
@@ -138,7 +139,7 @@
                   >
                   <span
                     class="block truncate font-mono text-xs text-muted-foreground"
-                    >{bibliography.metadata.filePath}</span
+                    ><FilePath value={bibliography.metadata.filePath} /></span
                   >
                 </span>
               </label>

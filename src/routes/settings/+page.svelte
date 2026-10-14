@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilePath from '#lib/components/FilePath.svelte';
   import BundledCitationStylePicker from '#lib/components/BundledCitationStylePicker.svelte';
   import { FONT_LICENSES } from '#lib/utils/font-licenses.js';
   import { goto } from '$app/navigation';
@@ -356,16 +357,18 @@
           <div>
             <dt class="font-semibold">Managed files</dt>
             <dd class="font-mono break-all">
-              {storage.managedBibliographiesDirectory}
+              <FilePath value={storage.managedBibliographiesDirectory} />
             </dd>
           </div>
           <div>
             <dt class="font-semibold">Recovery snapshots</dt>
-            <dd class="font-mono break-all">{storage.recoveryDirectory}</dd>
+            <dd class="break-all">
+              <FilePath value={storage.recoveryDirectory} />
+            </dd>
           </div>
           <div>
             <dt class="font-semibold">Catalog database</dt>
-            <dd class="font-mono break-all">{storage.databasePath}</dd>
+            <dd class="break-all"><FilePath value={storage.databasePath} /></dd>
           </div>
         </dl>
       {/if}
@@ -453,7 +456,8 @@
                   · {item.reason.replaceAll('-', ' ')}
                   <span
                     class="block truncate font-mono text-muted-foreground"
-                    title={item.originalPath}>{item.originalPath}</span
+                    title={item.originalPath}
+                    ><FilePath value={item.originalPath} /></span
                   >
                 </span>
                 <button

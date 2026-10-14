@@ -21,6 +21,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            storage::home_directory,
             storage::storage_info,
             storage::backup_catalog_database,
             storage::check_storage_health,

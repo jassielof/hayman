@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilePath from '#lib/components/FilePath.svelte';
   import {
     tauriBackend,
     type Attachment,
@@ -135,9 +136,8 @@
               <span
                 class="block truncate font-mono text-xs text-muted-foreground"
               >
-                {attachment.available
-                  ? attachment.path
-                  : `Missing · ${attachment.path}`}
+                {#if !attachment.available}Missing ·
+                {/if}<FilePath value={attachment.path} />
               </span>
             </button>
             <button

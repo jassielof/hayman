@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilePath from '#lib/components/FilePath.svelte';
   import { resolve } from '$app/paths';
   import ExportBackupDialog from '#lib/components/ExportBackupDialog.svelte';
   import ConfirmDialog from '#lib/components/ui/confirm-dialog.svelte';
@@ -279,7 +280,7 @@
                       {bib.metadata.storageKind === 'linked'
                         ? 'Linked local file'
                         : 'Managed by Hayman'}
-                      · {bib.metadata.filePath}
+                      · <FilePath value={bib.metadata.filePath} />
                     </p>
                   {/if}
                   <p class="text-xs text-muted-foreground">

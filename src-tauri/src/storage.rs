@@ -33,6 +33,11 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
 
 type Result<T> = std::result::Result<T, String>;
+
+#[tauri::command]
+pub fn home_directory(app: AppHandle) -> Result<String> {
+    app.path().home_dir().map(|path| path.to_string_lossy().into_owned()).map_err(|error| error.to_string())
+}
 // Increment only with an additive, upgrade-tested migration; released local
 // catalogs are user data and do not have a cloud copy to repair from.
 const DATABASE_SCHEMA_VERSION: i64 = 1;
