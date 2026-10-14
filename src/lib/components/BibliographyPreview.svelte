@@ -92,7 +92,7 @@
     bind:overrideKind
     onRender={renderPreview}
   />
-  <div class="rounded-lg border border-border bg-card p-6 shadow-xs sm:p-8">
+  <div class="citation-surface rounded-lg p-6 shadow-xs sm:p-8">
     {#if loading}
       <div
         class="flex min-h-48 flex-col items-center justify-center gap-2"

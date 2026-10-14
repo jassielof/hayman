@@ -143,6 +143,39 @@ math {
 }
 
 @layer components {
+  .citation-surface {
+    @apply border-2 border-input bg-card text-card-foreground;
+  }
+  /* Independent paper surfaces must reset ink, links, errors and focus colors
+     too: light paper cannot inherit light ink from a dark application theme. */
+  :root[data-preview-theme='white'] .citation-surface {
+    color-scheme: light;
+    --color-background: #ffffff;
+    --color-card: #ffffff;
+    --color-foreground: #20342b;
+    --color-card-foreground: #20342b;
+    --color-muted-foreground: #52645a;
+    --color-input: #6b7a70;
+    --color-border: #6b7a70;
+    --color-primary: #006344;
+    --color-ring: #006344;
+    --color-destructive: #982b24;
+    --color-destructive-foreground: #ffffff;
+  }
+  :root[data-preview-theme='sepia'] .citation-surface {
+    color-scheme: light;
+    --color-background: #fbf4e4;
+    --color-card: #fbf4e4;
+    --color-foreground: #332b21;
+    --color-card-foreground: #332b21;
+    --color-muted-foreground: #625443;
+    --color-input: #8a795b;
+    --color-border: #8a795b;
+    --color-primary: #674618;
+    --color-ring: #674618;
+    --color-destructive: #982b24;
+    --color-destructive-foreground: #fff9ed;
+  }
   .sidebar-link {
     @apply block min-w-0 rounded-md px-2 py-2 text-sm text-foreground hover:bg-accent focus-visible:bg-accent;
   }

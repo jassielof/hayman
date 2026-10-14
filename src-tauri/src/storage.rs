@@ -251,6 +251,11 @@ fn validate_settings(settings: &SettingsPayload) -> Result<()> {
     if !settings.citation.is_object() {
         return Err("Citation settings must be an object.".into());
     }
+    if let Some(theme) = settings.citation.get("previewTheme")
+        && !matches!(theme.as_str(), Some("app" | "white" | "sepia"))
+    {
+        return Err("Preview theme must be app, white or sepia.".into());
+    }
     if let Some(style) = settings.citation.get("defaultStyle") {
         match style.as_str() {
             Some("custom") => {}
@@ -2141,6 +2146,30 @@ mod tests {
             serde_json::json!(42),
         ] {
             settings.citation = serde_json::json!({"defaultStyle": value});
+            assert!(validate_settings(&settings).is_err());
+        }
+    }
+
+    #[test]
+    fn settings_boundary_validates_preview_themes_and_accepts_legacy_settings() {
+        let mut settings: SettingsPayload = serde_json::from_value(serde_json::json!({
+            "id": "app", "fonts": {"sans": "Inter", "serif": "Alegreya", "mono": "Consolas"},
+            "citation": {},
+            "editor": {"defaultMode": "guided", "visibleFields": [], "fieldsByType": {}},
+            "library": {"density": "comfortable"}
+        }))
+        .unwrap();
+        assert!(validate_settings(&settings).is_ok());
+        for theme in ["app", "white", "sepia"] {
+            settings.citation = serde_json::json!({"previewTheme": theme});
+            assert!(validate_settings(&settings).is_ok());
+        }
+        for theme in [
+            serde_json::json!("dark"),
+            serde_json::json!(null),
+            serde_json::json!(123),
+        ] {
+            settings.citation = serde_json::json!({"previewTheme": theme});
             assert!(validate_settings(&settings).is_err());
         }
     }

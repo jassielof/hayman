@@ -8,6 +8,7 @@ export interface AppFontSettings {
 }
 
 export interface AppCitationSettings {
+  previewTheme?: 'app' | 'white' | 'sepia';
   defaultStyle: string;
   customCslName?: string;
   customCsl?: string;
@@ -38,6 +39,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
     math: 'stix-two-math',
   },
   citation: {
+    previewTheme: 'app',
     defaultStyle: 'ieee',
   },
   editor: {

@@ -73,6 +73,7 @@ describe('SettingsService', () => {
     await SettingsService.update({
       citation: {
         defaultStyle: 'custom',
+        previewTheme: 'sepia',
         customCslName: 'ieee.csl',
         customCsl: '<style></style>',
         entryPreviewTemplate: '{{normal}}',
@@ -84,6 +85,26 @@ describe('SettingsService', () => {
     expect(settings.citation.customCsl).toBeUndefined();
     expect(settings.citation.defaultStyle).toBe('ieee');
     expect(settings.citation.entryPreviewTemplate).toBe('{{normal}}');
+    expect(settings.citation.previewTheme).toBe('sepia');
+  });
+
+  it('defaults legacy preview appearance to the app and persists independent paper themes', async () => {
+    state.value = {
+      ...structuredClone(DEFAULT_APP_SETTINGS),
+      citation: { defaultStyle: 'ieee' },
+    };
+    expect((await SettingsService.get()).citation.previewTheme).toBe('app');
+    for (const previewTheme of ['white', 'sepia', 'app'] as const) {
+      await SettingsService.update({
+        citation: { defaultStyle: 'ieee', previewTheme },
+      });
+      expect((await SettingsService.get()).citation.previewTheme).toBe(
+        previewTheme,
+      );
+      expect(document.documentElement.dataset.previewTheme).toBe(previewTheme);
+    }
+    await SettingsService.applyToDocument();
+    expect(document.documentElement.dataset.previewTheme).toBe('app');
   });
 
   it('drops legacy executable templates without treating them as plain text', async () => {

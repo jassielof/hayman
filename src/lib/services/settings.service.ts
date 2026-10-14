@@ -6,6 +6,7 @@ import {
 import { applyFontSettings } from '#lib/utils/apply-font-settings.js';
 import { tauriBackend } from '#lib/services/tauri-backend.js';
 import { ALL_ENTRY_FIELDS } from '#lib/validators/entry-field-visibility.js';
+import { applyPreviewTheme } from '#lib/utils/apply-preview-theme.js';
 
 export class SettingsService {
   static async get(): Promise<AppSettings> {
@@ -64,12 +65,14 @@ export class SettingsService {
     };
     await tauriBackend.setSettings(next);
     applyFontSettings(next.fonts);
+    applyPreviewTheme(next.citation.previewTheme);
     return next;
   }
 
   static async applyToDocument() {
     const settings = await this.get();
     applyFontSettings(settings.fonts);
+    applyPreviewTheme(settings.citation.previewTheme);
   }
 
   static async clearCustomCsl() {
@@ -82,6 +85,7 @@ export class SettingsService {
       ...current,
       id: SETTINGS_ROW_ID,
       citation: {
+        previewTheme: current.citation.previewTheme,
         defaultStyle: nextDefaultStyle,
         entryPreviewTemplate: current.citation.entryPreviewTemplate,
       },
@@ -90,6 +94,7 @@ export class SettingsService {
     };
     await tauriBackend.setSettings(next);
     applyFontSettings(next.fonts);
+    applyPreviewTheme(next.citation.previewTheme);
     return next;
   }
 }

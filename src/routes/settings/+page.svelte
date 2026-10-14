@@ -343,6 +343,23 @@
         changes automatically. Sepia uses warm paper colors and always stays
         light.
       </p>
+      <label class="label" for="preview-theme"
+        >Citation and bibliography preview</label
+      >
+      <select
+        id="preview-theme"
+        class="select w-full"
+        bind:value={settings.citation.previewTheme}
+        aria-describedby="preview-theme-help"
+      >
+        <option value="app">Follow app theme</option>
+        <option value="white">White paper</option>
+        <option value="sepia">Sepia paper</option>
+      </select>
+      <p id="preview-theme-help" class="text-xs text-muted-foreground">
+        Applies only to rendered citations and bibliographies. Save settings to
+        apply; exported data and citation styles are unchanged.
+      </p>
     </fieldset>
 
     <fieldset class="fieldset">

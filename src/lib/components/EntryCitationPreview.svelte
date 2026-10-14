@@ -11,7 +11,7 @@
   let linkError = $state<string>();
 </script>
 
-<div class="space-y-5 rounded-lg border border-border bg-card p-4 sm:p-6">
+<div class="citation-surface space-y-5 rounded-lg p-4 sm:p-6">
   {#if loading}
     <p role="status">Formatting citation preview with Hayagriva…</p>
   {:else if error}
@@ -41,7 +41,7 @@
     </section>
     <section
       aria-label="Entry bibliography"
-      class="space-y-3 border-t border-border pt-4"
+      class="space-y-3 border-t-2 border-input pt-4"
     >
       <h2 class="text-sm font-medium">Bibliography</h2>
       <FormattedBibliography bibliography={preview.bibliography} />
