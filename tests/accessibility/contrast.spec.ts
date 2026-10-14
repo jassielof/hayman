@@ -1,8 +1,8 @@
-import { test, expect } from './fixtures';
+import { test, expect, THEMES, prepareTheme } from './fixtures';
 
-for (const theme of ['light', 'dark'] as const) {
+for (const theme of THEMES) {
   test(`semantic palette meets AA contrast in ${theme}`, async ({ page }) => {
-    await page.emulateMedia({ colorScheme: theme });
+    await prepareTheme(page, theme);
     await page.goto('/settings');
     await expect(
       page.getByRole('button', { name: 'Save settings' }),

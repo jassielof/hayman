@@ -1,4 +1,4 @@
-import { test, expect, audit } from './fixtures';
+import { test, expect, audit, THEMES, prepareTheme } from './fixtures';
 
 const routes = [
   '/',
@@ -14,9 +14,11 @@ const routes = [
   '/bibliography/demo/entry/paper/edit',
 ];
 
-for (const theme of ['light', 'dark'] as const) {
+for (const theme of THEMES) {
   test.describe(theme, () => {
-    test.use({ colorScheme: theme });
+    test.beforeEach(async ({ page }) => {
+      await prepareTheme(page, theme);
+    });
     for (const route of routes) {
       test(`WCAG AA ${route}`, async ({ page }) => {
         await page.goto(route);
@@ -26,6 +28,11 @@ for (const theme of ['light', 'dark'] as const) {
         if (theme === 'dark')
           await expect(page.locator('html')).toHaveClass(/dark/);
         else await expect(page.locator('html')).not.toHaveClass(/dark/);
+        if (theme === 'sepia')
+          await expect(page.locator('html')).toHaveAttribute(
+            'data-theme',
+            'sepia',
+          );
         await expect(
           page.getByText('Unmocked accessibility-test IPC:', { exact: false }),
         ).toHaveCount(0);

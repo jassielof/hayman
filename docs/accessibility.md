@@ -16,7 +16,7 @@ The CI accessibility job runs the same suite and uploads its HTML report, axe re
 
 ## Automated coverage
 
-- Chromium and WebKit, in system-selected light and dark themes, approximate the engine families used by Tauri. These browsers do not replace installed-app testing on WebView2, WKWebView and WebKitGTK.
+- Chromium and WebKit, in system-selected light/dark themes and the light-only Sepia theme, approximate the engine families used by Tauri. Sepia is also checked with a dark OS preference, across reloads and theme changes. These browsers do not replace installed-app testing on WebView2, WKWebView and WebKitGTK.
 - axe checks for WCAG 2.0/2.1 A/AA, WCAG 2.2 AA and applicable best-practice rules on the main pages and representative open dialogs, previews and editor states. Rules are not disabled to make the suite pass.
 - Rendered theme-token contrast checks cover normal text at 4.5:1, including muted text, links, destructive actions, tinted warnings and hover fills. Required input boundaries and focus colors are checked at 3:1. Decorative separators and disabled controls are not subject to those same requirements.
 - Color values are resolved by the browser, including OKLCH and alpha compositing, then evaluated with WCAG's sRGB relative-luminance formula without rounding the resulting ratio.

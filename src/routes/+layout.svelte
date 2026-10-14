@@ -3,9 +3,20 @@
   import { page } from '$app/state';
   import SettingsBootstrap from '#lib/components/SettingsBootstrap.svelte';
   import MutationToastHost from '#lib/components/MutationToastHost.svelte';
-  import { ModeWatcher, setMode, userPrefersMode } from 'mode-watcher';
-  import { MonitorIcon, MoonIcon, SettingsIcon, SunIcon } from '@lucide/svelte';
-  import { nextThemeMode, themeModeLabel } from '#lib/utils/theme-mode.js';
+  import { ModeWatcher, theme, userPrefersMode } from 'mode-watcher';
+  import {
+    BookOpenIcon,
+    MonitorIcon,
+    MoonIcon,
+    SettingsIcon,
+    SunIcon,
+  } from '@lucide/svelte';
+  import {
+    applyThemeMode,
+    getThemeMode,
+    nextThemeMode,
+    themeModeLabel,
+  } from '#lib/utils/theme-mode.js';
   import './layout.css';
   import './hljs-theme.css';
 
@@ -13,6 +24,9 @@
 
   const settingsPath = resolve('settings');
   const settingsActive = $derived(page.url.pathname === settingsPath);
+  const themeMode = $derived(
+    getThemeMode(userPrefersMode.current, theme.current),
+  );
 </script>
 
 <ModeWatcher defaultMode="system" track={true} />
@@ -45,14 +59,16 @@
     <button
       type="button"
       class="btn btn-ghost btn-square"
-      aria-label={`${themeModeLabel(userPrefersMode.current)}. Change theme mode`}
-      title={`${themeModeLabel(userPrefersMode.current)} — click to change`}
-      onclick={() => setMode(nextThemeMode(userPrefersMode.current))}
+      aria-label={`${themeModeLabel(themeMode)}. Change theme mode`}
+      title={`${themeModeLabel(themeMode)} — click to change`}
+      onclick={() => applyThemeMode(nextThemeMode(themeMode))}
     >
-      {#if userPrefersMode.current === 'system'}
+      {#if themeMode === 'system'}
         <MonitorIcon class="size-5" />
-      {:else if userPrefersMode.current === 'light'}
+      {:else if themeMode === 'light'}
         <SunIcon class="size-5" />
+      {:else if themeMode === 'sepia'}
+        <BookOpenIcon class="size-5" />
       {:else}
         <MoonIcon class="size-5" />
       {/if}

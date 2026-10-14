@@ -12,7 +12,7 @@
 .code-block .hljs-template-variable,
 .code-block .hljs-type,
 .code-block .hljs-variable.language_ {
-  color: #c72b3b;
+  color: var(--syntax-keyword, #c72b3b);
 }
 
 .code-block .hljs-title,
@@ -43,7 +43,7 @@
 
 .code-block .hljs-built_in,
 .code-block .hljs-symbol {
-  color: #a84705;
+  color: var(--syntax-built-in, #a84705);
 }
 
 .code-block .hljs-comment,
@@ -56,7 +56,7 @@
 .code-block .hljs-quote,
 .code-block .hljs-selector-tag,
 .code-block .hljs-selector-pseudo {
-  color: #1b7431;
+  color: var(--syntax-name, #1b7431);
 }
 
 .code-block .hljs-subst {

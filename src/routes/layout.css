@@ -77,6 +77,35 @@ math {
   --color-ring: oklch(0.68 0.14 160);
 }
 
+/* A light-only reading palette. Keep all surfaces warm, including inputs,
+   warnings and code; never reduce text contrast to imitate faded ink. */
+:root[data-theme='sepia'] {
+  color-scheme: light;
+  --color-background: #f4ecd8;
+  --color-foreground: #332b21;
+  --color-card: #fbf4e4;
+  --color-card-foreground: #332b21;
+  --color-muted: #eae0c7;
+  --color-muted-foreground: #625443;
+  --color-border: #d7c8a7;
+  --color-input: #8a795b;
+  --color-primary: #674618;
+  --color-primary-foreground: #fff9ed;
+  --color-secondary: #eae0c7;
+  --color-secondary-foreground: #332b21;
+  --color-accent: #e5d7b7;
+  --color-accent-foreground: #332b21;
+  --color-destructive: #982b24;
+  --color-destructive-foreground: #fff9ed;
+  --color-warning: #bd8628;
+  --color-warning-foreground: #33240f;
+  --color-warning-text: #583b15;
+  --color-ring: #674618;
+  --syntax-keyword: #a32330;
+  --syntax-built-in: #814609;
+  --syntax-name: #31622c;
+}
+
 @layer base {
   :focus-visible {
     outline: 2px solid var(--color-ring);

@@ -2,6 +2,20 @@ import { test as base, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
+export const THEMES = ['light', 'dark', 'sepia'] as const;
+export async function prepareTheme(page: Page, theme: (typeof THEMES)[number]) {
+  // Test sepia against a dark OS preference: it must remain light-only.
+  await page.emulateMedia({
+    colorScheme: theme === 'light' ? 'light' : 'dark',
+  });
+  if (theme === 'sepia') {
+    await page.addInitScript(() => {
+      localStorage.setItem('mode-watcher-mode', 'light');
+      localStorage.setItem('mode-watcher-theme', 'sepia');
+    });
+  }
+}
+
 // Exercise the shipped frontend without opening native dialogs or reading/writing
 // the user's Tauri database. Keep IPC mocks here, never in production components.
 export const test = base.extend({

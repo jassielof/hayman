@@ -36,9 +36,11 @@
   import { save } from '@tauri-apps/plugin-dialog';
   import { BibliographyService } from '#lib/services/bibliography.service.js';
   import { formatFormattableString } from '#lib/formatters/formattable-string.js';
-  import { setMode, userPrefersMode } from 'mode-watcher';
+  import { theme, userPrefersMode } from 'mode-watcher';
   import {
     THEME_MODES,
+    applyThemeMode,
+    getThemeMode,
     themeModeLabel,
     type ThemeMode,
   } from '#lib/utils/theme-mode.js';
@@ -327,8 +329,9 @@
       <select
         id="theme-mode"
         class="select w-full"
-        value={userPrefersMode.current}
-        onchange={(event) => setMode(event.currentTarget.value as ThemeMode)}
+        value={getThemeMode(userPrefersMode.current, theme.current)}
+        onchange={(event) =>
+          applyThemeMode(event.currentTarget.value as ThemeMode)}
       >
         {#each THEME_MODES as themeMode (themeMode)}
           <option value={themeMode}>{themeModeLabel(themeMode)}</option>
@@ -336,7 +339,8 @@
       </select>
       <p class="text-xs text-muted-foreground">
         System theme is the default and follows operating-system appearance
-        changes automatically.
+        changes automatically. Sepia uses warm paper colors and always stays
+        light.
       </p>
     </fieldset>
 
