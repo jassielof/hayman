@@ -6,6 +6,8 @@ Hayman supports quick editing of a single linked YAML file as well as projects t
 
 ## Library and quick tools
 
+The library separates projects, locally linked YAML files, and Hayman-managed bibliographies. All references searches across them without making extra copies. Linked-file edits preserve comments, schema directives and entry order; unchanged content is not rewritten. If an edit cannot preserve the requested data safely, Hayman refuses it rather than falling back to lossy serialization. Comments attached to removed or replaced nodes are retained as standalone comments at the end of the file.
+
 Quick tools converts pasted or local BibTeX/BibLaTeX into Hayagriva without creating a bibliography. For Zotero or another local manager, export the selected references as BibLaTeX/BibTeX first; this imports reference data, not attachments, collections or annotations. Copy/save the converted YAML or review a selective import into an existing bibliography.
 
 Identifier lookup is optional: each DOI, ISBN or arXiv lookup requires explicit consent and sends only that identifier to Crossref, Open Library or arXiv. Results are validated with Hayagriva and shown for review, never saved automatically. Ordinary editing, conversion and previews remain offline; no account or cloud synchronization is required. See [tool safety and testing](docs/quick-tools.md).
